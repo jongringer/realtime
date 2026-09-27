@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=5.0, user-scalable=yes">
+  <title>ODsay 실시간 대중교통 도착 전광판 - 출퇴근 맞춤</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="description" content="이대목동병원 15-154(양천01, 603, 6620) 및 9호선 일반열차 ODsay 실시간 대중교통 도착 정보">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg?v=202610_icon">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=202610_icon">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=202610_icon">
+  <meta property="og:title" content="4조 3교대 스마트 근무표 - 실시간 대중교통">
+  <meta property="og:image" content="https://kbs-4shift-5855.surge.sh/icons/og-image.png?v=202610_icon">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+  <style>
+    :root {
+      --bg: #f1f5f9;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-sub: #64748b;
+      --primary: #0284c7;
+      --border: #cbd5e1;
+      --radius: 16px;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 16px 12px 40px 12px;
+    }
+    .container {
+      width: 100%;
+      max-width: 450px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .header-card {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #ffffff;
+      padding: 18px 16px;
+      border-radius: var(--radius);
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.15);
+    }
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .header-badge {
+      background: #10b981;
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap !important;
+      flex-shrink: 0;
+    }
+    .live-time-pill {
+      font-size: 12px;
+      color: #94a3b8;
+      background: rgba(255, 255, 255, 0.12);
+      padding: 3px 9px;
+      border-radius: 12px;
+      font-variant-numeric: tabular-nums;
+    }
+    .header-title {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 4px;
+      letter-spacing: -0.3px;
+    }
+    .header-desc {
+      font-size: 12px;
+      color: #cbd5e1;
+      line-height: 1.45;
+    }
+    .notice-box {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 12px;
+      color: #166534;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      line-height: 1.4;
+    }
+    .tab-wrap {
+      display: flex;
+      background: #e2e8f0;
+      padding: 4px;
+      border-radius: 12px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 11px 8px;
+      border: none;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #475569;
+      background: transparent;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      background: #ffffff;
+      color: #0f172a;
+      border: 1.5px solid #0284c7;
+      font-weight: 800;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+    .walk-icon {
+      display: inline-block;
+      transform: scaleX(-1);
+      transform-origin: center;
+      vertical-align: -1px;
+    }
+    .missed-transit-box {
+      display: none !important;
+    }
+    .subway-9-card {
+      background: #fdfbf7 !important;
+      border: 1.2px solid #ede3d4 !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
+    }
+    .subway-9-card .badge-seoul-subway {
+      background: #b8860b !important;
+      color: #ffffff !important;
+      font-weight: 800;
+    }
+    .subway-9-card .next-transit-box {
+      background: #ffffff !important;
+      border: 1px solid #e7ded0 !important;
+    }
+    .subway-9-card .next-transit-sub {
+      color: #451a03 !important;
+      border-top-color: #ebdccb !important;
+      font-weight: 700;
+    }
+    .subway-9-card .next-time-big {
+      color: #92530a !important;
+      font-weight: 800;
+    }
+    .subway-9-card .next2-transit-box {
+      background: #ffffff !important;
+      border: 1px solid #ebdccb !important;
+    }
+    .subway-9-card .next2-tag-blue {
+      color: #78350f !important;
+      font-weight: 800;
+    }
+    .subway-9-card .bit-footer-info {
+      color: #1c1917 !important;
+      font-weight: 700;
+    }
+    .subway-9-card .bit-dest-pill {
+      background: #f7f1e6 !important;
+      color: #451a03 !important;
+      font-weight: 800;
+    }
+    .status-banner {
+      background: #ffffff;
+      border: 1.5px solid #cbd5e1;
+      color: #1e293b;
+      border-radius: 10px;
+      padding: 7px 11px;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .transit-time-min {
+      font-weight: 900;
+      color: #dc2626;
+    }
+    .transit-time-sec {
+      font-weight: 900;
+      color: #0f172a;
+    }
+    
+    .transit-arr-label {
+      font-size: 13px !important;
+      font-weight: 800 !important;
+      color: inherit;
+    }
+    .transit-clock-time {
+      font-size: 1.18rem !important;
+      font-weight: 900 !important;
+      letter-spacing: -0.3px;
+      display: inline-block;
+      vertical-align: baseline;
+      margin: 0 1px;
+    }
+    
+    /* ODsay 대중교통 전광판 카드 스타일 */
+    .bit-board-card {
+      background: #ffffff;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 16px;
+      padding: 14px 15px;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .bit-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1.5px solid #f1f5f9;
+      padding-bottom: 8px;
+    }
+    .bit-title-group {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .bit-ars-badge {
+      background: #0284c7;
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 10.5px;
+      padding: 2px 6px;
+      border-radius: 5px;
+      flex-shrink: 0;
+      white-space: nowrap !important;
+    }
+    .bit-station-name {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #0f172a;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap !important;
+      flex-shrink: 1;
+    }
+    .bit-status-live {
+      font-size: 9px !important;
+      color: #000000 !important;
+      font-weight: 800 !important;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      padding: 1.5px 5px !important;
+      border-radius: 4px;
+      display: inline-flex !important;
+      align-items: center;
+      gap: 3px;
+      letter-spacing: -0.2px;
+      white-space: nowrap !important;
+      word-break: keep-all !important;
+      flex-shrink: 0 !important;
+      line-height: 1.1;
+    }
+    .bit-status-dot {
+      width: 6px;
+      height: 6px;
+      background-color: #10b981;
+      border-radius: 50%;
+      animation: pulseDot 1.5s infinite;
+    }
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.3); }
+    }
+    .bit-desc-row {
+      font-size: 11.5px;
+      color: #64748b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .bit-dest-pill {
+      background: #f1f5f9;
+      color: #1e293b;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 5px;
+      font-size: 11px;
+    }
+    .bit-route-list {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+    .bit-route-item {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 10px 11px;
+    }
+    .bit-route-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    .badge-seoul-town {
+      background: #059669;
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 12px;
+      padding: 2.5px 7px;
+      border-radius: 5px;
+    }
+    .badge-seoul-blue {
+      background: #1d4ed8;
+      color: #ffffff;
+      font-weight: 900 !important;
+      font-size: 16.5px !important;
+      padding: 4px 10px;
+      border-radius: 7px;
+      letter-spacing: 0.3px;
+    }
+    .badge-seoul-green {
+      background: #16a34a;
+      color: #ffffff;
+      font-weight: 900 !important;
+      font-size: 16.5px !important;
+      padding: 4px 10px;
+      border-radius: 7px;
+      letter-spacing: 0.3px;
+    }
+    .badge-seoul-subway {
+      background: #b45309;
+      color: #ffffff;
+      font-weight: 900 !important;
+      font-size: 16.5px !important;
+      padding: 4px 10px;
+      border-radius: 7px;
+      letter-spacing: 0.3px;
+    }
+    .badge-subway-normal {
+      background: #fef3c7;
+      color: #92400e;
+      font-weight: 800;
+      font-size: 10.5px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid #fde68a;
+    }
+    .badge-low-bus {
+      background: #ecfdf5;
+      color: #047857;
+      font-weight: 800;
+      font-size: 10px;
+      padding: 1px 4px;
+      border-radius: 4px;
+      border: 1px solid #a7f3d0;
+      margin-left: 3px;
+    }
+    
+    /* 도보 중 통과 박스 */
+    .missed-transit-box {
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 8px;
+      padding: 5px 9px;
+      font-size: 11.5px;
+      color: #64748b;
+      margin-top: 4px;
+      margin-bottom: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .missed-label {
+      color: #ef4444;
+      font-weight: 700;
+      font-size: 11px;
+    }
+    
+    /* 🔴 다음 대중교통 박스 */
+    .next-transit-box {
+      background: #f0f9ff;
+      border: 1.5px solid #0284c7;
+      border-radius: 10px;
+      padding: 8px 11px;
+      margin-top: 4px;
+    }
+    .next-transit-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3px;
+    }
+    .next-tag-red {
+      color: #b91c1c;
+      font-weight: 900;
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .next-time-big {
+      font-size: 21.5px !important;
+      font-weight: 900 !important;
+      color: #0369a1;
+      letter-spacing: -0.3px;
+      line-height: 1.2;
+    }
+    .next-time-big .live-countdown,
+    .live-countdown {
+      font-size: 1.4rem !important;
+      font-weight: 900 !important;
+      letter-spacing: -0.3px;
+    }
+    .next-transit-sub {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12.5px;
+      color: #0284c7;
+      border-top: 1px dashed #bae6fd;
+      padding-top: 4px;
+      margin-top: 4px;
+    }
+    
+    /* 🔵 다다음 대중교통 박스 */
+    .next2-transit-box {
+      background: #f8fafc;
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      padding: 6px 10px;
+      margin-top: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12.5px;
+    }
+    .next2-tag-blue {
+      color: #1d4ed8;
+      font-weight: 800;
+    }
+    
+    .bit-footer-info {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 4px;
+      padding-top: 6px;
+      border-top: 1px solid #f1f5f9;
+      line-height: 1.4;
+    }
+    
+    .action-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .btn-share {
+      background: #0284c7;
+      color: #ffffff;
+      border: none;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .btn-calendar {
+      background: #ffffff;
+      color: #0f172a;
+      border: 1.5px solid var(--border);
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: rgba(15, 23, 42, 0.92);
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 30px;
+      font-size: 13px;
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 9999;
+    }
+    #toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <main class="container">
+    <header class="header-card">
+      <div class="header-top">
+        <span class="header-badge">🟢 실시간 버스 · 9호선 역사시간표 우선</span>
+        <span class="live-time-pill" id="liveClock">--:--:--</span>
+      </div>
+      <h1 class="header-title">출퇴근 실시간 대중교통 전광판</h1>
+      <p class="header-desc">
+        현 시각 기준 정류소와 승강장에 가장 빨리 도착하는 <strong>[다음]</strong> 및 <strong>[다다음]</strong> 버스·열차를 1초 단위 실시간 카운트다운으로 즉시 안내합니다.
+      </p>
+    </header>
+
+    <div class="notice-box">
+      <span style="font-size: 16px;">⚡</span>
+      <div>
+        <b>실시간 버스 GPS 및 9호선 역사 고정시간표 우선 연동</b>
+        <div style="font-size: 11px; color: #166534; margin-top: 2px;">
+          9호선 일반열차는 오디세이보다 역사 공식 고정 시간표를 최우선으로 반영하여 정확한 출발 시각과 잔여 초를 카운트다운합니다.
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-wrap">
+      <button type="button" class="tab-btn active" id="tabCommute" onclick="setMode('commute')">
+        🚶 <strong>출근</strong> (6단지앞 ➔ 선유도역)
+      </button>
+      <button type="button" class="tab-btn" id="tabOffwork" onclick="setMode('offwork')">
+        🏠 <strong>퇴근</strong> (국회역 ➔ 선유도버스)
+      </button>
+    </div>
+
+
+
+    <div id="cardsContainer" style="display: flex; flex-direction: column; gap: 12px;"></div>
+
+    <div class="action-row">
+      <button type="button" class="btn-share" onclick="shareKakaoLink()">
+        <span>💬</span> <span>카카오톡 전송용 링크 복사</span>
+      </button>
+      <a href="index.html" class="btn-calendar">
+        <span>📅</span> <span>근무표 앱 열기</span>
+      </a>
+    </div>
+  </main>
+
+  <div id="toast">링크가 클립보드에 복사되었습니다! 💬</div>
+
+  <script>
+    const ODSAY_KEY = 'd2hM82mSFbFtvCVF6BsaJA';
+    let currentMode = 'commute';
+    let autoReason = '';
+    const REFRESH_INTERVAL = 30;
+    let refreshCountdown = 30;
+    let isFetching = false;
+
+    const STATIONS = {
+      commuteBus: '101877',   // 이대목동병원.목동6단지앞 (ARS 15154)
+      commuteSubway: '912',   // 선유도역 9호선
+      offworkSubway: '914',   // 국회의사당역 9호선
+      offworkBus: '206720'    // 선유도역1번출구.한신 (ARS 19210)
+    };
+
+    const BUS_HEADWAYS = {
+      '양천01': 390,  // 마을버스 6.5분
+      '603': 660,    // 간선버스 11분
+      '6620': 720    // 지선버스 12분
+    };
+
+    function formatSec(sec) {
+      if (sec <= 0) return '<span style="color:#dc2626; font-weight:900;">⚡ 곧 도착</span>';
+      if (sec < 60) return `<span style="color:#dc2626; font-weight:900;">${sec}초 후</span>`;
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      const sStr = s < 10 ? '0' + s : s;
+      return `<span class="transit-time-min">${m}분</span> <span class="transit-time-sec">${sStr}초 후</span>`;
+    }
+
+    async function fetchBus(stId) {
+      try {
+        const res = await fetch(`https://api.odsay.com/v1/api/realtimeStation?stationID=${stId}&apiKey=${encodeURIComponent(ODSAY_KEY)}&_t=${Date.now()}`, { cache: 'no-store' });
+        const json = await res.json();
+        return json?.result?.real || null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    const subwayCache = {};
+    async function fetchSubway(stId) {
+      if (subwayCache[stId]) {
+        return subwayCache[stId];
+      }
+      try {
+        const res = await fetch(`https://api.odsay.com/v1/api/searchSubwaySchedule?stationID=${stId}&apiKey=${encodeURIComponent(ODSAY_KEY)}&_t=${Date.now()}`, { cache: 'no-store' });
+        const json = await res.json();
+        if (json?.result) {
+          subwayCache[stId] = json.result;
+          return json.result;
+        }
+        return null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function calculateBusArrival(routeNum, routeReal, now, nowMs) {
+      const headway = BUS_HEADWAYS[routeNum] || 420;
+      let next = null;
+      let next2 = null;
+
+      if (routeReal && routeReal.arrival1) {
+        const a1 = routeReal.arrival1;
+        const sec1 = a1.arrivalSec;
+        const stop1 = a1.leftStation ? `${a1.leftStation}번째 전` : '';
+        const low1 = a1.lowBusYn === 'Y' ? '저상' : '';
+
+        const a2 = routeReal.arrival2;
+        const sec2 = a2 ? a2.arrivalSec : null;
+        const stop2 = a2 && a2.leftStation ? `${a2.leftStation}번째 전` : '';
+        const low2 = a2 && a2.lowBusYn === 'Y' ? '저상' : '';
+
+        next = { sec: sec1, stop: stop1 || '운행 중', low: low1, targetTime: nowMs + sec1 * 1000 };
+        if (sec2 !== null) {
+          next2 = { sec: sec2, stop: stop2 || '운행 중', low: low2, targetTime: nowMs + sec2 * 1000 };
+        } else {
+          const next2Sec = sec1 + headway;
+          next2 = { sec: next2Sec, stop: '배차 간격 운행', targetTime: nowMs + next2Sec * 1000 };
+        }
+      } else {
+        const curSecInHour = now.getMinutes() * 60 + now.getSeconds();
+        const cycleOffset = headway - (curSecInHour % headway);
+
+        next = { sec: cycleOffset, stop: '정규 배차순번', targetTime: nowMs + cycleOffset * 1000 };
+        const next2Sec = cycleOffset + headway;
+        next2 = { sec: next2Sec, stop: '차기 배차순번', targetTime: nowMs + next2Sec * 1000 };
+      }
+
+      return { next, next2 };
+    }
+
+    // ==========================================
+    // 1. 국회의사당역 (개화 방면 - 퇴근용) 역사 고정 시간표
+    // ==========================================
+    const NATIONAL_ASSEMBLY_WEEKDAY = {
+      5: [42, 53],
+      6: [6, 22, 37, 50],
+      7: [3, 16, 29, 42, 50],
+      8: [2, 14, 22, 31, 39, 48, 57],
+      9: [4, 11, 17, 23, 30, 36, 42, 49, 55],
+      10: [1, 8, 14, 20, 27, 33, 39, 44, 52, 57],
+      11: [5, 13, 23, 34, 45, 56],
+      12: [7, 18, 29, 41, 53],
+      13: [4, 15, 26, 37, 48, 59],
+      14: [10, 21, 32, 43, 54],
+      15: [5, 16, 28, 41, 53],
+      16: [4, 15, 26, 37, 48, 59],
+      17: [10, 21, 32, 43, 54],
+      18: [5, 16, 24, 32, 40, 48, 56],
+      19: [4, 11, 18, 25, 32, 38, 45, 52, 59],
+      20: [6, 13, 19, 26, 33, 40, 47, 54],
+      21: [0, 7, 15, 22, 28, 36, 46, 57],
+      22: [5, 8, 19, 30, 41, 52],
+      23: [3, 14, 25, 36, 47, 58],
+      24: [9, 20, 31, 42, 53] // 42분 마곡나루행, 53분 염창행
+    };
+
+    const NATIONAL_ASSEMBLY_WEEKEND = {
+      5: [41, 52],
+      6: [5, 18, 35, 50],
+      7: [2, 14, 26, 38, 50],
+      8: [2, 14, 26, 38, 50],
+      9: [2, 14, 26, 37, 50],
+      10: [1, 12, 23, 34, 45, 56],
+      11: [7, 18, 29, 40, 51],
+      12: [2, 13, 24, 35, 46, 57],
+      13: [8, 19, 30, 41, 52],
+      14: [3, 14, 25, 36, 47, 58],
+      15: [9, 20, 31, 42, 53],
+      16: [4, 15, 26, 37, 48, 59],
+      17: [10, 21, 32, 43, 54],
+      18: [5, 16, 27, 38, 49],
+      19: [0, 11, 22, 33, 44, 55],
+      20: [6, 17, 28, 39, 50],
+      21: [1, 11, 23, 34, 45, 56],
+      22: [7, 18, 29, 40, 52],
+      23: [6, 18, 33, 50] // 50분 염창행
+    };
+
+    // ==========================================
+    // 2. 선유도역 (당산·중앙보훈병원 방면 - 출근용) 역사 고정 시간표
+    // ==========================================
+    const SEONYUDO_WEEKDAY = {
+      5: [34, 46, 57],
+      6: [9, 21, 32, 43, 54],
+      7: [3, 11, 18, 25, 32, 39, 46, 53],
+      8: [0, 7, 14, 21, 28, 36, 43, 51, 58],
+      9: [6, 14, 22, 30, 38, 46, 54],
+      10: [2, 11, 21, 31, 41, 51],
+      11: [1, 12, 23, 34, 45, 56],
+      12: [7, 18, 29, 40, 51],
+      13: [2, 13, 24, 35, 46, 57],
+      14: [8, 19, 30, 41, 52],
+      15: [3, 14, 25, 36, 47, 58],
+      16: [9, 20, 31, 42, 53],
+      17: [4, 15, 25, 35, 45, 55],
+      18: [4, 12, 20, 27, 35, 42, 50, 57],
+      19: [5, 12, 20, 27, 35, 42, 50, 57],
+      20: [5, 14, 23, 32, 42, 52],
+      21: [2, 12, 22, 32, 43, 54],
+      22: [5, 16, 28, 40, 52],
+      23: [4, 16, 29, 42, 56],
+      24: [7, 20, 35, 56] // 56분 당산행 막차
+    };
+
+    const SEONYUDO_WEEKEND = {
+      5: [36, 48],
+      6: [3, 18, 30, 42, 54],
+      7: [6, 18, 30, 42, 54],
+      8: [6, 18, 30, 42, 54],
+      9: [6, 18, 30, 41, 53],
+      10: [5, 17, 29, 41, 53],
+      11: [5, 17, 29, 41, 53],
+      12: [5, 17, 29, 41, 53],
+      13: [5, 17, 29, 41, 53],
+      14: [5, 17, 29, 41, 53],
+      15: [5, 17, 29, 41, 53],
+      16: [5, 17, 29, 41, 53],
+      17: [5, 17, 29, 41, 53],
+      18: [5, 17, 28, 40, 52],
+      19: [4, 16, 28, 40, 52],
+      20: [4, 16, 28, 40, 52],
+      21: [4, 16, 28, 40, 52],
+      22: [4, 16, 28, 40, 53],
+      23: [7, 21, 38, 55] // 55분 당산행 막차
+    };
+
+    function isKoreanHoliday(date) {
+      if (typeof window !== 'undefined' && typeof window.isKoreanHoliday === 'function') {
+        return window.isKoreanHoliday(date);
+      }
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      const md = `${m}-${d}`;
+      const fixed = ['01-01','03-01','05-05','06-06','08-15','10-03','10-09','12-25'];
+      return fixed.includes(md);
+    }
+
+    function isWeekendOrHoliday(date) {
+      const day = date.getDay();
+      return day === 0 || day === 6 || isKoreanHoliday(date);
+    }
+
+    /**
+     * ODsay보다 우선 반영되는 역사 공식 고정 시간표 배차 계산 함수
+     */
+    function getPrioritizedTrains(now, isCommute, count = 2) {
+      const isHoliday = isWeekendOrHoliday(now);
+      let schedule;
+      let defaultDest;
+      let stationName;
+
+      if (isCommute) {
+        stationName = '선유도역';
+        defaultDest = '중앙보훈병원';
+        schedule = isHoliday ? SEONYUDO_WEEKEND : SEONYUDO_WEEKDAY;
+      } else {
+        stationName = '국회의사당역';
+        defaultDest = '개화';
+        schedule = isHoliday ? NATIONAL_ASSEMBLY_WEEKEND : NATIONAL_ASSEMBLY_WEEKDAY;
+      }
+
+      const rawH = now.getHours();
+      // 0시는 지하철 당일 심야 운행 24시로 처리
+      const currentH = (rawH === 0) ? 24 : rawH;
+      const currentMinutes = currentH * 60 + now.getMinutes();
+      const currentSec = now.getSeconds();
+      const nowMs = now.getTime();
+
+      const results = [];
+      const hours = Object.keys(schedule).map(Number).sort((a, b) => a - b);
+
+      for (const h of hours) {
+        const mins = schedule[h];
+        for (const m of mins) {
+          const trainMin = h * 60 + m;
+          const diffSec = (trainMin - currentMinutes) * 60 - currentSec;
+          if (diffSec >= -30) {
+            let dest = defaultDest;
+            if (stationName === '국회의사당역') {
+              if (h === 24 && m === 42) {
+                dest = '마곡나루(종착)';
+              } else if ((h === 24 && m === 53) || (h === 23 && m === 50 && isHoliday)) {
+                dest = '염창(종착)';
+              }
+            } else if (stationName === '선유도역') {
+              if ((h === 24 && m === 56) || (h === 23 && m === 55 && isHoliday)) {
+                dest = '당산(종착)';
+              }
+            }
+
+            const displayH = (h === 24) ? '00' : String(h).padStart(2, '0');
+            const displayM = String(m).padStart(2, '0');
+
+            results.push({
+              departureTime: `${displayH}:${displayM}`,
+              endStationName: dest,
+              sec: Math.max(0, diffSec),
+              remainSeconds: Math.max(0, diffSec),
+              remainMinutes: Math.floor(Math.max(0, diffSec) / 60),
+              targetTime: nowMs + Math.max(0, diffSec) * 1000,
+              source: '역고정시간표(우선)',
+              subwayClass: 0
+            });
+            if (results.length >= count) break;
+          }
+        }
+        if (results.length >= count) break;
+      }
+
+      // 만약 심야 운행 종료 시간대(01:00 ~ 04:59)라면 당일 아침 첫차 반환
+      if (results.length === 0 && (rawH >= 1 && rawH < 5)) {
+        const firstH = hours[0];
+        const firstM = schedule[firstH][0];
+        const displayH = String(firstH).padStart(2, '0');
+        const displayM = String(firstM).padStart(2, '0');
+        const firstTrainMin = firstH * 60 + firstM;
+        const diffSec = (firstTrainMin - (rawH * 60 + now.getMinutes())) * 60 - currentSec;
+        results.push({
+          departureTime: `${displayH}:${displayM}`,
+          endStationName: defaultDest,
+          sec: Math.max(0, diffSec),
+          remainSeconds: Math.max(0, diffSec),
+          remainMinutes: Math.floor(Math.max(0, diffSec) / 60),
+          targetTime: nowMs + Math.max(0, diffSec) * 1000,
+          source: '역고정시간표(첫차)',
+          subwayClass: 0,
+          isFirstTrain: true
+        });
+      }
+
+      return results;
+    }
+
+    async function renderCards() {
+      const container = document.getElementById('cardsContainer');
+      const banner = document.getElementById('statusText');
+      const tabC = document.getElementById('tabCommute');
+      const tabO = document.getElementById('tabOffwork');
+
+      const isCommute = (currentMode === 'commute');
+      tabC.className = `tab-btn ${isCommute ? 'active' : ''}`;
+      tabO.className = `tab-btn ${!isCommute ? 'active' : ''}`;
+
+      container.innerHTML = `
+        <div style="text-align:center; padding:32px 14px; background:#fff; border-radius:16px; border:1px solid #bae6fd; box-shadow:0 4px 14px rgba(2,132,199,0.08);">
+          <div style="font-size:28px; margin-bottom:8px; display:inline-block; animation:spin 1s infinite linear;">🔄</div>
+          <div style="font-size:15px; font-weight:800; color:#0284c7;">실시간 대중교통 최신 정보 불러오는 중...</div>
+          <p style="font-size:12px; color:#64748b; margin-top:4px;">ODsay 서버로부터 현재 버스 및 9호선 실시간 도착 정보를 갱신하고 있습니다.</p>
+        </div>
+      `;
+
+      const startTime = Date.now();
+      const busStId = isCommute ? STATIONS.commuteBus : STATIONS.offworkBus;
+      const subwayStId = isCommute ? STATIONS.commuteSubway : STATIONS.offworkSubway;
+
+      const [busData, subData] = await Promise.all([
+        fetchBus(busStId),
+        fetchSubway(subwayStId)
+      ]);
+
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 350) {
+        await new Promise(r => setTimeout(r, 350 - elapsed));
+      }
+
+      const now = new Date();
+      const nowMs = now.getTime();
+
+      // 1. 버스 도착 정보
+      const busStName = isCommute ? '이대목동병원·목동6단지앞' : '선유도역1번출구·한신아파트';
+      const busArsId = isCommute ? '15-154' : '19-210';
+      const busDestNote = isCommute ? '선유도역·당산역 방면' : '목동아파트 단지 방면 환승';
+      const busFilter = ['양천01', '603', '6620'];
+
+      const busRows = busFilter.map(route => {
+        let badgeClass = 'badge-seoul-town';
+        let typeText = '마을버스 (배차 6~7분)';
+        if (route === '603') { badgeClass = 'badge-seoul-blue'; typeText = '간선버스 (배차 10~12분)'; }
+        else if (route === '6620') { badgeClass = 'badge-seoul-green'; typeText = '지선버스 (배차 11~13분)'; }
+
+        let real = null;
+        if (busData) {
+          if (route === '6620' && isCommute) {
+            real = busData.find(r => r.routeNm === '6620' && (r.stationSeq === '28' || r.updownFlag === '2'))
+                || busData.find(r => r.routeNm === '6620');
+          } else {
+            real = busData.find(r => r.routeNm === route);
+          }
+        }
+
+        const { next, next2 } = calculateBusArrival(route, real, now, nowMs);
+
+        // 🔴 다음 버스
+        const nextArrTime = new Date(next.targetTime);
+        const nextTimeStr = `${String(nextArrTime.getHours()).padStart(2, '0')}:${String(nextArrTime.getMinutes()).padStart(2, '0')}`;
+
+        const nextHtml = `
+          <div class="next-transit-box" style="padding:7px 10px;">
+            <div class="next-transit-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px; white-space:nowrap;">
+              <span class="next-tag-red" style="font-size:11px; white-space:nowrap;">
+                <span>🔴</span> <span>다음 버스</span>
+                ${next.low ? `<span class="badge-low-bus">♿ ${next.low}</span>` : ''}
+              </span>
+              <span class="next-time-big live-cd" data-time="${next.targetTime}" style="font-size:13.5px; font-weight:800; white-space:nowrap;">
+                ${formatSec(next.sec)}
+              </span>
+            </div>
+            <div class="next-transit-sub" style="font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; justify-content:space-between; align-items:center; border-top:1px dashed #bae6fd; padding-top:4px; margin-top:4px;">
+              <span>위치: <b>${next.stop || '운행 중'}</b></span>
+              <span class="transit-sub-time"><span class="transit-arr-label" style="font-size:12.5px; font-weight:800;">도착 예정:</span> <b class="transit-clock-time" style="font-size:16px; font-weight:900; color:#0369a1;">${nextTimeStr}</b></span>
+            </div>
+          </div>
+        `;
+
+        let next2Html = '';
+        if (next2) {
+          const next2ArrTime = new Date(next2.targetTime);
+          const next2TimeStr = `${String(next2ArrTime.getHours()).padStart(2, '0')}:${String(next2ArrTime.getMinutes()).padStart(2, '0')}`;
+          next2Html = `
+            <div class="next2-transit-box" style="padding:6px 10px; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; justify-content:space-between; align-items:center;">
+              <span class="next2-tag-blue" style="font-size:12px; white-space:nowrap;">
+                <span>🔵 다다음 (<b class="transit-clock-time" style="font-size:15px; font-weight:900; color:#1d4ed8;">${next2TimeStr}</b>):</span>
+              </span>
+              <span class="live-cd" data-time="${next2.targetTime}" style="font-weight:800; color:#1e40af; font-size:12px;">
+                ${formatSec(next2.sec)}
+              </span>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="bit-route-item" style="padding:8px 10px;">
+            <div class="bit-route-top" style="margin-bottom:4px;">
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span class="${badgeClass}">${route}</span>
+                <span style="font-size:10.5px; color:#64748b; font-weight:600;">${typeText}</span>
+              </div>
+            </div>
+            ${nextHtml}
+            ${next2Html}
+          </div>
+        `;
+      }).join('');
+
+      const busHtml = `
+        <div class="bit-board-card">
+          <div class="bit-header-row">
+            <div class="bit-title-group">
+              <span class="bit-ars-badge">ARS ${busArsId}</span>
+              <strong class="bit-station-name">${busStName}</strong>
+            </div>
+            <span class="bit-status-live"><span class="bit-status-dot"></span> ODsay실시간</span>
+          </div>
+          <div class="bit-desc-row" style="font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+            <span>📍 정류소 실시간 도착 현황</span>
+            <span class="bit-dest-pill">${busDestNote}</span>
+          </div>
+          <div class="bit-route-list">${busRows}</div>
+          <div class="bit-footer-info">
+            <span>💡 정류소 실시간 도착 정보는 30초마다 자동 갱신됩니다.</span>
+          </div>
+        </div>
+      `;
+
+      // 2. 지하철 도착 정보 (역사 고정 시간표 최우선 반영)
+      const subStName = isCommute ? '선유도역 9호선 [상행]' : '국회의사당역 9호선 [하행]';
+      const subDir = isCommute ? '당산·중앙보훈병원 방면' : '당산·개화 방면 (선유도역 방향)';
+      const isUpLine = isCommute;
+
+      let subScheduleHtml = '';
+      const isHolidayToday = isWeekendOrHoliday(now);
+      const dayTypeLabel = isHolidayToday ? '🌴 주말·공휴일 시간표' : '🗓️ 평일 시간표';
+
+      // 1순위: 사용자 제공 역사 고정 시간표 우선 계산
+      const prioritizedTrains = getPrioritizedTrains(now, isCommute, 2);
+      let finalTrains = [];
+
+      if (prioritizedTrains && prioritizedTrains.length > 0) {
+        finalTrains = prioritizedTrains;
+      } else {
+        // 보조(fallback): ODsay 지하철 API
+        let sched = null;
+        if (subData) {
+          const day = now.getDay();
+          sched = (day === 0) ? (isUpLine ? subData.holidaySchedule?.up : subData.holidaySchedule?.down)
+                : (day === 6) ? (isUpLine ? subData.saturdaySchedule?.up : subData.saturdaySchedule?.down)
+                : (isUpLine ? subData.weekdaySchedule?.up : subData.weekdaySchedule?.down);
+        }
+        if (sched && sched.length > 0) {
+          const normalTrains = sched.filter(t => t.subwayClass === 0);
+          const curTotalSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+          normalTrains.forEach(t => {
+            const [h, m] = t.departureTime.split(':').map(Number);
+            const tSec = (h * 3600 + m * 60) - curTotalSec;
+            if (tSec >= -30) {
+              finalTrains.push({
+                departureTime: t.departureTime,
+                endStationName: t.endStationName || (isCommute ? '중앙보훈병원' : '개화'),
+                sec: Math.max(0, tSec),
+                remainSeconds: Math.max(0, tSec),
+                remainMinutes: Math.floor(Math.max(0, tSec) / 60),
+                targetTime: nowMs + Math.max(0, tSec) * 1000,
+                source: 'ODsay보조'
+              });
+            }
+          });
+        }
+      }
+
+      if (finalTrains && finalTrains.length > 0) {
+        const t1 = finalTrains[0];
+        const t2 = finalTrains.length > 1 ? finalTrains[1] : null;
+
+        let t2Html = '';
+        if (t2) {
+          t2Html = `
+            <div class="next2-transit-box" style="padding:6px 10px; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; justify-content:space-between; align-items:center;">
+              <span class="next2-tag-blue" style="font-size:12px; white-space:nowrap;">
+                <span>🔵 다다음 (<b class="transit-clock-time" style="font-size:15px; font-weight:900; color:#78350f;">${t2.departureTime}</b> · ${t2.endStationName}행):</span>
+              </span>
+              <span class="live-cd" data-time="${t2.targetTime}" style="font-weight:800; color:#1e40af; font-size:12px;">
+                ${formatSec(t2.sec)}
+              </span>
+            </div>
+          `;
+        }
+
+        subScheduleHtml = `
+          <div class="next-transit-box" style="padding:7px 10px;">
+            <div class="next-transit-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px; white-space:nowrap;">
+              <span class="next-tag-red" style="font-size:11px; white-space:nowrap;">
+                <span>🔴</span> <span>다음 열차</span>
+                <span class="badge-low-bus" style="background:#fef3c7; color:#b45309; border-color:#fde68a;">역고정(우선)</span>
+              </span>
+              <span class="next-time-big live-cd" data-time="${t1.targetTime}" style="font-size:13.5px; font-weight:800; white-space:nowrap;">
+                ${formatSec(t1.sec)}
+              </span>
+            </div>
+            <div class="next-transit-sub" style="font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; justify-content:space-between; align-items:center; border-top:1px dashed #bae6fd; padding-top:4px; margin-top:4px;">
+              <span class="transit-sub-time"><span class="transit-arr-label" style="font-size:12.5px; font-weight:800;">출발:</span> <b class="transit-clock-time" style="font-size:16px; font-weight:900; color:#78350f;">${t1.departureTime}</b> <span style="font-size:11px; font-weight:600;">(${t1.endStationName}행)</span></span>
+              <span>${isCommute ? '선유도역 탑승' : '국회의사당역 탑승'} · 고정시간표</span>
+            </div>
+          </div>
+          ${t2Html}
+        `;
+      }
+
+      if (!subScheduleHtml) {
+        subScheduleHtml = `
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px; font-size:12.5px; color:#64748b;">
+            9호선 역사 고정 시간표 운행 준비 중
+          </div>
+        `;
+      }
+
+      const subHtml = `
+        <div class="bit-board-card subway-9-card">
+          <div class="bit-header-row">
+            <div class="bit-title-group">
+              <span class="badge-seoul-subway">9호선</span>
+              <strong class="bit-station-name">${subStName}</strong>
+            </div>
+            <div style="display:flex; align-items:center; gap:5px;">
+              <span class="bit-status-live" style="background:#ecfdf5; color:#047857; border-color:#a7f3d0;"><span class="bit-status-dot" style="background:#10b981;"></span> 역사시간표 우선</span>
+              <span class="subway-day-type-badge">${dayTypeLabel}</span>
+            </div>
+          </div>
+          <div class="bit-desc-row">
+            <span>방면: <b>${subDir}</b></span>
+            <span class="bit-dest-pill">${isCommute ? '선유도역 탑승' : '국회의사당역 탑승'}</span>
+          </div>
+          <div style="margin-top:6px;">${subScheduleHtml}</div>
+          <div class="bit-footer-info" style="margin-top:8px;">
+            <span>💡 9호선 일반열차는 오디세이보다 역사 공식 고정 시간표를 최우선으로 반영하여 정확히 카운트다운합니다.</span>
+          </div>
+        </div>
+      `;
+
+      if (isCommute) {
+        container.innerHTML = busHtml + subHtml;
+      } else {
+        container.innerHTML = subHtml + busHtml;
+      }
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+      renderCards();
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    function shareKakaoLink() {
+      const shareUrl = window.location.href;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(shareUrl).then(() => {
+          showToast('카카오톡 전송용 링크가 복사되었습니다! 💬');
+        }).catch(() => {
+          prompt('아래 링크를 복사하여 카카오톡에 붙여넣기 하세요:', shareUrl);
+        });
+      } else {
+        prompt('아래 링크를 복사하여 카카오톡에 붙여넣기 하세요:', shareUrl);
+      }
+    }
+
+    setInterval(() => {
+      const now = Date.now();
+      document.querySelectorAll('.live-cd').forEach(el => {
+        const t = parseInt(el.getAttribute('data-time'), 10);
+        if (!t || isNaN(t)) return;
+        const diffSec = Math.max(0, Math.floor((t - now) / 1000));
+        el.innerHTML = formatSec(diffSec);
+      });
+
+      // 30초 단위 자동 교정 카운트다운
+      if (refreshCountdown > 0) {
+        refreshCountdown--;
+      }
+      if (refreshCountdown <= 0) {
+        refreshCountdown = REFRESH_INTERVAL;
+        if (!document.hidden && !isFetching) {
+          renderCards();
+        }
+      }
+    }, 1000);
+
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('liveClock').innerHTML = `${now.toLocaleTimeString('ko-KR')} <span style="color:#60a5fa; font-weight:700; margin-left:4px;">(교정 ${refreshCountdown}s)</span>`;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    let lastResumeFetch = 0;
+    const handleAppResume = () => {
+      const now = Date.now();
+      if (now - lastResumeFetch < 2500) return;
+      lastResumeFetch = now;
+      refreshCountdown = REFRESH_INTERVAL;
+      renderCards();
+    };
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) handleAppResume();
+    });
+    window.addEventListener('pageshow', () => {
+      handleAppResume();
+    });
+    window.addEventListener('focus', () => {
+      handleAppResume();
+    });
+
+    // 시간대별 자동 출/퇴근 모드 초기화 (05~13시 출근, 그 외 퇴근)
+    const initHour = new Date().getHours();
+    currentMode = (initHour >= 5 && initHour < 13) ? 'commute' : 'offwork';
+    renderCards();
+  </script>
+</body>
+</html>

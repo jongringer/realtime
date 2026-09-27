@@ -1,0 +1,3861 @@
+/* ==========================================================================
+   4조 3교대 스마트 근무표 스타일시트
+   스크린샷 1:1 완벽 재현 모던 디자인 시스템
+   ========================================================================== */
+
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+:root {
+  --font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+  
+  /* ==========================================================================
+     테마 1: [옵시디언 럭셔리 다크 - 모던 프리미엄 (기본 추천)]
+     하이엔드 스마트 디바이스 / 테슬라 감성의 깊이 있고 기품 있는 다크 무드
+     ========================================================================== */
+  --bg-body: #050811;
+  --bg-app: #0b0f19;
+  --bg-card: #131b2e;
+  --card-border: 1px solid rgba(255, 255, 255, 0.08);
+  --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-light: #64748b;
+
+  /* 근무 컬러 팔레트 (옵시디언 럭셔리) */
+  --shift-day-bg: #2563eb;       /* 일근 - 세련된 사파이어 오션 블루 */
+  --shift-day-text: #ffffff;
+  --shift-night-bg: #f59e0b;     /* 야근 - 타오르는 골든 선셋 앰버 */
+  --shift-night-text: #ffffff;
+  --shift-early-bg: #8b5cf6;     /* 조근 - 고혹적인 로열 바이올렛 */
+  --shift-early-text: #ffffff;
+  --shift-off-bg: #1e293b;       /* 비번 - 단정한 티타늄 슬레이트 */
+  --shift-off-text: #94a3b8;
+  --shift-off-border: 1px solid #334155;
+  --shift-overtime-bg: #f43f5e;  /* 대근 - 비비드 루비 로즈 */
+  --shift-overtime-text: #ffffff;
+  --shift-vacation-bg: #10b981;  /* 휴가 - 청량한 에메랄드 세이지 */
+  --shift-vacation-text: #ffffff;
+
+  /* 달력 스타일 */
+  --cal-bg: linear-gradient(180deg, #111827 0%, #0d131f 100%);
+  --cal-border: 1px solid rgba(255, 255, 255, 0.08);
+  --cal-cell-border: rgba(255, 255, 255, 0.05);
+  --cal-text: #f8fafc;
+  --cal-text-dim: #94a3b8;
+  --cal-sun-color: #f87171;
+  --cal-sat-color: #60a5fa;
+  --highlight-focus: #38bdf8;
+  --highlight-bg: rgba(56, 189, 248, 0.12);
+  --highlight-glow: rgba(56, 189, 248, 0.25);
+
+  --primary-blue: #38bdf8;
+  --primary-blue-hover: #0284c7;
+  --border-radius-card: 20px;
+  --border-radius-sm: 8px;
+}
+
+/* ==========================================================================
+   테마 2: [애플 & 토스 퓨어 라이트 (미니멀 클린 럭셔리)]
+   화사하고 정갈한 화이트 & 라이트 그레이 톤으로 눈이 편안한 미니멀 디자인
+   ========================================================================== */
+body[data-theme="apple-light"] {
+  --bg-body: #e2e8f0;
+  --bg-app: #f1f3f7;             /* 너무 밝은 흰색 대신 눈이 편안한 애플 소프트 그레이 */
+  --bg-card: #ffffff;
+  --card-border: 1px solid #d8dee8;
+  --card-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --text-light: #64748b;
+
+  /* 근무 컬러 팔레트 (애플 퓨어 라이트) */
+  --shift-day-bg: #0284c7;       /* 일근 - 맑고 청량한 스마트 스카이블루 */
+  --shift-day-text: #0369a1;
+  --shift-night-bg: #ea580c;     /* 야근 - 생기 있는 웜 탠저린 코랄 */
+  --shift-night-text: #c2410c;
+  --shift-early-bg: #7c3aed;     /* 조근 - 품격 있는 딥 바이올렛 */
+  --shift-early-text: #6d28d9;
+  --shift-off-bg: #e2e8f0;       /* 비번 - 소프트 클라우드 그레이 */
+  --shift-off-text: #334155;
+  --shift-off-border: 1px solid #cbd5e1;
+  --shift-overtime-bg: #e11d48;  /* 대근 - 비비드 카민 */
+  --shift-overtime-text: #be123c;
+  --shift-vacation-bg: #059669;  /* 휴가 - 클래식 포레스트 그린 */
+  --shift-vacation-text: #047857;
+
+  /* 달력 스타일 (애플 소프트 그레이) */
+  --cal-bg: #f8fafc;
+  --cal-border: 1px solid #cbd5e1;
+  --cal-cell-border: #e2e8f0;
+  --cal-text: #0f172a;
+  --cal-text-dim: #334155;
+  --cal-sun-color: #dc2626;
+  --cal-sat-color: #2563eb;
+  --highlight-focus: #0284c7;
+  --highlight-bg: rgba(2, 132, 199, 0.1);
+  --highlight-glow: rgba(2, 132, 199, 0.2);
+
+  --primary-blue: #0284c7;
+  --primary-blue-hover: #0369a1;
+}
+
+/* ==========================================================================
+   테마 3: [노블 샴페인 & 벨벳 미드나이트 (하이엔드 VIP 라운지)]
+   호텔/VIP 멤버십 무드의 벨벳 블랙 & 샴페인 골드 브론즈 포인트
+   ========================================================================== */
+body[data-theme="noble-gold"] {
+  --bg-body: #07090e;
+  --bg-app: #0c1017;
+  --bg-card: #151b26;
+  --card-border: 1px solid rgba(217, 119, 6, 0.2);
+  --card-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-light: #64748b;
+
+  /* 근무 컬러 팔레트 (노블 골드) */
+  --shift-day-bg: #1e40af;       /* 일근 - 클래식 딥 네이비 */
+  --shift-day-text: #ffffff;
+  --shift-night-bg: #d97706;     /* 야근 - 품격 있는 샴페인 골드 브론즈 */
+  --shift-night-text: #ffffff;
+  --shift-early-bg: #6366f1;     /* 조근 - 영롱한 인디고 사파이어 */
+  --shift-early-text: #ffffff;
+  --shift-off-bg: #1e293b;       /* 비번 - 벨벳 차콜 */
+  --shift-off-text: #cbd5e1;
+  --shift-off-border: 1px solid rgba(217, 119, 6, 0.35);
+  --shift-overtime-bg: #be123c;
+  --shift-overtime-text: #ffffff;
+  --shift-vacation-bg: #047857;
+  --shift-vacation-text: #ffffff;
+
+  /* 달력 스타일 */
+  --cal-bg: linear-gradient(145deg, #161e2e 0%, #0f172a 100%);
+  --cal-border: 1px solid rgba(217, 119, 6, 0.3);
+  --cal-cell-border: rgba(255, 255, 255, 0.05);
+  --cal-text: #f8fafc;
+  --cal-text-dim: #94a3b8;
+  --cal-sun-color: #fb7185;
+  --cal-sat-color: #818cf8;
+  --highlight-focus: #d97706;
+  --highlight-bg: rgba(217, 119, 6, 0.12);
+  --highlight-glow: rgba(217, 119, 6, 0.3);
+
+  --primary-blue: #d97706;
+  --primary-blue-hover: #b45309;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  touch-action: pan-x pan-y pinch-zoom; /* 어느 위치에서나 버벅임 없이 즉시 두 손가락 확대/축소 가능 */
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg-body, #050811);
+  color: var(--text-main);
+  line-height: 1.45;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 0;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* 모바일 뷰포트 컨테이너 */
+.app-container {
+  width: 100%;
+  max-width: 440px;
+  min-height: 100vh;
+  background-color: var(--bg-app);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow-x: hidden;
+  padding: 6px 10px 16px 10px;
+}
+
+/* --------------------------------------------------------------------------
+   1. 상단 프로필 헤더
+   -------------------------------------------------------------------------- */
+.top-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  padding: 0 2px;
+}
+
+.profile-pill {
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-card);
+  padding: 4px 14px 4px 4px;
+  border-radius: 9999px;
+  border: var(--card-border);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.profile-pill:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: var(--primary-blue);
+}
+
+.profile-avatar {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #0284c7, #0369a1);
+  color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 15px;
+  margin-right: 10px;
+  box-shadow: 0 2px 4px rgba(2, 132, 199, 0.3);
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.profile-team {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: -1px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 상단 낮 ☀️ / 밤 🌙 단일 교대 토글 버튼 (낮일 때는 하얀바탕, 밤일 때는 검은바탕) */
+.theme-toggle-single-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  line-height: 1.2;
+  white-space: nowrap !important;
+  flex-shrink: 0;
+}
+
+/* ☀️ 낮 모드: 하얀 바탕 + 짙은 텍스트 */
+body[data-theme="apple-light"] .theme-toggle-single-btn,
+.theme-toggle-single-btn.is-day {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1.5px solid #cbd5e1 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+}
+
+body[data-theme="apple-light"] .theme-toggle-single-btn:hover,
+.theme-toggle-single-btn.is-day:hover {
+  background-color: #f8fafc !important;
+  border-color: #94a3b8 !important;
+  transform: translateY(-1px);
+}
+
+/* 🌙 밤 모드: 검은 바탕 + 밝은 텍스트 */
+body[data-theme="obsidian"] .theme-toggle-single-btn,
+body[data-theme="noble-gold"] .theme-toggle-single-btn,
+.theme-toggle-single-btn.is-night {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border: 1.5px solid #334155 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5), 0 0 6px rgba(56, 189, 248, 0.2) !important;
+}
+
+body[data-theme="obsidian"] .theme-toggle-single-btn:hover,
+body[data-theme="noble-gold"] .theme-toggle-single-btn:hover,
+.theme-toggle-single-btn.is-night:hover {
+  background-color: #1e293b !important;
+  border-color: #38bdf8 !important;
+  transform: translateY(-1px);
+}
+
+.theme-toggle-single-btn .theme-toggle-icon {
+  font-size: 13.5px;
+  line-height: 1;
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.theme-toggle-single-btn:active .theme-toggle-icon {
+  transform: scale(1.2) rotate(15deg);
+}
+
+.theme-toggle-single-btn .theme-toggle-text {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+.spinning {
+  animation: spin 0.8s infinite linear !important;
+}
+
+.transit-loading-box {
+  text-align: center;
+  padding: 26px 14px;
+  background: var(--bg-card, #ffffff);
+  border-radius: 14px;
+  border: 1px solid #bae6fd;
+  box-shadow: 0 2px 10px rgba(2, 132, 199, 0.08);
+}
+
+.header-icon-btn {
+  width: 36px;
+  height: 36px;
+  background-color: var(--bg-card);
+  border: var(--card-border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  color: var(--text-main);
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.header-icon-btn:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+/* --------------------------------------------------------------------------
+   2. 년월 네비게이션
+   -------------------------------------------------------------------------- */
+.month-nav-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  padding: 0 4px;
+}
+
+.month-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.month-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.5px;
+}
+
+.shift-badge-pill {
+  background-color: #e0f2fe;
+  color: #0284c7;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 4px 9px;
+  border-radius: 7px;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.15s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  line-height: 1.2;
+}
+.shift-badge-pill:hover {
+  background-color: #bae6fd;
+  color: #0369a1;
+  transform: translateY(-1px);
+}
+.shift-badge-pill:active {
+  transform: scale(0.95);
+}
+
+body[data-theme="obsidian"] .shift-badge-pill {
+  background-color: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+body[data-theme="noble-gold"] .shift-badge-pill {
+  background-color: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.btn-home-today {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card, #ffffff);
+  border: var(--card-border, 1px solid #cbd5e1);
+  color: var(--text-main);
+  font-size: 15px;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: all 0.18s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  user-select: none;
+  -webkit-user-select: none;
+  margin-left: 2px;
+}
+.btn-home-today:hover {
+  background: var(--primary-blue, #0284c7);
+  color: #ffffff;
+  border-color: var(--primary-blue, #0284c7);
+  transform: scale(1.08);
+}
+.btn-home-today:active {
+  transform: scale(0.92);
+}
+
+body[data-theme="obsidian"] .btn-home-today {
+  background: rgba(30, 41, 59, 0.85);
+  border-color: rgba(56, 189, 248, 0.3);
+}
+body[data-theme="noble-gold"] .btn-home-today {
+  background: rgba(21, 27, 38, 0.85);
+  border-color: rgba(251, 191, 36, 0.3);
+}
+
+.month-arrows {
+  display: flex;
+  gap: 6px;
+}
+
+.nav-arrow-btn {
+  width: 32px;
+  height: 32px;
+  border: var(--card-border);
+  background-color: var(--bg-card);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.nav-arrow-btn:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: var(--primary-blue);
+}
+
+/* --------------------------------------------------------------------------
+   3. 오늘 근무 안내 카드
+   -------------------------------------------------------------------------- */
+.today-card {
+  background: var(--bg-card);
+  border-radius: var(--border-radius-card);
+  padding: 32px 18px 28px 18px; /* 날씨 크기만큼 상하 여백 넉넉하게 확장 */
+  margin-bottom: 12px;
+  box-shadow: var(--card-shadow);
+  border: var(--card-border);
+  position: relative;
+  transition: all 0.25s ease;
+  overflow: hidden;
+}
+
+.today-top-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.today-time-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.today-date-text {
+  font-size: 26px !important;
+  font-weight: 900 !important;
+  color: var(--text-main);
+  letter-spacing: -0.6px;
+  line-height: 1.2;
+}
+
+.today-clock-wrap {
+  display: flex;
+  align-items: center;
+}
+
+.today-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  flex-wrap: nowrap;
+  gap: 6px;
+}
+
+.today-indicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0284c7;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.today-sub-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 2px;
+}
+
+.realtime-clock-pill {
+  font-size: 18.5px !important; /* 날짜 숫자와 동일한 18.5px의 큼직한 시계 글씨 */
+  font-weight: 900 !important;
+  background-color: rgba(2, 132, 199, 0.08);
+  color: #0284c7;
+  padding: 5px 12px;
+  border-radius: 9px;
+  border: 1.2px solid rgba(2, 132, 199, 0.25);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(2, 132, 199, 0.06);
+}
+
+body[data-theme="apple-light"] .realtime-clock-pill {
+  background-color: #f0f9ff;
+  color: #0369a1;
+  border-color: #bae6fd;
+}
+
+body[data-theme="obsidian"] .realtime-clock-pill {
+  background-color: rgba(30, 41, 59, 0.85);
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+body[data-theme="noble-gold"] .realtime-clock-pill {
+  background-color: rgba(21, 27, 38, 0.85);
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.3);
+}
+
+/* 실시간 날씨 정보 칩: 여의도 기준 & 진하고 또렷한 고대비 (터치 시 실시간 갱신 & 네이버 상세 링크) */
+.today-weather-pill {
+  font-size: 16px !important; /* 날씨 글자 크기 더욱 시원하게 확대 */
+  font-weight: 800;
+  background: #ffffff;
+  color: #0f172a !important;
+  border: 1.5px solid #94a3b8;
+  padding: 5px 10px 5px 13px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.3;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  text-decoration: none;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.18s ease;
+  position: relative;
+}
+
+.today-weather-pill:hover {
+  background: #f8fafc;
+  border-color: #3b82f6;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(59, 130, 246, 0.18);
+}
+
+.today-weather-pill:active {
+  transform: scale(0.97);
+}
+
+.today-weather-pill .weather-icon {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.today-weather-pill .weather-text {
+  font-weight: 800;
+  color: inherit;
+  letter-spacing: -0.2px;
+}
+
+.today-weather-pill .weather-refresh-btn {
+  font-size: 11px;
+  opacity: 0.6;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease, opacity 0.2s ease;
+  margin-left: 1px;
+}
+
+.today-weather-pill:hover .weather-refresh-btn {
+  opacity: 1;
+  transform: rotate(30deg);
+}
+
+/* 갱신 중 스피너 애니메이션 */
+.today-weather-pill.is-updating .weather-refresh-btn,
+.today-weather-pill.is-updating .weather-icon {
+  animation: weather-spin 0.75s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  opacity: 1;
+}
+
+@keyframes weather-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 갱신 완료 반짝임 효과 */
+.today-weather-pill.is-updated {
+  animation: weather-updated-pulse 0.6s ease-out;
+}
+
+@keyframes weather-updated-pulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5); }
+  50% { transform: scale(1.04); box-shadow: 0 0 0 6px rgba(59, 130, 246, 0); border-color: #2563eb; }
+  100% { transform: scale(1); }
+}
+
+/* 네이버 날씨 바로가기 전용 뱃지 버튼 */
+.weather-naver-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  padding: 1.5px 5px;
+  border-radius: 6px;
+  background: #03c75a;
+  color: #ffffff !important;
+  font-size: 9px;
+  font-weight: 900;
+  text-decoration: none;
+  line-height: 1.1;
+  margin-left: 2px;
+  box-shadow: 0 1px 2px rgba(3, 199, 90, 0.3);
+  transition: all 0.15s ease;
+}
+
+.weather-naver-link:hover {
+  background: #02b350;
+  transform: scale(1.08);
+  box-shadow: 0 2px 5px rgba(3, 199, 90, 0.4);
+}
+
+.weather-naver-link .naver-badge {
+  font-weight: 900;
+  letter-spacing: -0.5px;
+}
+
+.weather-naver-link .naver-arrow {
+  font-size: 8px;
+  font-weight: 900;
+}
+
+body[data-theme="apple-light"] .today-weather-pill {
+  background: #ffffff;
+  border: 1.5px solid #64748b;
+  color: #000000 !important;
+  font-weight: 800;
+}
+
+body[data-theme="apple-light"] .today-weather-pill:hover {
+  background: #f8fafc;
+  border-color: #2563eb;
+}
+
+body[data-theme="obsidian"] .today-weather-pill {
+  background: rgba(30, 41, 59, 0.85);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #f8fafc !important;
+}
+
+body[data-theme="obsidian"] .today-weather-pill:hover {
+  background: rgba(51, 65, 85, 0.95);
+  border-color: #60a5fa;
+}
+
+.day-weather-mini {
+  font-size: 9px;
+  font-weight: 700;
+  color: #f59e0b;
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  margin-left: auto;
+  opacity: 0.95;
+  white-space: nowrap;
+}
+
+.today-top-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center; /* 날짜+시계 그룹과 야근 뱃지를 완벽하게 나란히 정렬 */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.today-time-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  text-align: left;
+}
+
+.today-date-text {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.6px;
+  line-height: 1.15;
+}
+
+.today-clock-wrap {
+  display: flex;
+  align-items: center;
+}
+
+.today-shift-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 6px; /* 우측 가이드라인에서 넉넉한 여백 확보 - 잘림 절대 방지 */
+}
+
+.today-shift-badge {
+  position: relative;
+  font-size: 32px !important; /* 큼직하고 시원한 가로 글씨 */
+  font-weight: 900 !important;
+  letter-spacing: -0.5px;
+  color: #ffffff !important;
+  padding: 8px 24px;
+  border-radius: 14px;
+  display: inline-flex !important;
+  flex-direction: row !important; /* 무조건 가로 배치 */
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap !important; /* 세로 줄바꿈 방지 */
+  line-height: 1.15;
+  box-sizing: border-box;
+  /* 테두리에 '흰색에서 빨간색이 도는' 회전 빛 그라데이션 레일 효과 */
+  background:
+    linear-gradient(var(--today-badge-bg, #ea580c), var(--today-badge-bg, #ea580c)) padding-box,
+    conic-gradient(
+      from var(--border-angle),
+      transparent 0%,
+      transparent 35%,
+      rgba(239, 68, 68, 0.35) 55%,
+      #ef4444 75%,
+      #fca5a5 88%,
+      #ffffff 94%,
+      #fca5a5 97%,
+      rgba(239, 68, 68, 0.35) 100%
+    ) border-box !important;
+  border: 3.5px solid transparent !important;
+  animation: borderRotate 2.5s linear infinite;
+  box-shadow: 0 4px 18px rgba(239, 68, 68, 0.45) !important;
+  z-index: 2;
+}
+
+.today-bottom-section {
+  display: flex;
+  align-items: center;
+  margin-top: 12px;
+  width: 100%;
+}
+
+
+/* 근무별 바탕색 (일근 / 야근 / 조근 / 비번)과 완벽 동기화 */
+.today-shift-badge.badge-day {
+  --today-badge-bg: var(--shift-day-bg, #0284c7);
+}
+.today-shift-badge.badge-night {
+  --today-badge-bg: var(--shift-night-bg, #ea580c);
+}
+.today-shift-badge.badge-early {
+  --today-badge-bg: var(--shift-early-bg, #7c3aed);
+}
+.today-shift-badge.badge-off {
+  --today-badge-bg: var(--shift-off-bg, #334155);
+}
+.today-shift-badge.badge-overtime {
+  --today-badge-bg: var(--shift-overtime-bg, #e11d48);
+}
+.today-shift-badge.badge-vacation {
+  --today-badge-bg: var(--shift-vacation-bg, #059669);
+}
+
+.today-shift-badge span {
+  display: inline-block;
+  white-space: nowrap !important; /* 가로 1줄 고정 */
+  margin: 0 auto;
+  text-align: center;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.today-time-text {
+  display: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* --------------------------------------------------------------------------
+   4. 달력 (다크 모드 카드)
+   -------------------------------------------------------------------------- */
+.calendar-card {
+  background: var(--cal-bg);
+  border-radius: var(--border-radius-card);
+  padding: 8px 6px 12px 6px;
+  margin-bottom: 50px; /* 갤럭시 S23 시작화면에서 하단 대중교통 정보가 절대 나오지 않게 밀어냄 */
+  box-shadow: var(--card-shadow);
+  border: var(--cal-border);
+  color: var(--cal-text);
+  transition: background-color 0.25s ease, border-color 0.25s ease;
+  overflow: hidden;
+  position: relative;
+  touch-action: pan-y pinch-zoom; /* 두 손가락 핀치 줌(확대/축소) 100% 허용 + 부드러운 스크롤 */
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  padding-bottom: 5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 4px;
+  font-size: 18.5px !important; /* 원상복구 (18.5px) */
+  font-weight: 900 !important;
+}
+
+.weekday {
+  color: var(--cal-text-dim, #cbd5e1);
+  font-size: 18.5px !important; /* 원상복구 (18.5px) */
+  font-weight: 900 !important;
+}
+
+.weekday.sun {
+  color: #dc2626 !important; /* 일요일: 선명한 빨간색 */
+}
+
+.weekday.sat {
+  color: #2563eb !important; /* 토요일: 선명한 파란색 */
+}
+
+/* 애플 테마: 평일 요일 및 평일 날짜를 선명한 검은색으로 (단, 공휴일은 제외하여 빨간색 보장) */
+body[data-theme="apple-light"] .calendar-weekdays {
+  border-bottom: 1.5px solid #cbd5e1;
+}
+
+body[data-theme="apple-light"] .weekday:not(.sun):not(.sat) {
+  color: #111827 !important;
+  font-weight: 800;
+}
+
+body[data-theme="apple-light"] .calendar-day-cell:not(.sun):not(.sat):not(.holiday) .day-number {
+  color: #111827 !important;
+  font-weight: 800;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important; /* 7개 요일 칸 간격 완벽 균등 고정 */
+  row-gap: 4px;
+  column-gap: 2.5px;
+  width: 100%;
+  will-change: transform, opacity;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease;
+}
+
+/* 부드러운 좌우 넘김 애니메이션 클래스 */
+.calendar-grid.sliding-transition {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease !important;
+}
+
+.calendar-grid.no-transition {
+  transition: none !important;
+}
+
+.calendar-grid.slide-out-left {
+  transform: translateX(-100%) !important;
+  opacity: 0 !important;
+}
+
+.calendar-grid.slide-out-right {
+  transform: translateX(100%) !important;
+  opacity: 0 !important;
+}
+
+.calendar-grid.slide-from-right {
+  transform: translateX(80%) !important;
+  opacity: 0 !important;
+}
+
+.calendar-grid.slide-from-left {
+  transform: translateX(-80%) !important;
+  opacity: 0 !important;
+}
+
+.calendar-day-cell {
+  min-height: 72px; /* 달력 상하로 약 1cm(약 38~40px) 늘림 (5주 기준 8px*5=40px) */
+  min-width: 0 !important;                  /* 개인 일정으로 인한 칸 간격 변형 원천 차단 */
+  background-color: transparent;
+  border-radius: 6px;
+  padding: 2px 2px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  user-select: none;
+  touch-action: pan-y pinch-zoom;           /* 달력 날짜 칸 위에서도 즉시 핀치 줌 확대/축소 가능 */
+  overflow: hidden !important;              /* 칸 간격 유지 */
+}
+
+.calendar-day-cell:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.calendar-day-cell.other-month {
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+/* 선택된 날짜 하이라이트 */
+.calendar-day-cell.selected {
+  outline: 2px solid var(--highlight-focus);
+  outline-offset: -1px;
+  background-color: var(--highlight-bg);
+  border-radius: 6px;
+  box-shadow: 0 0 10px var(--highlight-glow);
+}
+
+/* 오늘 날짜: 밝은 빛이 테두리를 따라 지속적으로 한바퀴 회전하는 그라데이션 효과 */
+@property --border-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes borderRotate {
+  0% {
+    --border-angle: 0deg;
+  }
+  100% {
+    --border-angle: 360deg;
+  }
+}
+
+.calendar-day-cell.today {
+  position: relative;
+  border-radius: 9px;
+  background: var(--bg-card, #ffffff);
+  /* conic-gradient로 밝은 광원 빔이 3.5px 두께 테두리를 따라 한바퀴 선명하게 순환 */
+  background:
+    linear-gradient(var(--bg-card, #ffffff), var(--bg-card, #ffffff)) padding-box,
+    conic-gradient(
+      from var(--border-angle),
+      transparent 0%,
+      transparent 40%,
+      rgba(2, 132, 199, 0.45) 60%,
+      #0284c7 75%,
+      #38bdf8 88%,
+      #ffffff 94%,
+      #38bdf8 97%,
+      rgba(2, 132, 199, 0.45) 100%
+    ) border-box !important;
+  border: 3.5px solid transparent !important; /* 그라데이션이 시원하게 잘 보이도록 3.5px 두께로 확대 */
+  animation: borderRotate 2.5s linear infinite;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.45) !important;
+  z-index: 2;
+}
+
+/* 다크 모드(옵시디언/골드)에서의 오늘 날짜 광채 최적화 */
+body[data-theme="obsidian"] .calendar-day-cell.today {
+  background:
+    linear-gradient(#111827, #111827) padding-box,
+    conic-gradient(
+      from var(--border-angle),
+      transparent 0%,
+      transparent 40%,
+      rgba(56, 189, 248, 0.35) 60%,
+      #0284c7 75%,
+      #38bdf8 88%,
+      #ffffff 94%,
+      #38bdf8 97%,
+      rgba(56, 189, 248, 0.35) 100%
+    ) border-box !important;
+  border: 3.5px solid transparent !important;
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.5) !important;
+}
+
+body[data-theme="noble-gold"] .calendar-day-cell.today {
+  background:
+    linear-gradient(#151b26, #151b26) padding-box,
+    conic-gradient(
+      from var(--border-angle),
+      transparent 0%,
+      transparent 40%,
+      rgba(217, 119, 6, 0.35) 60%,
+      #d97706 75%,
+      #fbbf24 88%,
+      #ffffff 94%,
+      #fbbf24 97%,
+      rgba(217, 119, 6, 0.35) 100%
+    ) border-box !important;
+  border: 3.5px solid transparent !important;
+  box-shadow: 0 0 18px rgba(251, 191, 36, 0.45) !important;
+}
+
+/* @property 미지원 구형 브라우저 대비 부드러운 펄스 폴백 */
+@supports not (background: paint(something)) {
+  .calendar-day-cell.today {
+    border: 2px solid #38bdf8 !important;
+    animation: fallbackPulse 1.8s ease-in-out infinite alternate;
+  }
+  @keyframes fallbackPulse {
+    0% { box-shadow: 0 0 4px #38bdf8; }
+    100% { box-shadow: 0 0 16px #0284c7; }
+  }
+}
+
+.day-header-row {
+  display: flex;
+  justify-content: center; /* 상단 요일선과 완벽하게 정중앙 일치 */
+  align-items: center;
+  position: relative;
+  width: 100%;
+  margin-bottom: 2px;
+}
+
+.day-number {
+  font-size: 18.5px !important; /* 달력 날짜 숫자 원상복구 (18.5px) */
+  font-weight: 900 !important;
+  color: var(--cal-text, #ffffff);
+  text-align: center;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
+  padding-left: 0;
+  line-height: 1;
+}
+
+.calendar-day-cell.sun .day-number {
+  color: #dc2626 !important; /* 일요일 날짜: 선명한 빨간색 */
+}
+
+.calendar-day-cell.sat .day-number {
+  color: #2563eb !important; /* 토요일 날짜: 선명한 파란색 */
+}
+
+/* 공휴일인 날짜는 토요일이든 평일이든 무조건 선명한 빨간색 */
+.calendar-day-cell.holiday .day-number {
+  color: #dc2626 !important;
+  font-weight: 900 !important;
+}
+
+/* ==========================================================================
+   근무 뱃지: [글씨 크기 시원하게 확대 + 모바일 줄바꿈 방지 1줄 고정]
+   부드럽고 맑은 파스텔 실크 텍스처와 최상급 가독성
+   ========================================================================== */
+.shift-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12.5px;            /* 원상복구 (12.5px) */
+  font-weight: 800;
+  padding: 3px 1px;
+  border-radius: 6px;
+  text-align: center;
+  width: 100%;
+  margin-top: 1px;
+  white-space: nowrap !important; /* 휴대폰 화면에서 절대 두 줄로 줄바꿈되지 않음 */
+  overflow: hidden;
+  text-overflow: clip;
+  letter-spacing: -0.5px;
+  line-height: 1.25;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  transition: all 0.2s ease;
+}
+
+/* 4글자 뱃지(일근대근, 야근대근, 조근대근, 일근휴가 등) 1줄 꽉 찬 크기 */
+.shift-badge.long-text {
+  font-size: 11px;              /* 원상복구 (11px) */
+  letter-spacing: -0.8px;
+  font-weight: 800;
+  padding: 2.5px 0;
+}
+
+@media (max-width: 400px) {
+  .shift-badge {
+    font-size: 12px;            /* 원상복구 */
+    letter-spacing: -0.6px;
+    padding: 2px 1px;
+    font-weight: 800;
+  }
+  .shift-badge.long-text {
+    font-size: 10.8px;          /* 원상복구 */
+    letter-spacing: -0.85px;
+    padding: 2px 0px;
+    font-weight: 800;
+  }
+}
+
+/* --- [테마 1: 옵시디언 럭셔리 다크 - 실크 효과] --- */
+.shift-badge.shift-day {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.35) 0%, rgba(56, 189, 248, 0.22) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  color: #e0f2fe;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 2px 6px rgba(37, 99, 235, 0.15);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.shift-badge.shift-night {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.36) 0%, rgba(251, 191, 36, 0.22) 100%);
+  border: 1px solid rgba(251, 191, 36, 0.55);
+  color: #fef3c7;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 2px 6px rgba(245, 158, 11, 0.15);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.shift-badge.shift-early {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.35) 0%, rgba(167, 139, 250, 0.22) 100%);
+  border: 1px solid rgba(167, 139, 250, 0.5);
+  color: #ede9fe;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 2px 6px rgba(139, 92, 246, 0.15);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.shift-badge.shift-off {
+  background: linear-gradient(135deg, rgba(100, 116, 139, 0.22) 0%, rgba(71, 85, 105, 0.15) 100%);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #cbd5e1;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.shift-badge.shift-overtime {
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.38) 0%, rgba(251, 113, 133, 0.22) 100%);
+  border: 1px solid rgba(251, 113, 133, 0.55);
+  color: #ffe4e6;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 2px 6px rgba(244, 63, 94, 0.18);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.shift-badge.shift-vacation {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.35) 0%, rgba(52, 211, 153, 0.22) 100%);
+  border: 1px solid rgba(52, 211, 153, 0.5);
+  color: #d1fae5;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 2px 6px rgba(16, 185, 129, 0.15);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* --- [테마 2: 애플 퓨어 라이트 - 파스텔 실크 효과] --- */
+body[data-theme="apple-light"] .shift-badge.shift-day {
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.16) 0%, rgba(56, 189, 248, 0.25) 100%);
+  border: 1px solid rgba(2, 132, 199, 0.4);
+  color: #0369a1;
+  font-weight: 800;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 2px 4px rgba(2, 132, 199, 0.08);
+  text-shadow: none;
+}
+
+body[data-theme="apple-light"] .shift-badge.shift-night {
+  background: linear-gradient(135deg, rgba(234, 88, 12, 0.16) 0%, rgba(251, 146, 60, 0.25) 100%);
+  border: 1px solid rgba(234, 88, 12, 0.4);
+  color: #c2410c;
+  font-weight: 800;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 2px 4px rgba(234, 88, 12, 0.08);
+  text-shadow: none;
+}
+
+body[data-theme="apple-light"] .shift-badge.shift-early {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.16) 0%, rgba(167, 139, 250, 0.25) 100%);
+  border: 1px solid rgba(124, 58, 237, 0.4);
+  color: #6d28d9;
+  font-weight: 800;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 2px 4px rgba(124, 58, 237, 0.08);
+  text-shadow: none;
+}
+
+body[data-theme="apple-light"] .shift-badge.shift-off {
+  background: linear-gradient(135deg, rgba(203, 213, 225, 0.35) 0%, rgba(241, 245, 249, 0.65) 100%);
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  font-weight: 700;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8);
+  text-shadow: none;
+}
+
+body[data-theme="apple-light"] .shift-badge.shift-overtime {
+  background: linear-gradient(135deg, rgba(225, 29, 72, 0.16) 0%, rgba(251, 113, 133, 0.25) 100%);
+  border: 1px solid rgba(225, 29, 72, 0.4);
+  color: #be123c;
+  font-weight: 800;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 2px 4px rgba(225, 29, 72, 0.08);
+  text-shadow: none;
+}
+
+body[data-theme="apple-light"] .shift-badge.shift-vacation {
+  background: linear-gradient(135deg, rgba(5, 150, 105, 0.16) 0%, rgba(52, 211, 153, 0.25) 100%);
+  border: 1px solid rgba(5, 150, 105, 0.4);
+  color: #047857;
+  font-weight: 800;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 2px 4px rgba(5, 150, 105, 0.08);
+  text-shadow: none;
+}
+
+/* --- [테마 3: 노블 샴페인 골드 - 벨벳 실크 효과] --- */
+body[data-theme="noble-gold"] .shift-badge.shift-day {
+  background: linear-gradient(135deg, rgba(30, 64, 175, 0.38) 0%, rgba(96, 165, 250, 0.22) 100%);
+  border: 1px solid rgba(96, 165, 250, 0.45);
+  color: #dbeafe;
+}
+
+body[data-theme="noble-gold"] .shift-badge.shift-night {
+  background: linear-gradient(135deg, rgba(217, 119, 6, 0.38) 0%, rgba(245, 158, 11, 0.22) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  color: #fef3c7;
+}
+
+body[data-theme="noble-gold"] .shift-badge.shift-early {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.38) 0%, rgba(129, 140, 248, 0.22) 100%);
+  border: 1px solid rgba(129, 140, 248, 0.45);
+  color: #e0e7ff;
+}
+
+body[data-theme="noble-gold"] .shift-badge.shift-off {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.4) 0%, rgba(51, 65, 85, 0.25) 100%);
+  border: 1px solid rgba(217, 119, 6, 0.35);
+  color: #cbd5e1;
+}
+
+body[data-theme="noble-gold"] .shift-badge.shift-overtime {
+  background: linear-gradient(135deg, rgba(190, 18, 60, 0.38) 0%, rgba(244, 63, 94, 0.22) 100%);
+  border: 1px solid rgba(244, 63, 94, 0.5);
+  color: #ffe4e6;
+}
+
+body[data-theme="noble-gold"] .shift-badge.shift-vacation {
+  background: linear-gradient(135deg, rgba(4, 120, 87, 0.38) 0%, rgba(16, 185, 129, 0.22) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  color: #d1fae5;
+}
+
+/* 개인 일정 미니 뱃지 (달력 안: 사용자 요청 2~3줄 표기 완벽 지원) */
+.schedule-badge-mini {
+  display: block !important;
+  background-color: #fee2e2;
+  color: #991b1b;
+  font-size: 8px !important;
+  font-weight: 700;
+  line-height: 1.25 !important;
+  padding: 2px 3px !important;
+  border-radius: 3px;
+  margin-top: 2px;
+  white-space: normal !important;          /* 사용자 요청: 2~3줄 표기 허용 */
+  word-break: break-all !important;        /* 칸 너비 초과 시 자연스러운 줄바꿈 */
+  border-left: 2px solid #ef4444;
+  text-align: left;
+  overflow: hidden;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.schedule-badge-mini .pin-icon {
+  font-size: 7.5px;
+  margin-right: 1px;
+  display: inline;
+}
+
+body[data-theme="apple-light"] .schedule-badge-mini {
+  background-color: #fef2f2;
+  color: #991b1b;
+  border-left: 2px solid #ef4444;
+}
+
+body[data-theme="obsidian"] .schedule-badge-mini {
+  background-color: #450a0a;
+  color: #fecaca;
+  border-left: 2px solid #f87171;
+}
+
+/* --------------------------------------------------------------------------
+   5. 개인 일정 등록 및 관리 카드
+   -------------------------------------------------------------------------- */
+.schedule-management-card {
+  background: #fdfaf6;
+  border: 1px solid #fed7aa;
+  border-radius: var(--border-radius-card);
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.schedule-card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.schedule-card-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.schedule-card-subtitle {
+  font-size: 11.5px;
+  color: #64748b;
+  margin-bottom: 14px;
+}
+
+.schedule-form-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+}
+
+.form-select,
+.form-input {
+  width: 100%;
+  height: 38px;
+  padding: 6px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background-color: #ffffff;
+  font-size: 13px;
+  color: #0f172a;
+  font-family: var(--font-family);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-select:focus,
+.form-input:focus {
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+}
+
+.form-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-register-schedule {
+  min-width: 60px;
+  background-color: #0284c7;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-register-schedule:hover {
+  background-color: #0369a1;
+}
+
+/* 등록된 개인 일정 리스트 */
+.schedule-list-section {
+  margin-top: 14px;
+  border-top: 1px dashed #cbd5e1;
+  padding-top: 12px;
+}
+
+.schedule-list-header {
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.schedule-items-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.schedule-item-pill {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e0f2fe;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+
+.schedule-item-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.schedule-item-date {
+  font-weight: 700;
+  color: #0284c7;
+}
+
+.schedule-item-title {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.btn-delete-schedule {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 4px;
+  transition: color 0.15s;
+}
+
+.btn-delete-schedule:hover {
+  color: #ef4444;
+}
+
+/* --------------------------------------------------------------------------
+   6. 근무표 업데이트 버튼 (PDF / 사진 등록)
+   -------------------------------------------------------------------------- */
+.btn-update-schedule-big {
+  width: 100%;
+  background-color: #0284c7;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.28);
+  margin-bottom: 16px;
+  transition: all 0.2s ease;
+}
+
+.btn-update-schedule-big:hover {
+  background-color: #0369a1;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(2, 132, 199, 0.35);
+}
+
+.btn-update-schedule-big:active {
+  transform: translateY(0);
+}
+
+/* --------------------------------------------------------------------------
+   7. 하단 교대근무 기준 카드
+   -------------------------------------------------------------------------- */
+.standards-card {
+  background: #ffffff;
+  border-radius: var(--border-radius-card);
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  border: 1px solid #f1f5f9;
+}
+
+.standards-title {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.standards-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.standard-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 9px;
+  border-radius: 6px;
+  background-color: #f8fafc;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+}
+
+.standard-badge.shift-day {
+  background-color: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1e40af;
+}
+
+.standard-badge.shift-night {
+  background-color: #fefce8;
+  border-color: #fef08a;
+  color: #854d0e;
+}
+
+.standard-badge.shift-early {
+  background-color: #faf5ff;
+  border-color: #e9d5ff;
+  color: #6b21a8;
+}
+
+.standard-badge.shift-off {
+  background-color: #f8fafc;
+  border-color: #e2e8f0;
+  color: #64748b;
+}
+
+.standard-badge.shift-vacation {
+  background-color: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #065f46;
+}
+
+.standard-badge.shift-overtime {
+  background-color: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+.standard-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.dot-blue { background-color: #2563eb; }
+.dot-yellow { background-color: #eab308; }
+.dot-purple { background-color: #9333ea; }
+.dot-gray { background-color: #94a3b8; }
+.dot-green { background-color: #10b981; }
+.dot-red { background-color: #ef4444; }
+
+/* --------------------------------------------------------------------------
+   8. 모달 공통 스타일
+   -------------------------------------------------------------------------- */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 16px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.25s ease;
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal-container {
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  background: #ffffff;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+  display: flex;
+  flex-direction: column;
+  transform: scale(0.95);
+  transition: transform 0.25s ease;
+}
+
+.modal-overlay.active .modal-container {
+  transform: scale(1);
+}
+
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.modal-footer {
+  padding: 14px 20px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  background: #f8fafc;
+}
+
+/* 파일 업로드 숨김 인풋 강제 비표시 */
+#cameraInput,
+#galleryInput,
+#fileInput,
+input[type="file"]#cameraInput,
+input[type="file"]#galleryInput,
+input[type="file"]#fileInput {
+  display: none !important;
+  visibility: hidden !important;
+  position: absolute !important;
+  width: 0 !important;
+  height: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* 파일 업로드 드롭존 */
+.dropzone {
+  border: 2px dashed #94a3b8;
+  border-radius: 12px;
+  padding: 24px 16px;
+  text-align: center;
+  background-color: #f8fafc;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 16px;
+}
+
+.dropzone:hover, .dropzone.dragover {
+  border-color: var(--primary-blue);
+  background-color: #f0f9ff;
+}
+
+.dropzone-icon {
+  font-size: 36px;
+  margin-bottom: 8px;
+  color: var(--primary-blue);
+}
+
+.dropzone-text {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 4px;
+}
+
+.dropzone-subtext {
+  font-size: 11.5px;
+  color: #94a3b8;
+}
+
+/* OCR 진행률 표시 */
+.ocr-progress-box {
+  display: none;
+  margin-bottom: 16px;
+  background-color: #f1f5f9;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.ocr-progress-box.active {
+  display: block;
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 8px;
+  background-color: #cbd5e1;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.progress-bar-fill {
+  width: 0%;
+  height: 100%;
+  background-color: var(--primary-blue);
+  transition: width 0.3s ease;
+}
+
+.progress-status-text {
+  font-size: 12px;
+  color: #475569;
+  font-weight: 600;
+}
+
+/* 추출된 근무 테이블 */
+.ocr-results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  margin-top: 10px;
+}
+
+.ocr-results-table th, .ocr-results-table td {
+  border: 1px solid #e2e8f0;
+  padding: 8px;
+  text-align: left;
+}
+
+.ocr-results-table th {
+  background-color: #f8fafc;
+  font-weight: 700;
+  color: #334155;
+}
+
+.btn-secondary {
+  padding: 8px 16px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-primary {
+  padding: 8px 16px;
+  border: none;
+  background-color: var(--primary-blue);
+  color: #ffffff;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* 반응형 미디어 쿼리 */
+@media (max-width: 480px) {
+  body {
+    background-color: var(--bg-app);
+  }
+  .app-container {
+    box-shadow: none;
+    padding: 12px 10px 30px 10px;
+  }
+  .month-title {
+    font-size: 20px;
+  }
+}
+
+/* ==========================================================================
+   출퇴근 맞춤 교통알림 (9호선 & 버스) 전용 스타일
+   ========================================================================== */
+:root {
+  --subway-color: #BDB092; /* 9호선 골드 */
+  --subway-dark: #8B7355;
+  --bus-blue: #1D4ED8;     /* 간선 버스 */
+  --bus-green: #15803D;    /* 지선 버스 */
+  --bus-town: #CA8A04;     /* 마을 버스 */
+  --transit-border: #E2E8F0;
+}
+
+.transit-widget-card {
+  background: #ffffff;
+  border: 1px solid var(--transit-border);
+  border-radius: var(--border-radius-card);
+  padding: 14px 4px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  transition: outline 0.3s ease, box-shadow 0.3s ease;
+  width: 100%;
+}
+
+@media (max-width: 480px) {
+  .transit-widget-card {
+    padding: 12px 2px;
+  }
+}
+
+.transit-widget-card.widget-highlight {
+  outline: 3px solid #2563eb;
+  box-shadow: 0 0 16px rgba(37, 99, 235, 0.35);
+}
+
+.transit-widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+
+.transit-widget-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.transit-widget-title {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.transit-header-actions {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.btn-transit-fullscreen {
+  font-size: 10px;
+  color: #0284c7;
+  text-decoration: none;
+  font-weight: 700;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  padding: 2.5px 6px;
+  border-radius: 6px;
+  white-space: nowrap;
+  line-height: 1.2;
+  transition: all 0.15s ease;
+}
+
+.btn-transit-fullscreen:hover {
+  background: #e0f2fe;
+}
+
+body[data-theme="obsidian"] .btn-transit-fullscreen {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.35);
+  color: #38bdf8;
+}
+
+.transit-refresh-btn {
+  background: #0284c7;
+  border: 1px solid rgba(255,255,255,0.4);
+  color: #fff;
+  padding: 2.5px 6px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  white-space: nowrap;
+  line-height: 1.2;
+  transition: all 0.15s ease;
+}
+
+.transit-status-banner {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body[data-theme="obsidian"] .transit-status-banner {
+  background: rgba(30, 58, 138, 0.25);
+  border-color: rgba(56, 189, 248, 0.3);
+  color: #93c5fd;
+}
+.transit-refresh-btn:hover {
+  background: #0369a1;
+  transform: translateY(-1px);
+}
+.transit-refresh-btn:active, .btn-reload-transit:active {
+  transform: scale(0.96);
+}
+.transit-refresh-btn.spinning, .btn-reload-transit.spinning {
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   근무표 업로드 3개 옵션 (카메라 / 갤러리 / 파일) 카드 그리드
+   ========================================================================== */
+.upload-options-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.upload-option-card {
+  background: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 12px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.upload-option-card:hover {
+  background: #eff6ff;
+  border-color: #0284c7;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(2, 132, 199, 0.12);
+}
+
+.upload-option-card:active {
+  transform: translateY(0);
+}
+
+.upload-opt-icon {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.upload-opt-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.3px;
+  margin-bottom: 2px;
+}
+
+.upload-opt-desc {
+  font-size: 10px;
+  color: #64748b;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+}
+
+.transit-tab-wrap {
+  display: flex;
+  background: #F1F5F9;
+  padding: 4px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+}
+
+.transit-tab-btn {
+  flex: 1;
+  padding: 10px 6px;
+  border: none;
+  border-radius: 9px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #64748B;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.transit-tab-btn.active {
+  background: #ffffff !important;               /* 과도한 노란색 제거 -> 깨끗한 화이트 카드 */
+  color: #0f172a !important;
+  border: 2px solid #0284c7 !important;         /* 세련된 오션 블루 선택 테두리 */
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.2) !important;
+  font-weight: 800;
+}
+
+.transit-tab-btn:hover:not(.active) {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.highlight-shift-word {
+  font-weight: 900 !important;
+  font-size: 1.05rem !important;
+  letter-spacing: -0.5px;
+  display: inline-block;
+}
+
+.highlight-shift-word.commute-text {
+  color: #0284c7;
+}
+
+.highlight-shift-word.offwork-text {
+  color: #ea580c;
+}
+
+.transit-tab-btn.active .highlight-shift-word.commute-text {
+  color: #0284c7;
+  text-decoration: none;
+}
+
+.transit-tab-btn.active .highlight-shift-word.offwork-text {
+  color: #ea580c;
+  text-decoration: none;
+}
+
+.badge-shift-bold {
+  font-weight: 900 !important;
+  font-size: 1.08em;
+  padding: 2px 8px;
+  border-radius: 6px;
+  display: inline-block;
+  letter-spacing: -0.3px;
+  margin: 0 2px;
+}
+
+.badge-shift-bold.commute-bold {
+  color: #0f172a;
+  background: #fde047;
+  border: 1.5px solid #eab308;
+}
+
+.badge-shift-bold.offwork-bold {
+  color: #0f172a;
+  background: #fde047;
+  border: 1.5px solid #eab308;
+}
+
+/* ==========================================================================
+   ODsay 실시간 버스·지하철 대중교통 전광판 디자인 시스템 (.bit-board-card)
+   ========================================================================== */
+.bit-board-card {
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 16px;
+  padding: 12px 10px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  width: 100%;
+}
+
+@media (max-width: 480px) {
+  .bit-board-card {
+    padding: 11px 7px;
+  }
+}
+
+.bit-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1.5px solid #f1f5f9;
+  padding-bottom: 7px;
+  gap: 6px;
+  flex-wrap: nowrap !important;
+  white-space: nowrap !important;
+}
+
+.bit-title-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap !important;
+}
+
+.bit-ars-badge {
+  background: #0284c7;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 9.5px;
+  padding: 1.5px 5px;
+  border-radius: 4px;
+  letter-spacing: -0.2px;
+  flex-shrink: 0;
+  white-space: nowrap !important;
+}
+
+.bit-station-name {
+  font-size: 15.5px !important;
+  font-weight: 900 !important;
+  color: #0f172a;
+  letter-spacing: -0.3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap !important;
+  flex-shrink: 1;
+}
+
+.bit-status-live {
+  font-size: 9px !important;
+  color: #000000 !important;                /* 사용자 요청: 오디세이실시간 글씨 검은색 */
+  font-weight: 800 !important;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  padding: 1.5px 5px !important;
+  border-radius: 4px;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 3px;
+  letter-spacing: -0.2px;
+  white-space: nowrap !important;          /* 절대 두 줄로 줄바꿈 방지 */
+  word-break: keep-all !important;
+  flex-shrink: 0 !important;               /* 절대 찌그러짐 방지 */
+  line-height: 1.1;
+}
+
+.bit-status-dot {
+  width: 6px;
+  height: 6px;
+  background-color: #10b981;
+  border-radius: 50%;
+  animation: pulseLiveDot 1.5s infinite ease-in-out;
+}
+
+@keyframes pulseLiveDot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.4; }
+}
+
+.bit-desc-row {
+  font-size: 11.5px;
+  color: #64748b;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bit-route-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bit-route-item {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.bit-route-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.badge-seoul-town {
+  background: #059669;
+  color: #ffffff;
+  font-weight: 900 !important;
+  font-size: 16.5px !important;
+  padding: 4px 10px;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  letter-spacing: 0.3px;
+}
+
+.badge-seoul-blue {
+  background: #1d4ed8;
+  color: #ffffff;
+  font-weight: 900 !important;
+  font-size: 16.5px !important;
+  padding: 4px 10px;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  letter-spacing: 0.3px;
+}
+
+.badge-seoul-green {
+  background: #16a34a;
+  color: #ffffff;
+  font-weight: 900 !important;
+  font-size: 16.5px !important;
+  padding: 4px 10px;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  letter-spacing: 0.3px;
+}
+
+.badge-seoul-subway {
+  background: #b45309;
+  color: #ffffff;
+  font-weight: 900 !important;
+  font-size: 16.5px !important;
+  padding: 4px 10px;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  letter-spacing: 0.3px;
+}
+
+.bit-route-type-label {
+  font-size: 12.5px;
+  color: #64748b;
+  font-weight: 700;
+}
+
+/* 도보 사람 이모티콘: 오른쪽 진행 방향으로 반전 */
+.walk-icon {
+  display: inline-block;
+  transform: scaleX(-1);
+  transform-origin: center;
+  vertical-align: -1px;
+}
+
+/* 탑승불가 항목 완전 숨김 (사용자 요청 반영) */
+.missed-transit-box {
+  display: none !important;
+}
+
+/* [🔴 다음 대중교통] 도보탑승 강력 추천 박스 (9:16 컴팩트 1줄 최적화) */
+.next-transit-box {
+  background: #f0f9ff;
+  border: 1.5px solid #0284c7;
+  border-radius: 9px;
+  padding: 7px 10px;
+  margin-top: 4px;
+}
+
+body[data-theme="obsidian"] .next-transit-box {
+  background: rgba(37, 99, 235, 0.12);
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.next-transit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+  white-space: nowrap;
+}
+
+.next-tag-red {
+  color: #b91c1c;
+  font-weight: 900;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+body[data-theme="obsidian"] .next-tag-red {
+  color: #f87171;
+}
+
+.next-time-big {
+  font-size: 21.5px !important;
+  font-weight: 900 !important;
+  color: #0369a1;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.next-time-big .live-countdown,
+.live-countdown {
+  font-size: 1.4rem !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.3px;
+}
+
+/* 실시간 티커 시간/분/초 가독성 타이포그래피 (낮 모드: 분 빨간색, 초 검은색) */
+.transit-time-min {
+  font-weight: 900;
+  color: #dc2626; /* 낮/밤 공통 분은 빨간색 */
+  font-size: 1.38rem;
+  letter-spacing: -0.3px;
+}
+
+.transit-time-sec {
+  font-weight: 900;
+  color: #0f172a; /* 초는 낮 검은색 */
+  font-size: 1.38rem;
+  letter-spacing: -0.3px;
+}
+
+.transit-time-arrive {
+  color: #dc2626;
+  font-weight: 900;
+  font-size: 1.32rem;
+  letter-spacing: -0.3px;
+}
+
+.transit-time-imminent {
+  color: #0f172a;
+  font-weight: 900;
+  font-size: 1.42rem;
+  letter-spacing: -0.3px;
+}
+
+.next2-countdown {
+  font-weight: 800;
+  color: #1e40af;
+}
+
+.next2-countdown .transit-time-min {
+  color: #dc2626;
+  font-size: 1.22rem;
+}
+
+.next2-countdown .transit-time-sec {
+  color: #0f172a;
+  font-size: 1.22rem;
+}
+
+.transit-countdown-suffix {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 700;
+}
+
+body[data-theme="obsidian"] .next-time-big {
+  color: #38bdf8;
+}
+
+/* ==========================================================================
+   대중교통 시각(도착예정 시각 / 출발 시각 / 다다음 시각) 전용 대형 폰트 스타일
+   ========================================================================== */
+.transit-arr-label {
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  color: inherit;
+}
+
+.transit-clock-time {
+  font-size: 1.18rem !important; /* 시각 숫자를 시원하고 크게 강조 */
+  font-weight: 900 !important;
+  color: #0284c7;
+  letter-spacing: -0.3px;
+  display: inline-block;
+  vertical-align: baseline;
+  margin: 0 1px;
+}
+
+.next-transit-sub {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #0284c7;
+  border-top: 1px dashed rgba(2, 132, 199, 0.25);
+  padding-top: 5px;
+  margin-top: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.transit-sub-time {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+body[data-theme="obsidian"] .next-transit-sub {
+  color: #94a3b8;
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+body[data-theme="obsidian"] .transit-clock-time,
+body[data-theme="noble-gold"] .transit-clock-time {
+  color: #38bdf8 !important;
+}
+
+/* [🔵 다다음 대중교통] 보조 박스 (9:16 컴팩트 1줄 최적화) */
+.next2-transit-box {
+  background: #f8fafc;
+  border: 1px solid #bfdbfe;
+  border-radius: 7px;
+  padding: 7px 10px;
+  margin-top: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body[data-theme="obsidian"] .next2-transit-box {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.next2-tag-blue {
+  color: #1d4ed8;
+  font-weight: 800;
+  font-size: 12.5px;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.next2-transit-box .transit-clock-time {
+  font-size: 1.12rem !important; /* 다다음 시각도 큼직하게 */
+  color: #1d4ed8;
+}
+
+body[data-theme="obsidian"] .next2-tag-blue {
+  color: #60a5fa;
+}
+
+body[data-theme="obsidian"] .next2-transit-box .transit-clock-time,
+body[data-theme="noble-gold"] .next2-transit-box .transit-clock-time {
+  color: #60a5fa !important;
+}
+
+/* ==========================================================================
+   9호선 전광판 카드: [아주 옅은 갈색 틴트(보일까말까 수준) + 순백색 박스 + 고대비 글씨]
+   ========================================================================== */
+.bit-board-card.subway-9-card {
+  background: #fdfbf7 !important;
+  border: 1.2px solid #ede3d4 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
+}
+
+/* 밤 다크모드(옵시디언)에서도 9호선 바탕색은 그대로 옅은 갈색(#fdfbf7) 유지 */
+body[data-theme="obsidian"] .bit-board-card.subway-9-card,
+body[data-theme="noble-gold"] .bit-board-card.subway-9-card {
+  background: #fdfbf7 !important;
+  border: 1.2px solid #ede3d4 !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25) !important;
+}
+
+body[data-theme="obsidian"] .subway-9-card .bit-station-name,
+body[data-theme="noble-gold"] .subway-9-card .bit-station-name {
+  color: #0f172a !important;
+}
+
+body[data-theme="apple-light"] .bit-board-card.subway-9-card {
+  background: #fdfbf7 !important;
+  border: 1.2px solid #ede3d4 !important;
+}
+
+.subway-9-card .bit-header-row {
+  border-bottom: 1.5px solid #ece4d4 !important;
+}
+
+body[data-theme="obsidian"] .subway-9-card .bit-header-row,
+body[data-theme="noble-gold"] .subway-9-card .bit-header-row {
+  border-bottom: 1.5px solid #ece4d4 !important;
+}
+
+.subway-9-card .badge-seoul-subway {
+  background: #b8860b !important;
+  color: #ffffff !important;
+  font-weight: 800;
+}
+
+.subway-9-card .next-transit-box {
+  background: #ffffff !important;
+  border: 1px solid #e7ded0 !important;
+}
+
+body[data-theme="obsidian"] .subway-9-card .next-transit-box,
+body[data-theme="noble-gold"] .subway-9-card .next-transit-box {
+  background: #ffffff !important;
+  border: 1px solid #e7ded0 !important;
+}
+
+.subway-9-card .next-transit-sub {
+  color: #451a03 !important;
+  border-top-color: #ebdccb !important;
+  font-weight: 700;
+}
+
+body[data-theme="obsidian"] .subway-9-card .next-transit-sub,
+body[data-theme="noble-gold"] .subway-9-card .next-transit-sub {
+  color: #451a03 !important;
+  border-top-color: #ebdccb !important;
+  font-weight: 700;
+}
+
+.subway-9-card .next-time-big {
+  color: #92530a !important;
+  font-weight: 800;
+}
+
+body[data-theme="obsidian"] .subway-9-card .next-time-big,
+body[data-theme="noble-gold"] .subway-9-card .next-time-big {
+  color: #92530a !important;
+  font-weight: 800;
+}
+
+.subway-9-card .next2-transit-box {
+  background: #ffffff !important;
+  border: 1px solid #ebdccb !important;
+}
+
+body[data-theme="obsidian"] .subway-9-card .next2-transit-box,
+body[data-theme="noble-gold"] .subway-9-card .next2-transit-box {
+  background: #ffffff !important;
+  border: 1px solid #ebdccb !important;
+}
+
+.subway-9-card .next2-tag-blue {
+  color: #78350f !important;
+  font-weight: 800;
+}
+
+body[data-theme="obsidian"] .subway-9-card .next2-tag-blue,
+body[data-theme="noble-gold"] .subway-9-card .next2-tag-blue {
+  color: #78350f !important;
+  font-weight: 800;
+}
+
+/* 9호선 하단 정보 영역 글씨 선명화 */
+.subway-9-card .bit-footer-info {
+  color: #1c1917 !important;
+  border-top: 1px solid #ede3d4 !important;
+  font-weight: 700;
+}
+
+body[data-theme="obsidian"] .subway-9-card .bit-footer-info,
+body[data-theme="noble-gold"] .subway-9-card .bit-footer-info {
+  color: #1c1917 !important;
+  border-top: 1px solid #ede3d4 !important;
+  font-weight: 700;
+}
+
+.subway-9-card .bit-dest-pill {
+  background: #f7f1e6 !important;
+  color: #451a03 !important;
+  font-weight: 800;
+}
+
+body[data-theme="obsidian"] .subway-9-card .bit-dest-pill,
+body[data-theme="noble-gold"] .subway-9-card .bit-dest-pill {
+  background: #f7f1e6 !important;
+  color: #451a03 !important;
+  font-weight: 800;
+}
+
+body[data-theme="obsidian"] .subway-9-card .bit-desc-row,
+body[data-theme="noble-gold"] .subway-9-card .bit-desc-row {
+  color: #64748b !important;
+}
+
+.bit-footer-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11.5px;
+  color: #475569;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.bit-dest-pill {
+  background: #f1f5f9;
+  color: #1e293b;
+  font-weight: 700;
+  padding: 2.5px 8px;
+  border-radius: 5px;
+  font-size: 11px;
+}
+
+.badge-low-bus {
+  background: #ecfdf5;
+  color: #047857;
+  font-weight: 800;
+  font-size: 10.5px;
+  padding: 1.5px 5px;
+  border-radius: 4px;
+  border: 1px solid #a7f3d0;
+  margin-left: 4px;
+}
+
+.badge-subway-normal {
+  background: #fef3c7;
+  color: #92400e;
+  font-weight: 800;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 5px;
+  border: 1px solid #fde68a;
+}
+
+.bit-notice-banner {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 11.5px;
+  color: #166534;
+  line-height: 1.45;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.transit-footer-bar {
+  padding: 8px 4px 0 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--transit-border);
+  margin-top: 8px;
+  background: transparent;
+  flex-wrap: nowrap;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.transit-update-time {
+  font-size: 10.5px;
+  color: #64748B;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.btn-reload-transit {
+  background: #1E293B;
+  color: #fff;
+  border: none;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+.btn-reload-transit:hover {
+  background: #334155;
+}
+
+/* --------------------------------------------------------------------------
+   프리미엄 테마 스위처 바
+   -------------------------------------------------------------------------- */
+.theme-selector-bar {
+  display: none !important;
+}
+
+.theme-bar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.theme-bar-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.theme-bar-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.theme-btn-group {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.btn-theme-pill {
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 8px 6px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--text-main);
+  text-align: center;
+}
+
+body[data-theme="apple-light"] .btn-theme-pill {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+
+.btn-theme-pill:hover {
+  transform: translateY(-1px);
+}
+
+.btn-theme-pill.active {
+  border-color: var(--primary-blue);
+  background: var(--highlight-bg);
+  box-shadow: 0 0 0 1px var(--primary-blue);
+  font-weight: 800;
+}
+
+.theme-chips-row {
+  display: flex;
+  gap: 3px;
+  margin-top: 2px;
+}
+
+.theme-chip-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.theme-name-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.theme-tag-recommend {
+  font-size: 9px;
+  color: var(--primary-blue);
+  font-weight: 800;
+}
+
+/* ==========================================================================
+   날짜 모달 내 등록된 개인 일정 리스트 & 선택 삭제 스타일
+   ========================================================================== */
+.day-schedule-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-card);
+  border: 1px solid var(--card-border, #e2e8f0);
+  border-radius: 9px;
+  padding: 8px 10px;
+  gap: 8px;
+  transition: all 0.15s ease;
+}
+
+.day-schedule-item:hover {
+  border-color: var(--primary-blue, #0284c7);
+  background: rgba(2, 132, 199, 0.04);
+}
+
+.day-schedule-item-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.day-schedule-checkbox {
+  width: 17px;
+  height: 17px;
+  cursor: pointer;
+  accent-color: var(--primary-blue, #0284c7);
+  flex-shrink: 0;
+}
+
+.day-schedule-time-badge {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--primary-blue, #0284c7);
+  background: rgba(2, 132, 199, 0.1);
+  padding: 2px 6px;
+  border-radius: 5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.day-schedule-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.btn-delete-single-schedule {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 15px;
+  padding: 4px 6px;
+  border-radius: 5px;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-delete-single-schedule:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.day-schedule-empty {
+  text-align: center;
+  padding: 18px 12px;
+  color: var(--text-muted, #94a3b8);
+  font-size: 12.5px;
+  background: rgba(125, 125, 125, 0.05);
+  border-radius: 9px;
+  border: 1px dashed var(--card-border, #cbd5e1);
+}
+
+/* ==========================================================================
+   상단 메모장 모달: 근무 특이사항 한 줄 정렬 스타일
+   ========================================================================== */
+.special-notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.special-note-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg-hover, rgba(125, 125, 125, 0.06));
+  border-radius: 8px;
+  border-left: 4px solid #94a3b8;
+  font-size: 13px;
+  line-height: 1.4;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.special-note-row.overtime {
+  background: rgba(239, 68, 68, 0.08);
+  border-left-color: #ef4444;
+}
+
+.special-note-row.vacation {
+  background: rgba(16, 185, 129, 0.08);
+  border-left-color: #10b981;
+}
+
+.special-note-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.special-note-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  white-space: nowrap;
+  letter-spacing: -0.2px;
+  flex-shrink: 0;
+}
+
+.badge-overtime {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.badge-vacation {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.special-note-date {
+  font-weight: 700;
+  color: var(--text-main);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.special-note-right {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.special-note-name {
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: -0.3px;
+}
+
+.special-note-row.overtime .special-note-name {
+  color: #dc2626;
+}
+
+.special-note-row.vacation .special-note-name {
+  color: #059669;
+}
+
+.special-note-empty {
+  padding: 12px 8px;
+  color: var(--text-muted, #94a3b8);
+  font-size: 12.5px;
+  text-align: center;
+  background: rgba(125, 125, 125, 0.04);
+  border-radius: 7px;
+}
+
+/* 밤 모드 (Dark Theme) 가독성 향상 */
+[data-theme="obsidian"] .badge-overtime,
+[data-theme="midnight"] .badge-overtime {
+  background: rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+[data-theme="obsidian"] .badge-vacation,
+[data-theme="midnight"] .badge-vacation {
+  background: rgba(16, 185, 129, 0.25);
+  color: #6ee7b7;
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+[data-theme="obsidian"] .special-note-row.overtime .special-note-name,
+[data-theme="midnight"] .special-note-row.overtime .special-note-name {
+  color: #f87171;
+}
+
+[data-theme="obsidian"] .special-note-row.vacation .special-note-name,
+[data-theme="midnight"] .special-note-row.vacation .special-note-name {
+  color: #34d399;
+}
+
+/* ==========================================================================
+   모달 (근무표 등록안내 등) - 흰색 컨테이너 내부 텍스트 검은색/고대비 보장
+   (밤 모드에서도 대근, 휴가, 날짜 등이 흰색으로 바뀌지 않고 검은색 글씨로 유지)
+   ========================================================================== */
+.modal-container,
+body[data-theme="obsidian"] .modal-container,
+body[data-theme="noble-gold"] .modal-container {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+.modal-container .modal-title,
+body[data-theme="obsidian"] .modal-container .modal-title,
+body[data-theme="noble-gold"] .modal-container .modal-title {
+  color: #0f172a !important;
+}
+
+.modal-container p,
+body[data-theme="obsidian"] .modal-container p,
+body[data-theme="noble-gold"] .modal-container p,
+.modal-container .form-label,
+body[data-theme="obsidian"] .modal-container .form-label,
+body[data-theme="noble-gold"] .modal-container .form-label {
+  color: #334155 !important;
+}
+
+.month-special-notes-box,
+body[data-theme="obsidian"] .month-special-notes-box,
+body[data-theme="noble-gold"] .month-special-notes-box {
+  background: #f8fafc !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-top: 14px;
+}
+
+#specialNotesHeaderTitle,
+.modal-container #specialNotesHeaderTitle,
+body[data-theme="obsidian"] .modal-container #specialNotesHeaderTitle,
+body[data-theme="noble-gold"] .modal-container #specialNotesHeaderTitle {
+  color: #0f172a !important;
+}
+
+.modal-container .special-note-row,
+body[data-theme="obsidian"] .modal-container .special-note-row,
+body[data-theme="noble-gold"] .modal-container .special-note-row {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-left-width: 4px !important;
+}
+
+.modal-container .special-note-row.overtime,
+body[data-theme="obsidian"] .modal-container .special-note-row.overtime,
+body[data-theme="noble-gold"] .modal-container .special-note-row.overtime {
+  border-left-color: #dc2626 !important;
+}
+
+.modal-container .special-note-row.vacation,
+body[data-theme="obsidian"] .modal-container .special-note-row.vacation,
+body[data-theme="noble-gold"] .modal-container .special-note-row.vacation {
+  border-left-color: #16a34a !important;
+}
+
+.modal-container .special-note-date,
+body[data-theme="obsidian"] .modal-container .special-note-date,
+body[data-theme="noble-gold"] .modal-container .special-note-date {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+
+.modal-container .special-note-name,
+body[data-theme="obsidian"] .modal-container .special-note-name,
+body[data-theme="noble-gold"] .modal-container .special-note-name {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+.modal-container .special-note-row.overtime .special-note-name,
+body[data-theme="obsidian"] .modal-container .special-note-row.overtime .special-note-name,
+body[data-theme="noble-gold"] .modal-container .special-note-row.overtime .special-note-name {
+  color: #b91c1c !important;
+  font-weight: 800 !important;
+}
+
+.modal-container .special-note-row.vacation .special-note-name,
+body[data-theme="obsidian"] .modal-container .special-note-row.vacation .special-note-name,
+body[data-theme="noble-gold"] .modal-container .special-note-row.vacation .special-note-name {
+  color: #047857 !important;
+  font-weight: 800 !important;
+}
+
+.modal-container .badge-overtime,
+body[data-theme="obsidian"] .modal-container .badge-overtime,
+body[data-theme="noble-gold"] .modal-container .badge-overtime {
+  background: #fee2e2 !important;
+  color: #991b1b !important;
+  border: 1px solid #fecaca !important;
+  font-weight: 800 !important;
+}
+
+.modal-container .badge-vacation,
+body[data-theme="obsidian"] .modal-container .badge-vacation,
+body[data-theme="noble-gold"] .modal-container .badge-vacation {
+  background: #d1fae5 !important;
+  color: #065f46 !important;
+  border: 1px solid #a7f3d0 !important;
+  font-weight: 800 !important;
+}
+
+.modal-container .special-note-empty,
+body[data-theme="obsidian"] .modal-container .special-note-empty,
+body[data-theme="noble-gold"] .modal-container .special-note-empty {
+  color: #475569 !important;
+  background: #f1f5f9 !important;
+}
+
+.modal-container .upload-opt-title,
+body[data-theme="obsidian"] .modal-container .upload-opt-title,
+body[data-theme="noble-gold"] .modal-container .upload-opt-title {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+.modal-container .upload-opt-desc,
+body[data-theme="obsidian"] .modal-container .upload-opt-desc,
+body[data-theme="noble-gold"] .modal-container .upload-opt-desc {
+  color: #64748b !important;
+}
+
+/* ==========================================================================
+   🌙 다크 모드 (Obsidian) - 대중교통 위젯 전면 다크 처리
+   ========================================================================== */
+body[data-theme="obsidian"] .transit-widget-card,
+body[data-theme="noble-gold"] .transit-widget-card {
+  background: rgba(15, 23, 42, 0.85) !important;
+  border-color: rgba(56, 189, 248, 0.25) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+body[data-theme="obsidian"] .transit-widget-title,
+body[data-theme="noble-gold"] .transit-widget-title {
+  color: #e2e8f0 !important;
+}
+
+body[data-theme="obsidian"] .transit-tab-wrap,
+body[data-theme="noble-gold"] .transit-tab-wrap {
+  background: rgba(30, 41, 59, 0.8) !important;
+}
+
+body[data-theme="obsidian"] .transit-tab-btn,
+body[data-theme="noble-gold"] .transit-tab-btn {
+  color: #94a3b8 !important;
+}
+
+body[data-theme="obsidian"] .transit-tab-btn.active,
+body[data-theme="noble-gold"] .transit-tab-btn.active {
+  background: rgba(15, 23, 42, 0.9) !important;
+  color: #e2e8f0 !important;
+  border-color: #38bdf8 !important;
+  box-shadow: 0 2px 8px rgba(56, 189, 248, 0.25) !important;
+}
+
+body[data-theme="obsidian"] .bit-board-card,
+body[data-theme="noble-gold"] .bit-board-card {
+  background: rgba(15, 23, 42, 0.75) !important;
+  border-color: rgba(51, 65, 85, 0.8) !important;
+}
+
+body[data-theme="obsidian"] .bit-station-name,
+body[data-theme="noble-gold"] .bit-station-name {
+  color: #f1f5f9 !important;
+}
+
+body[data-theme="obsidian"] .bit-header-row,
+body[data-theme="noble-gold"] .bit-header-row {
+  border-bottom-color: rgba(51, 65, 85, 0.8) !important;
+}
+
+body[data-theme="obsidian"] .bit-route-item,
+body[data-theme="noble-gold"] .bit-route-item {
+  background: rgba(30, 41, 59, 0.6) !important;
+  border-color: rgba(51, 65, 85, 0.6) !important;
+}
+
+body[data-theme="obsidian"] .next-transit-box,
+body[data-theme="noble-gold"] .next-transit-box {
+  background: rgba(15, 23, 42, 0.8) !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+body[data-theme="obsidian"] .next2-transit-box,
+body[data-theme="noble-gold"] .next2-transit-box {
+  background: rgba(30, 41, 59, 0.6) !important;
+  border-color: rgba(30, 58, 138, 0.4) !important;
+}
+
+body[data-theme="obsidian"] .next-time-big,
+body[data-theme="noble-gold"] .next-time-big {
+  color: #f87171 !important;
+}
+
+/* 🌙 밤 모드 (Dark Theme) 버스 전광판 실시간 카운트다운 타이머 (분은 빨간색, 초는 흰색으로 통일) */
+body[data-theme="obsidian"] .bit-board-card:not(.subway-9-card) .transit-time-min,
+body[data-theme="noble-gold"] .bit-board-card:not(.subway-9-card) .transit-time-min {
+  color: #ef4444 !important; /* 밤 분: 빨간색 */
+}
+
+body[data-theme="obsidian"] .bit-board-card:not(.subway-9-card) .transit-time-sec,
+body[data-theme="noble-gold"] .bit-board-card:not(.subway-9-card) .transit-time-sec {
+  color: #ffffff !important; /* 밤 초: 흰색 */
+}
+
+body[data-theme="obsidian"] .bit-board-card:not(.subway-9-card) .transit-time-arrive,
+body[data-theme="noble-gold"] .bit-board-card:not(.subway-9-card) .transit-time-arrive {
+  color: #ef4444 !important;
+}
+
+body[data-theme="obsidian"] .bit-board-card:not(.subway-9-card) .transit-time-imminent,
+body[data-theme="noble-gold"] .bit-board-card:not(.subway-9-card) .transit-time-imminent {
+  color: #ffffff !important;
+}
+
+body[data-theme="obsidian"] .bit-board-card:not(.subway-9-card) .next2-countdown .transit-time-min,
+body[data-theme="noble-gold"] .bit-board-card:not(.subway-9-card) .next2-countdown .transit-time-min {
+  color: #ef4444 !important;
+}
+
+body[data-theme="obsidian"] .bit-board-card:not(.subway-9-card) .next2-countdown .transit-time-sec,
+body[data-theme="noble-gold"] .bit-board-card:not(.subway-9-card) .next2-countdown .transit-time-sec {
+  color: #ffffff !important;
+}
+
+body[data-theme="obsidian"] .transit-countdown-suffix,
+body[data-theme="noble-gold"] .transit-countdown-suffix {
+  color: #94a3b8 !important;
+}
+
+body[data-theme="obsidian"] .next-transit-sub b,
+body[data-theme="noble-gold"] .next-transit-sub b {
+  color: #e2e8f0 !important;
+}
+
+body[data-theme="obsidian"] .bit-dest-pill,
+body[data-theme="noble-gold"] .bit-dest-pill {
+  background: rgba(30, 41, 59, 0.9) !important;
+  color: #93c5fd !important;
+  border-color: rgba(56, 189, 248, 0.3) !important;
+}
+
+body[data-theme="obsidian"] .bit-desc-row,
+body[data-theme="noble-gold"] .bit-desc-row {
+  color: #94a3b8 !important;
+}
+
+body[data-theme="obsidian"] .bit-footer-info,
+body[data-theme="noble-gold"] .bit-footer-info {
+  color: #64748b !important;
+}
+
+/* 방어 코드: 혹시 인라인 스타일로 0f172a가 남아있더라도 버스 카드 밤 모드에서는 강제로 밝은 흰색 처리 */
+body[data-theme="obsidian"] .bit-board-card:not(.subway-9-card) .next-time-big span[style*="0f172a"],
+body[data-theme="noble-gold"] .bit-board-card:not(.subway-9-card) .next-time-big span[style*="0f172a"],
+body[data-theme="obsidian"] .bit-board-card:not(.subway-9-card) .live-countdown span[style*="0f172a"],
+body[data-theme="noble-gold"] .bit-board-card:not(.subway-9-card) .live-countdown span[style*="0f172a"] {
+  color: #ffffff !important;
+}
+
+body[data-theme="obsidian"] .transit-footer-bar,
+body[data-theme="noble-gold"] .transit-footer-bar {
+  border-top-color: rgba(51, 65, 85, 0.6) !important;
+}
+
+body[data-theme="obsidian"] .transit-update-time,
+body[data-theme="noble-gold"] .transit-update-time {
+  color: #64748b !important;
+}
+
+body[data-theme="obsidian"] .bit-status-live,
+body[data-theme="noble-gold"] .bit-status-live {
+  background: rgba(15, 23, 42, 0.8) !important;
+  border-color: rgba(51, 65, 85, 0.7) !important;
+  color: #cbd5e1 !important;
+}
+
+body[data-theme="obsidian"] .next-transit-sub,
+body[data-theme="noble-gold"] .next-transit-sub {
+  color: #94a3b8 !important;
+}
+
+body[data-theme="obsidian"] .transit-status-banner,
+body[data-theme="noble-gold"] .transit-status-banner {
+  background: rgba(30, 58, 138, 0.3) !important;
+  border-color: rgba(56, 189, 248, 0.3) !important;
+  color: #93c5fd !important;
+}
+
+/* ==========================================================================
+   🌙 9호선 지하철 전광판 카드: 밤 모드에서도 낮 모드와 100% 똑같은 바탕화면(#fdfbf7)과 글씨 유지
+   ========================================================================== */
+body[data-theme="obsidian"] .subway-9-card,
+body[data-theme="noble-gold"] .subway-9-card,
+.subway-9-card {
+  background: #fdfbf7 !important;
+  border: 1.2px solid #ede3d4 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
+}
+
+body[data-theme="obsidian"] .subway-9-card .bit-header-row,
+body[data-theme="noble-gold"] .subway-9-card .bit-header-row,
+.subway-9-card .bit-header-row {
+  border-bottom: 1.5px solid #ece4d4 !important;
+}
+
+body[data-theme="obsidian"] .subway-9-card .bit-station-name,
+body[data-theme="noble-gold"] .subway-9-card .bit-station-name,
+.subway-9-card .bit-station-name {
+  color: #0f172a !important;
+}
+
+body[data-theme="obsidian"] .subway-9-card .bit-desc-row,
+body[data-theme="noble-gold"] .subway-9-card .bit-desc-row,
+.subway-9-card .bit-desc-row {
+  color: #451a03 !important;
+}
+
+body[data-theme="obsidian"] .subway-9-card .bit-dest-pill,
+body[data-theme="noble-gold"] .subway-9-card .bit-dest-pill,
+.subway-9-card .bit-dest-pill {
+  background: #f7f1e6 !important;
+  color: #451a03 !important;
+  border: 1px solid #ebdccb !important;
+  font-weight: 800 !important;
+}
+
+body[data-theme="obsidian"] .subway-9-card .subway-day-type-badge,
+body[data-theme="noble-gold"] .subway-9-card .subway-day-type-badge,
+.subway-9-card .subway-day-type-badge {
+  color: #92530a !important;
+  background: #fef3c7 !important;
+  border: 1px solid #fde68a !important;
+  font-weight: 700 !important;
+}
+
+body[data-theme="obsidian"] .subway-9-card .next-transit-box,
+body[data-theme="noble-gold"] .subway-9-card .next-transit-box,
+.subway-9-card .next-transit-box {
+  background: #ffffff !important;
+  border: 1px solid #e7ded0 !important;
+}
+
+body[data-theme="obsidian"] .subway-9-card .next2-transit-box,
+body[data-theme="noble-gold"] .subway-9-card .next2-transit-box,
+.subway-9-card .next2-transit-box {
+  background: #ffffff !important;
+  border: 1px solid #ebdccb !important;
+}
+
+body[data-theme="obsidian"] .subway-9-card .next-transit-sub,
+body[data-theme="noble-gold"] .subway-9-card .next-transit-sub,
+.subway-9-card .next-transit-sub {
+  color: #451a03 !important;
+  border-top: 1px dashed #ebdccb !important;
+  font-weight: 700 !important;
+}
+
+body[data-theme="obsidian"] .subway-9-card .next-transit-sub b,
+body[data-theme="noble-gold"] .subway-9-card .next-transit-sub b,
+.subway-9-card .next-transit-sub b {
+  color: #451a03 !important;
+}
+
+body[data-theme="obsidian"] .subway-9-card .next2-tag-blue,
+body[data-theme="noble-gold"] .subway-9-card .next2-tag-blue,
+.subway-9-card .next2-tag-blue {
+  color: #78350f !important;
+  font-weight: 800 !important;
+}
+
+body[data-theme="obsidian"] .subway-9-card .next-time-big,
+body[data-theme="noble-gold"] .subway-9-card .next-time-big,
+.subway-9-card .next-time-big {
+  color: #92530a !important;
+  font-weight: 800 !important;
+}
+
+/* 9호선 출발 시각 및 다다음 시각: 낮/밤 모드 똑같이 짙은 갈색(#78350f) 및 대형 글씨 */
+body[data-theme="obsidian"] .subway-9-card .transit-clock-time,
+body[data-theme="noble-gold"] .subway-9-card .transit-clock-time,
+.subway-9-card .transit-clock-time {
+  color: #78350f !important;
+  font-size: 1.18rem !important;
+  font-weight: 900 !important;
+}
+
+body[data-theme="obsidian"] .subway-9-card .next2-transit-box .transit-clock-time,
+body[data-theme="noble-gold"] .subway-9-card .next2-transit-box .transit-clock-time,
+.subway-9-card .next2-transit-box .transit-clock-time {
+  color: #78350f !important;
+  font-size: 1.12rem !important;
+  font-weight: 900 !important;
+}
+
+/* 9호선 카드 내부 시간 표시: 낮/밤 모드 똑같이 분은 빨간색(#dc2626), 초는 검은색(#0f172a) 유지 */
+body[data-theme="obsidian"] .subway-9-card .transit-time-min,
+body[data-theme="noble-gold"] .subway-9-card .transit-time-min,
+.subway-9-card .transit-time-min {
+  color: #dc2626 !important; /* 분은 빨간색 */
+}
+
+body[data-theme="obsidian"] .subway-9-card .transit-time-sec,
+body[data-theme="noble-gold"] .subway-9-card .transit-time-sec,
+.subway-9-card .transit-time-sec {
+  color: #0f172a !important; /* 초는 검은색 */
+}
+
+body[data-theme="obsidian"] .subway-9-card .transit-time-arrive,
+body[data-theme="noble-gold"] .subway-9-card .transit-time-arrive,
+.subway-9-card .transit-time-arrive {
+  color: #dc2626 !important;
+}
+
+body[data-theme="obsidian"] .subway-9-card .transit-time-imminent,
+body[data-theme="noble-gold"] .subway-9-card .transit-time-imminent,
+.subway-9-card .transit-time-imminent {
+  color: #0f172a !important;
+}
+
+body[data-theme="obsidian"] .subway-9-card .next2-countdown .transit-time-min,
+body[data-theme="noble-gold"] .subway-9-card .next2-countdown .transit-time-min,
+.subway-9-card .next2-countdown .transit-time-min {
+  color: #dc2626 !important;
+}
+
+body[data-theme="obsidian"] .subway-9-card .next2-countdown .transit-time-sec,
+body[data-theme="noble-gold"] .subway-9-card .next2-countdown .transit-time-sec,
+.subway-9-card .next2-countdown .transit-time-sec {
+  color: #0f172a !important;
+}
+
+/* ==========================================================================
+   9호선 요일 타입 뱃지 (평일 / 주말·공휴일)
+   ========================================================================== */
+.subway-day-type-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #92530a;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  padding: 2px 6px;
+  border-radius: 5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+body[data-theme="obsidian"] .subway-day-type-badge,
+body[data-theme="noble-gold"] .subway-day-type-badge {
+  background: rgba(120, 53, 15, 0.3) !important;
+  border-color: rgba(180, 83, 9, 0.4) !important;
+  color: #fbbf24 !important;
+}
+
+/* ==========================================================================
+   대한민국 공휴일 달력 표시 (공휴일 날짜 무조건 선명한 빨간색 & 명칭 배지)
+   ========================================================================== */
+.calendar-day-cell.holiday .day-number,
+.calendar-day-cell.sat.holiday .day-number,
+body[data-theme="apple-light"] .calendar-day-cell.holiday .day-number,
+body[data-theme="apple-light"] .calendar-day-cell.sat.holiday .day-number {
+  color: #dc2626 !important;
+  font-weight: 900 !important;
+}
+
+.holiday-badge,
+.holiday-name-tag {
+  font-size: 8px;
+  line-height: 1.15;
+  font-weight: 800;
+  color: #dc2626;
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  border-radius: 4px;
+  padding: 1px 3px;
+  margin: 1px auto 3px auto;
+  text-align: center;
+  word-break: keep-all;
+  width: fit-content;
+  max-width: 95%;
+  letter-spacing: -0.4px;
+  display: block;
+}
+
+body[data-theme="obsidian"] .holiday-badge,
+body[data-theme="obsidian"] .holiday-name-tag,
+body[data-theme="noble-gold"] .holiday-badge,
+body[data-theme="noble-gold"] .holiday-name-tag {
+  background: rgba(239, 68, 68, 0.22) !important;
+  border-color: rgba(239, 68, 68, 0.45) !important;
+  color: #fca5a5 !important;
+}
+
+body[data-theme="obsidian"] .calendar-day-cell.holiday .day-number,
+body[data-theme="obsidian"] .calendar-day-cell.sat.holiday .day-number,
+body[data-theme="noble-gold"] .calendar-day-cell.holiday .day-number,
+body[data-theme="noble-gold"] .calendar-day-cell.sat.holiday .day-number {
+  color: #f87171 !important;
+  font-weight: 900 !important;
+}
+
+/* ==========================================================================
+   이달의 특이사항 섹션
+   ========================================================================== */
+.monthly-notes-card {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--card-border, #e2e8f0);
+  border-radius: var(--border-radius-card, 16px);
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.monthly-notes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.monthly-notes-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.monthly-notes-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-main, #0f172a);
+  letter-spacing: -0.4px;
+}
+
+.monthly-notes-refresh-btn {
+  background: transparent;
+  border: none;
+  font-size: 19px;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: transform 0.2s ease, background 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.monthly-notes-refresh-btn:hover {
+  background: rgba(2, 132, 199, 0.12);
+}
+.monthly-notes-refresh-btn:active {
+  transform: scale(0.88);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spinning {
+  animation: spin 0.6s linear infinite !important;
+  display: inline-block !important;
+}
+
+.monthly-notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.monthly-notes-empty {
+  text-align: center;
+  padding: 18px 10px;
+  color: var(--text-muted, #94a3b8);
+  font-size: 14px;
+  background: rgba(125, 125, 125, 0.04);
+  border-radius: 8px;
+  border: 1px dashed var(--card-border, #cbd5e1);
+}
+
+.monthly-note-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 14px;
+  border-radius: 10px;
+  border-left: 3.5px solid #94a3b8;
+  background: rgba(125, 125, 125, 0.05);
+  gap: 8px;
+  transition: all 0.15s;
+}
+.monthly-note-row:hover {
+  background: rgba(2, 132, 199, 0.06);
+}
+
+.monthly-note-row.note-type-overtime {
+  border-left-color: #ef4444;
+  background: rgba(239, 68, 68, 0.07);
+}
+.monthly-note-row.note-type-vacation {
+  border-left-color: #10b981;
+  background: rgba(16, 185, 129, 0.07);
+}
+.monthly-note-row.note-type-schedule {
+  border-left-color: #0284c7;
+  background: rgba(2, 132, 199, 0.06);
+}
+
+.monthly-note-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.monthly-note-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.monthly-note-date {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-muted, #64748b);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.monthly-note-text {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-main, #0f172a);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.monthly-note-delete-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 20px;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 5px;
+  flex-shrink: 0;
+  transition: all 0.15s;
+  line-height: 1;
+}
+.monthly-note-delete-btn:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.12);
+}
+
+/* 다크 모드 */
+body[data-theme="obsidian"] .monthly-note-row.note-type-overtime,
+body[data-theme="noble-gold"] .monthly-note-row.note-type-overtime {
+  background: rgba(239, 68, 68, 0.1) !important;
+}
+body[data-theme="obsidian"] .monthly-note-row.note-type-vacation,
+body[data-theme="noble-gold"] .monthly-note-row.note-type-vacation {
+  background: rgba(16, 185, 129, 0.1) !important;
+}
+
+/* ==========================================================================
+   아날로그 시계 피커 스타일
+   ========================================================================== */
+.analog-clock-wrap {
+  margin-bottom: 0;
+}
+
+.analog-clock-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg-card, #f8fafc);
+  border: 1.5px solid var(--card-border, #cbd5e1);
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s;
+  font-size: 13px;
+}
+.analog-clock-toggle-btn:hover {
+  border-color: #0284c7;
+  background: rgba(2, 132, 199, 0.06);
+}
+
+.clock-toggle-icon {
+  font-size: 15px;
+}
+.clock-toggle-time {
+  flex: 1;
+  font-weight: 700;
+  color: var(--text-main, #0f172a);
+}
+.clock-toggle-arrow {
+  font-size: 10px;
+  color: var(--text-muted, #64748b);
+}
+
+.analog-clock-panel {
+  margin-top: 6px;
+  animation: fadeInDown 0.15s ease;
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.clock-panel-inner {
+  background: var(--bg-card, #ffffff);
+  border: 1.5px solid var(--card-border, #cbd5e1);
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.clock-mode-tabs {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+
+.clock-mode-tab {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1.5px solid var(--card-border, #cbd5e1);
+  border-radius: 8px;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--text-muted, #64748b);
+  transition: all 0.15s;
+}
+.clock-mode-tab.active {
+  background: #0284c7;
+  border-color: #0284c7;
+  color: #ffffff;
+}
+.clock-mode-tab.clock-clear-btn {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  color: #ef4444;
+  border-color: #fecaca;
+}
+.clock-mode-tab.clock-clear-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.analog-clock-canvas {
+  cursor: pointer;
+  border-radius: 50%;
+  touch-action: none;
+}
+
+.clock-selected-display {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-main, #0f172a);
+  letter-spacing: -0.5px;
+}
+
+.clock-result-badge {
+  margin-top: 6px;
+  padding: 5px 10px;
+  background: rgba(2, 132, 199, 0.1);
+  border: 1px solid rgba(2, 132, 199, 0.3);
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #0284c7;
+}
+
+/* 다크 모드 시계 */
+body[data-theme="obsidian"] .analog-clock-toggle-btn,
+body[data-theme="noble-gold"] .analog-clock-toggle-btn {
+  background: rgba(15, 23, 42, 0.8) !important;
+  border-color: rgba(51, 65, 85, 0.8) !important;
+}
+body[data-theme="obsidian"] .clock-panel-inner,
+body[data-theme="noble-gold"] .clock-panel-inner {
+  background: rgba(15, 23, 42, 0.9) !important;
+  border-color: rgba(51, 65, 85, 0.8) !important;
+}
+
+/* ==========================================================================
+   달력 스와이프 안내 및 터치
+   ========================================================================== */
+.calendar-card {
+  user-select: none;
+}
+

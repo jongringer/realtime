@@ -1,0 +1,6 @@
+{
+  "appId": "com.shiftalarm.app",
+  "appName": "ShiftAlarm",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}

@@ -1,0 +1,8 @@
+node_modules/
+release.keystore
+keystore_base64.txt
+*.apk
+dist/
+cloudflared.exe
+.DS_Store
+Thumbs.db
