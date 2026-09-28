@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=5.0, user-scalable=yes">
-  <title>ODsay 실시간 대중교통 도착 전광판 - 출퇴근 맞춤</title>
+  <title>서울시 실시간 버스·지하철 대중교통 도착 전광판 - 출퇴근 맞춤</title>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="description" content="이대목동병원 15-154(양천01, 603, 6620) 및 9호선 일반열차 ODsay 실시간 대중교통 도착 정보">
+  <meta name="description" content="이대목동병원 15-154(양천01, 603, 6620) 및 9호선 일반열차 서울시 공식 공공 API 실시간 대중교통 도착 정보">
   <link rel="icon" type="image/svg+xml" href="icons/icon.svg?v=202610_icon">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=202610_icon">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=202610_icon">
@@ -571,25 +571,39 @@
   <div id="toast">링크가 클립보드에 복사되었습니다! 💬</div>
 
   <script>
-    const ODSAY_KEY = 'd2hM82mSFbFtvCVF6BsaJA';
+    const SEOUL_BUS_KEY = 'df332cd23ac6df535a295747d46e0328dd0fd3faed11cec584c87a0ca1e7a759';
     let currentMode = 'commute';
     let autoReason = '';
-    const REFRESH_INTERVAL = 30;
-    let refreshCountdown = 30;
+    const REFRESH_INTERVAL = 25;
+    let refreshCountdown = 25;
     let isFetching = false;
 
-    const STATIONS = {
-      commuteBus: '101877',   // 이대목동병원.목동6단지앞 (ARS 15154)
-      commuteSubway: '912',   // 선유도역 9호선
-      offworkSubway: '914',   // 국회의사당역 9호선
-      offworkBus: '206720'    // 선유도역1번출구.한신 (ARS 19210)
+    const BUS_CONFIGS = {
+      commute: {
+        arsId: '15-154',
+        stId: '114000052',
+        stationName: '이대목동병원·목동6단지앞',
+        destNote: '선유도역·당산역 방면',
+        routes: [
+          { routeNum: '양천01', busRouteId: '114900001', stId: '114000052', ord: '17', badgeClass: 'badge-seoul-town', typeText: '마을버스 (배차 6~7분)', headway: 390 },
+          { routeNum: '603',   busRouteId: '100100088', stId: '114000052', ord: '22', badgeClass: 'badge-seoul-blue', typeText: '간선버스 (배차 10~12분)', headway: 660 },
+          { routeNum: '6620',  busRouteId: '100100300', stId: '114000052', ord: '28', badgeClass: 'badge-seoul-green', typeText: '지선버스 (당산역 방면)', headway: 720 }
+        ]
+      },
+      offwork: {
+        arsId: '19-210',
+        stId: '118000125',
+        stationName: '선유도역1번출구·한신아파트',
+        destNote: '목동아파트 단지 방면 환승',
+        routes: [
+          { routeNum: '양천01', busRouteId: '114900001', stId: '118000125', ord: '20', badgeClass: 'badge-seoul-town', typeText: '마을버스 (배차 6~7분)', headway: 390 },
+          { routeNum: '603',   busRouteId: '100100088', stId: '118000125', ord: '62', badgeClass: 'badge-seoul-blue', typeText: '간선버스 (배차 10~12분)', headway: 660 },
+          { routeNum: '6620',  busRouteId: '100100300', stId: '118000125', ord: '34', badgeClass: 'badge-seoul-green', typeText: '지선버스 (차고지 방면)', headway: 720 }
+        ]
+      }
     };
 
-    const BUS_HEADWAYS = {
-      '양천01': 390,  // 마을버스 6.5분
-      '603': 660,    // 간선버스 11분
-      '6620': 720    // 지선버스 12분
-    };
+    const busCache = {};
 
     function formatSec(sec) {
       if (sec <= 0) return '<span style="color:#dc2626; font-weight:900;">⚡ 곧 도착</span>';
@@ -600,64 +614,150 @@
       return `<span class="transit-time-min">${m}분</span> <span class="transit-time-sec">${sStr}초 후</span>`;
     }
 
-    async function fetchBus(stId) {
-      try {
-        const res = await fetch(`https://api.odsay.com/v1/api/realtimeStation?stationID=${stId}&apiKey=${encodeURIComponent(ODSAY_KEY)}&_t=${Date.now()}`, { cache: 'no-store' });
-        const json = await res.json();
-        return json?.result?.real || null;
-      } catch (e) {
-        return null;
-      }
-    }
+    async function fetchSeoulBusArrival(busRouteId, stId, ord) {
+      const cacheKey = `${busRouteId}_${stId}_${ord}`;
+      const directUrl = `http://ws.bus.go.kr/api/rest/arrive/getArrInfoByRoute?serviceKey=${SEOUL_BUS_KEY}&busRouteId=${busRouteId}&stId=${stId}&ord=${ord}&resultType=json`;
 
-    const subwayCache = {};
-    async function fetchSubway(stId) {
-      if (subwayCache[stId]) {
-        return subwayCache[stId];
-      }
       try {
-        const res = await fetch(`https://api.odsay.com/v1/api/searchSubwaySchedule?stationID=${stId}&apiKey=${encodeURIComponent(ODSAY_KEY)}&_t=${Date.now()}`, { cache: 'no-store' });
-        const json = await res.json();
-        if (json?.result) {
-          subwayCache[stId] = json.result;
-          return json.result;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000);
+        const res = await fetch(directUrl, { cache: 'no-store', signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (res.ok) {
+          const data = await res.json();
+          const item = data?.msgBody?.itemList?.[0];
+          if (item) {
+            busCache[cacheKey] = item;
+            return item;
+          }
         }
-        return null;
-      } catch (e) {
-        return null;
+      } catch (e) {}
+
+      const proxies = [
+        url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+        url => `https://corsproxy.io/?${encodeURIComponent(url)}`
+      ];
+
+      for (const makeProxy of proxies) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 3500);
+          const proxyUrl = makeProxy(directUrl);
+          const res = await fetch(proxyUrl, { cache: 'no-store', signal: controller.signal });
+          clearTimeout(timeoutId);
+          if (res.ok) {
+            const data = await res.json();
+            const item = data?.msgBody?.itemList?.[0];
+            if (item) {
+              busCache[cacheKey] = item;
+              return item;
+            }
+          }
+        } catch (err) {}
       }
+
+      return busCache[cacheKey] || null;
     }
 
-    function calculateBusArrival(routeNum, routeReal, now, nowMs) {
-      const headway = BUS_HEADWAYS[routeNum] || 420;
+    function parseSeoulBus(routeConfig, busItem, now, nowMs) {
+      const headway = routeConfig.headway;
+      const targetOrd = parseInt(routeConfig.ord, 10);
       let next = null;
       let next2 = null;
 
-      if (routeReal && routeReal.arrival1) {
-        const a1 = routeReal.arrival1;
-        const sec1 = a1.arrivalSec;
-        const stop1 = a1.leftStation ? `${a1.leftStation}번째 전` : '';
-        const low1 = a1.lowBusYn === 'Y' ? '저상' : '';
+      if (busItem) {
+        const traTime1 = parseInt(busItem.traTime1 || '0', 10);
+        const sectOrd1 = parseInt(busItem.sectOrd1 || '0', 10);
+        const arrmsg1 = (busItem.arrmsg1 || '').trim();
+        const plainNo1 = (busItem.plainNo1 || '').trim();
 
-        const a2 = routeReal.arrival2;
-        const sec2 = a2 ? a2.arrivalSec : null;
-        const stop2 = a2 && a2.leftStation ? `${a2.leftStation}번째 전` : '';
-        const low2 = a2 && a2.lowBusYn === 'Y' ? '저상' : '';
+        const traTime2 = parseInt(busItem.traTime2 || '0', 10);
+        const sectOrd2 = parseInt(busItem.sectOrd2 || '0', 10);
+        const arrmsg2 = (busItem.arrmsg2 || '').trim();
+        const plainNo2 = (busItem.plainNo2 || '').trim();
 
-        next = { sec: sec1, stop: stop1 || '운행 중', low: low1, targetTime: nowMs + sec1 * 1000 };
-        if (sec2 !== null) {
-          next2 = { sec: sec2, stop: stop2 || '운행 중', low: low2, targetTime: nowMs + sec2 * 1000 };
-        } else {
+        let stop1Text = '';
+        const m1 = arrmsg1.match(/\[(\d+)번째\s*전\]/);
+        if (m1) stop1Text = `[${m1[1]}번째 전]`;
+        else if (sectOrd1 > 0 && targetOrd > sectOrd1) stop1Text = `[${targetOrd - sectOrd1}번째 전]`;
+
+        const isArrivingSoon1 = arrmsg1.includes('곧 도착');
+        const isWait1 = arrmsg1.includes('출발대기');
+        const isEnd1 = arrmsg1.includes('운행종료');
+
+        let sec1 = traTime1;
+        if (isArrivingSoon1) sec1 = Math.min(sec1 > 0 ? sec1 : 30, 45);
+
+        next = {
+          sec: sec1,
+          arrmsg: arrmsg1,
+          stopText: stop1Text,
+          plainNo: plainNo1,
+          isArrivingSoon: isArrivingSoon1,
+          isWait: isWait1,
+          isEnd: isEnd1,
+          targetTime: (sec1 > 0) ? (nowMs + sec1 * 1000) : null
+        };
+
+        let stop2Text = '';
+        const m2 = arrmsg2.match(/\[(\d+)번째\s*전\]/);
+        if (m2) stop2Text = `[${m2[1]}번째 전]`;
+        else if (sectOrd2 > 0 && targetOrd > sectOrd2) stop2Text = `[${targetOrd - sectOrd2}번째 전]`;
+
+        const isWait2 = arrmsg2.includes('출발대기');
+        const isEnd2 = arrmsg2.includes('운행종료');
+        const isArrivingSoon2 = arrmsg2.includes('곧 도착');
+
+        if (traTime2 > 0 || isWait2 || isArrivingSoon2) {
+          let sec2 = traTime2;
+          if (isArrivingSoon2) sec2 = Math.min(sec2 > 0 ? sec2 : 45, 60);
+
+          next2 = {
+            sec: sec2,
+            arrmsg: arrmsg2,
+            stopText: stop2Text,
+            plainNo: plainNo2,
+            isWait: isWait2,
+            isEnd: isEnd2,
+            targetTime: (sec2 > 0) ? (nowMs + sec2 * 1000) : null
+          };
+        } else if (sec1 > 0 && !isWait1 && !isEnd1) {
           const next2Sec = sec1 + headway;
-          next2 = { sec: next2Sec, stop: '배차 간격 운행', targetTime: nowMs + next2Sec * 1000 };
+          next2 = {
+            sec: next2Sec,
+            arrmsg: '배차 간격 운행',
+            stopText: '차기 순번',
+            plainNo: '',
+            isWait: false,
+            isEnd: false,
+            targetTime: nowMs + next2Sec * 1000
+          };
         }
-      } else {
+      }
+
+      if (!next) {
         const curSecInHour = now.getMinutes() * 60 + now.getSeconds();
         const cycleOffset = headway - (curSecInHour % headway);
-
-        next = { sec: cycleOffset, stop: '정규 배차순번', targetTime: nowMs + cycleOffset * 1000 };
+        next = {
+          sec: cycleOffset,
+          arrmsg: '정규 배차순번',
+          stopText: '정규 배차',
+          plainNo: '',
+          isArrivingSoon: false,
+          isWait: false,
+          isEnd: false,
+          targetTime: nowMs + cycleOffset * 1000
+        };
         const next2Sec = cycleOffset + headway;
-        next2 = { sec: next2Sec, stop: '차기 배차순번', targetTime: nowMs + next2Sec * 1000 };
+        next2 = {
+          sec: next2Sec,
+          arrmsg: '차기 배차순번',
+          stopText: '차기 순번',
+          plainNo: '',
+          isWait: false,
+          isEnd: false,
+          targetTime: nowMs + next2Sec * 1000
+        };
       }
 
       return { next, next2 };
@@ -875,97 +975,122 @@
 
     async function renderCards() {
       const container = document.getElementById('cardsContainer');
-      const banner = document.getElementById('statusText');
       const tabC = document.getElementById('tabCommute');
       const tabO = document.getElementById('tabOffwork');
 
       const isCommute = (currentMode === 'commute');
-      tabC.className = `tab-btn ${isCommute ? 'active' : ''}`;
-      tabO.className = `tab-btn ${!isCommute ? 'active' : ''}`;
+      if (tabC) tabC.className = `tab-btn ${isCommute ? 'active' : ''}`;
+      if (tabO) tabO.className = `tab-btn ${!isCommute ? 'active' : ''}`;
 
       container.innerHTML = `
         <div style="text-align:center; padding:32px 14px; background:#fff; border-radius:16px; border:1px solid #bae6fd; box-shadow:0 4px 14px rgba(2,132,199,0.08);">
           <div style="font-size:28px; margin-bottom:8px; display:inline-block; animation:spin 1s infinite linear;">🔄</div>
-          <div style="font-size:15px; font-weight:800; color:#0284c7;">실시간 대중교통 최신 정보 불러오는 중...</div>
-          <p style="font-size:12px; color:#64748b; margin-top:4px;">ODsay 서버로부터 현재 버스 및 9호선 실시간 도착 정보를 갱신하고 있습니다.</p>
+          <div style="font-size:15px; font-weight:800; color:#0284c7;">실시간 대중교통 최신 정보 수신 중...</div>
+          <p style="font-size:12px; color:#64748b; margin-top:4px;">서울시 버스(TOPIS) 및 9호선 역사 공식 시간표를 수신하고 있습니다.</p>
         </div>
       `;
 
       const startTime = Date.now();
-      const busStId = isCommute ? STATIONS.commuteBus : STATIONS.offworkBus;
-      const subwayStId = isCommute ? STATIONS.commuteSubway : STATIONS.offworkSubway;
+      const config = BUS_CONFIGS[currentMode];
 
-      const [busData, subData] = await Promise.all([
-        fetchBus(busStId),
-        fetchSubway(subwayStId)
-      ]);
+      // 서울시 버스 3개 노선 병렬 호출
+      const busPromises = config.routes.map(r =>
+        fetchSeoulBusArrival(r.busRouteId, r.stId, r.ord).catch(() => null)
+      );
+
+      const busResults = await Promise.all(busPromises);
+      const busDataMap = {};
+      config.routes.forEach((r, idx) => {
+        busDataMap[r.routeNum] = busResults[idx];
+      });
 
       const elapsed = Date.now() - startTime;
-      if (elapsed < 350) {
-        await new Promise(r => setTimeout(r, 350 - elapsed));
+      if (elapsed < 250) {
+        await new Promise(r => setTimeout(r, 250 - elapsed));
       }
 
       const now = new Date();
       const nowMs = now.getTime();
 
       // 1. 버스 도착 정보
-      const busStName = isCommute ? '이대목동병원·목동6단지앞' : '선유도역1번출구·한신아파트';
-      const busArsId = isCommute ? '15-154' : '19-210';
-      const busDestNote = isCommute ? '선유도역·당산역 방면' : '목동아파트 단지 방면 환승';
-      const busFilter = ['양천01', '603', '6620'];
+      const busRows = config.routes.map(r => {
+        const item = busDataMap[r.routeNum];
+        const { next, next2 } = parseSeoulBus(r, item, now, nowMs);
 
-      const busRows = busFilter.map(route => {
-        let badgeClass = 'badge-seoul-town';
-        let typeText = '마을버스 (배차 6~7분)';
-        if (route === '603') { badgeClass = 'badge-seoul-blue'; typeText = '간선버스 (배차 10~12분)'; }
-        else if (route === '6620') { badgeClass = 'badge-seoul-green'; typeText = '지선버스 (배차 11~13분)'; }
+        // 🔴 다음 버스 UI
+        let nextTimeHtml = '';
+        let nextSubLoc = '';
 
-        let real = null;
-        if (busData) {
-          if (route === '6620' && isCommute) {
-            real = busData.find(r => r.routeNm === '6620' && (r.stationSeq === '28' || r.updownFlag === '2'))
-                || busData.find(r => r.routeNm === '6620');
-          } else {
-            real = busData.find(r => r.routeNm === route);
-          }
+        if (next.isWait) {
+          nextTimeHtml = `<span style="color:#d97706; font-weight:800;">⏸️ 출발대기</span>`;
+          nextSubLoc = `상태: <b>기점/차고지 출발대기</b>`;
+        } else if (next.isEnd) {
+          nextTimeHtml = `<span style="color:#64748b; font-weight:800;">🚫 운행종료</span>`;
+          nextSubLoc = `상태: <b>오늘 운행종료</b>`;
+        } else if (next.isArrivingSoon || next.sec <= 30) {
+          nextTimeHtml = `<span style="color:#dc2626; font-weight:900;">⚡ 곧 도착</span>`;
+          const loc = next.stopText ? `${next.stopText} · 진입 중` : '정류소 진입 중';
+          nextSubLoc = `위치: <b>${loc}</b>`;
+        } else if (next.targetTime) {
+          nextTimeHtml = `<span class="live-cd" data-time="${next.targetTime}" style="font-size:13.5px; font-weight:800; white-space:nowrap;">${formatSec(next.sec)}</span>`;
+          nextSubLoc = `위치: <b>${next.stopText || '운행 중'}</b>`;
+        } else {
+          nextTimeHtml = `<span style="color:#dc2626; font-weight:900;">⚡ 곧 도착</span>`;
+          nextSubLoc = `위치: <b>운행 중</b>`;
         }
 
-        const { next, next2 } = calculateBusArrival(route, real, now, nowMs);
+        let nextArrClock = '';
+        if (next.targetTime && !next.isWait && !next.isEnd) {
+          const nextArrTime = new Date(next.targetTime);
+          nextArrClock = `${String(nextArrTime.getHours()).padStart(2, '0')}:${String(nextArrTime.getMinutes()).padStart(2, '0')}`;
+        }
 
-        // 🔴 다음 버스
-        const nextArrTime = new Date(next.targetTime);
-        const nextTimeStr = `${String(nextArrTime.getHours()).padStart(2, '0')}:${String(nextArrTime.getMinutes()).padStart(2, '0')}`;
+        const vehicleBadge1 = next.plainNo ? `<span class="badge-bus-plate" style="display:inline-flex; align-items:center; background:#f1f5f9; color:#334155; font-size:10.5px; padding:1px 5px; border-radius:4px; font-weight:700; margin-left:6px; border:1px solid #cbd5e1;">🚌 ${next.plainNo}</span>` : '';
 
         const nextHtml = `
           <div class="next-transit-box" style="padding:7px 10px;">
             <div class="next-transit-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px; white-space:nowrap;">
               <span class="next-tag-red" style="font-size:11px; white-space:nowrap;">
                 <span>🔴</span> <span>다음 버스</span>
-                ${next.low ? `<span class="badge-low-bus">♿ ${next.low}</span>` : ''}
+                ${vehicleBadge1}
               </span>
-              <span class="next-time-big live-cd" data-time="${next.targetTime}" style="font-size:13.5px; font-weight:800; white-space:nowrap;">
-                ${formatSec(next.sec)}
+              <span class="next-time-big" style="font-size:13.5px; font-weight:800; white-space:nowrap;">
+                ${nextTimeHtml}
               </span>
             </div>
             <div class="next-transit-sub" style="font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; justify-content:space-between; align-items:center; border-top:1px dashed #bae6fd; padding-top:4px; margin-top:4px;">
-              <span>위치: <b>${next.stop || '운행 중'}</b></span>
-              <span class="transit-sub-time"><span class="transit-arr-label" style="font-size:12.5px; font-weight:800;">도착 예정:</span> <b class="transit-clock-time" style="font-size:16px; font-weight:900; color:#0369a1;">${nextTimeStr}</b></span>
+              <span>${nextSubLoc}</span>
+              ${nextArrClock ? `<span class="transit-sub-time"><span class="transit-arr-label" style="font-size:12.5px; font-weight:800;">도착 예정:</span> <b class="transit-clock-time" style="font-size:16px; font-weight:900; color:#0369a1;">${nextArrClock}</b></span>` : ''}
             </div>
           </div>
         `;
 
         let next2Html = '';
         if (next2) {
-          const next2ArrTime = new Date(next2.targetTime);
-          const next2TimeStr = `${String(next2ArrTime.getHours()).padStart(2, '0')}:${String(next2ArrTime.getMinutes()).padStart(2, '0')}`;
+          let next2TimeHtml = '';
+          let next2SubText = '';
+
+          if (next2.isWait) {
+            next2TimeHtml = `<span style="color:#d97706; font-weight:700;">출발대기</span>`;
+            next2SubText = '차고지 대기';
+          } else if (next2.isEnd) {
+            next2TimeHtml = `<span style="color:#64748b; font-weight:700;">운행종료</span>`;
+            next2SubText = '종료';
+          } else if (next2.targetTime) {
+            const next2ArrTime = new Date(next2.targetTime);
+            const next2Clock = `${String(next2ArrTime.getHours()).padStart(2, '0')}:${String(next2ArrTime.getMinutes()).padStart(2, '0')}`;
+            next2TimeHtml = `<span class="live-cd" data-time="${next2.targetTime}" style="font-weight:800; color:#1e40af; font-size:12px;">${formatSec(next2.sec)}</span>`;
+            next2SubText = `<b class="transit-clock-time" style="font-size:15px; font-weight:900; color:#1d4ed8;">${next2Clock}</b>${next2.stopText ? ` · ${next2.stopText}` : ''}`;
+          }
+
+          const vehicleBadge2 = next2.plainNo ? `<span style="font-size:10px; color:#475569; font-weight:600; margin-left:4px;">(${next2.plainNo})</span>` : '';
+
           next2Html = `
             <div class="next2-transit-box" style="padding:6px 10px; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; justify-content:space-between; align-items:center;">
               <span class="next2-tag-blue" style="font-size:12px; white-space:nowrap;">
-                <span>🔵 다다음 (<b class="transit-clock-time" style="font-size:15px; font-weight:900; color:#1d4ed8;">${next2TimeStr}</b>):</span>
+                <span>🔵 다다음 (${next2SubText}):${vehicleBadge2}</span>
               </span>
-              <span class="live-cd" data-time="${next2.targetTime}" style="font-weight:800; color:#1e40af; font-size:12px;">
-                ${formatSec(next2.sec)}
-              </span>
+              ${next2TimeHtml}
             </div>
           `;
         }
@@ -974,8 +1099,8 @@
           <div class="bit-route-item" style="padding:8px 10px;">
             <div class="bit-route-top" style="margin-bottom:4px;">
               <div style="display:flex; align-items:center; gap:6px;">
-                <span class="${badgeClass}">${route}</span>
-                <span style="font-size:10.5px; color:#64748b; font-weight:600;">${typeText}</span>
+                <span class="${r.badgeClass}">${r.routeNum}</span>
+                <span style="font-size:10.5px; color:#64748b; font-weight:600;">${r.typeText}</span>
               </div>
             </div>
             ${nextHtml}
@@ -988,70 +1113,35 @@
         <div class="bit-board-card">
           <div class="bit-header-row">
             <div class="bit-title-group">
-              <span class="bit-ars-badge">ARS ${busArsId}</span>
-              <strong class="bit-station-name">${busStName}</strong>
+              <span class="bit-ars-badge">ARS ${config.arsId}</span>
+              <strong class="bit-station-name">${config.stationName}</strong>
             </div>
-            <span class="bit-status-live"><span class="bit-status-dot"></span> ODsay실시간</span>
+            <span class="bit-status-live"><span class="bit-status-dot"></span> 서울시 실시간</span>
           </div>
           <div class="bit-desc-row" style="font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
             <span>📍 정류소 실시간 도착 현황</span>
-            <span class="bit-dest-pill">${busDestNote}</span>
+            <span class="bit-dest-pill">${config.destNote}</span>
           </div>
           <div class="bit-route-list">${busRows}</div>
           <div class="bit-footer-info">
-            <span>💡 정류소 실시간 도착 정보는 30초마다 자동 갱신됩니다.</span>
+            <span>💡 서울시 버스도착정보 공식 API(TOPIS) 연동으로 실시간 카운트다운됩니다.</span>
           </div>
         </div>
       `;
 
-      // 2. 지하철 도착 정보 (역사 고정 시간표 최우선 반영)
+      // 2. 지하철 도착 정보 (역사 고정 시간표 100% 반영)
       const subStName = isCommute ? '선유도역 9호선 [상행]' : '국회의사당역 9호선 [하행]';
       const subDir = isCommute ? '당산·중앙보훈병원 방면' : '당산·개화 방면 (선유도역 방향)';
-      const isUpLine = isCommute;
 
       let subScheduleHtml = '';
       const isHolidayToday = isWeekendOrHoliday(now);
       const dayTypeLabel = isHolidayToday ? '🌴 주말·공휴일 시간표' : '🗓️ 평일 시간표';
 
-      // 1순위: 사용자 제공 역사 고정 시간표 우선 계산
       const prioritizedTrains = getPrioritizedTrains(now, isCommute, 2);
-      let finalTrains = [];
 
       if (prioritizedTrains && prioritizedTrains.length > 0) {
-        finalTrains = prioritizedTrains;
-      } else {
-        // 보조(fallback): ODsay 지하철 API
-        let sched = null;
-        if (subData) {
-          const day = now.getDay();
-          sched = (day === 0) ? (isUpLine ? subData.holidaySchedule?.up : subData.holidaySchedule?.down)
-                : (day === 6) ? (isUpLine ? subData.saturdaySchedule?.up : subData.saturdaySchedule?.down)
-                : (isUpLine ? subData.weekdaySchedule?.up : subData.weekdaySchedule?.down);
-        }
-        if (sched && sched.length > 0) {
-          const normalTrains = sched.filter(t => t.subwayClass === 0);
-          const curTotalSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-          normalTrains.forEach(t => {
-            const [h, m] = t.departureTime.split(':').map(Number);
-            const tSec = (h * 3600 + m * 60) - curTotalSec;
-            if (tSec >= -30) {
-              finalTrains.push({
-                departureTime: t.departureTime,
-                endStationName: t.endStationName || (isCommute ? '중앙보훈병원' : '개화'),
-                sec: Math.max(0, tSec),
-                remainSeconds: Math.max(0, tSec),
-                remainMinutes: Math.floor(Math.max(0, tSec) / 60),
-                targetTime: nowMs + Math.max(0, tSec) * 1000,
-                source: 'ODsay보조'
-              });
-            }
-          });
-        }
-      }
-
-      if (finalTrains && finalTrains.length > 0) {
-        const t1 = finalTrains[0];
-        const t2 = finalTrains.length > 1 ? finalTrains[1] : null;
+        const t1 = prioritizedTrains[0];
+        const t2 = prioritizedTrains.length > 1 ? prioritizedTrains[1] : null;
 
         let t2Html = '';
         if (t2) {
@@ -1072,7 +1162,7 @@
             <div class="next-transit-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px; white-space:nowrap;">
               <span class="next-tag-red" style="font-size:11px; white-space:nowrap;">
                 <span>🔴</span> <span>다음 열차</span>
-                <span class="badge-low-bus" style="background:#fef3c7; color:#b45309; border-color:#fde68a;">역고정(우선)</span>
+                <span class="badge-low-bus" style="background:#fef3c7; color:#b45309; border-color:#fde68a;">역고정(공식)</span>
               </span>
               <span class="next-time-big live-cd" data-time="${t1.targetTime}" style="font-size:13.5px; font-weight:800; white-space:nowrap;">
                 ${formatSec(t1.sec)}
@@ -1085,9 +1175,7 @@
           </div>
           ${t2Html}
         `;
-      }
-
-      if (!subScheduleHtml) {
+      } else {
         subScheduleHtml = `
           <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px; font-size:12.5px; color:#64748b;">
             9호선 역사 고정 시간표 운행 준비 중
@@ -1103,7 +1191,7 @@
               <strong class="bit-station-name">${subStName}</strong>
             </div>
             <div style="display:flex; align-items:center; gap:5px;">
-              <span class="bit-status-live" style="background:#ecfdf5; color:#047857; border-color:#a7f3d0;"><span class="bit-status-dot" style="background:#10b981;"></span> 역사시간표 우선</span>
+              <span class="bit-status-live" style="background:#ecfdf5; color:#047857; border-color:#a7f3d0;"><span class="bit-status-dot" style="background:#10b981;"></span> 역사시간표 정밀연동</span>
               <span class="subway-day-type-badge">${dayTypeLabel}</span>
             </div>
           </div>
@@ -1113,7 +1201,7 @@
           </div>
           <div style="margin-top:6px;">${subScheduleHtml}</div>
           <div class="bit-footer-info" style="margin-top:8px;">
-            <span>💡 9호선 일반열차는 오디세이보다 역사 공식 고정 시간표를 최우선으로 반영하여 정확히 카운트다운합니다.</span>
+            <span>💡 9호선 일반열차는 역사 공식 고정 시간표를 100% 반영하여 초 단위로 정확히 카운트다운합니다.</span>
           </div>
         </div>
       `;
