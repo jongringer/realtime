@@ -478,11 +478,11 @@ function getPriorityBusSchedule(routeNum, arsId, dateObj = new Date()) {
   const list = targetPeriod.schedules[dayKey] || [];
   if (list.length === 0) return null;
 
-  // 현재 시각 이후의 운행 시각 찾기
-  // 약간 지난 버스(1분 이내 지난 버스)도 아직 정류소 진입 중일 수 있으므로 고려
+  // 현재 시각 이후의 운행 시각 찾기 (-30초 진입 중 고려)
   const futureItems = list.filter(item => {
     const itemMin = busTimeToMinutes(item.time);
-    return itemMin >= curTotalMin || (curTotalMin - itemMin <= 1);
+    const itemDiffSec = (itemMin - curTotalMin) * 60 - curSec;
+    return itemDiffSec >= -30;
   });
 
   if (futureItems.length === 0) return null;
@@ -493,16 +493,14 @@ function getPriorityBusSchedule(routeNum, arsId, dateObj = new Date()) {
     if (!item) return null;
     const targetMin = busTimeToMinutes(item.time);
     const diffSec = (targetMin - curTotalMin) * 60 - curSec;
-    const targetTimeMs = nowMs + Math.max(0, diffSec) * 1000;
+    const finalSec = Math.max(0, diffSec);
+    const targetTimeMs = nowMs + finalSec * 1000;
 
     return {
       time: item.time,
-      minTime: item.min,
-      maxTime: item.max,
-      rangeText: `가장빠른 ${item.min} ~ 가장늦은 ${item.max}`,
-      diffSec: Math.max(0, diffSec),
+      diffSec: finalSec,
       targetTime: targetTimeMs,
-      source: '15154우선시간표',
+      source: '공식운행시간표',
       periodName
     };
   }

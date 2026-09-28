@@ -520,53 +520,41 @@ class TransitManager {
       const pNext = prioritySchedule.next;
       const pNext2 = prioritySchedule.next2;
 
-      // 실시간 데이터가 없는 경우 시간표 데이터를 100% 최우선 카운트다운 소스로 채택
-      if (!next || next.isWait || next.isEnd || next.sec <= 0) {
-        next = {
-          sec: pNext.diffSec,
-          rawSec: pNext.diffSec,
-          arrmsg: `${pNext.time} 정시운행`,
-          stopText: `시간표 기준 (${prioritySchedule.periodName})`,
-          plainNo: (busItem && busItem.plainNo1) || '',
-          isArrivingSoon: pNext.diffSec <= 40,
-          isWait: false,
-          isEnd: false,
-          targetTime: pNext.targetTime,
-          isEstimate: false,
-          isPriority: true,
-          priorityTime: pNext.time,
-          priorityRange: pNext.rangeText,
-          periodName: prioritySchedule.periodName
-        };
-      } else {
-        // 실시간 위치/차량이 있는 경우라도 도착 예정 기준 시각은 시간표를 최우선 적용
-        next.isPriority = true;
-        next.priorityTime = pNext.time;
-        next.priorityRange = pNext.rangeText;
-        next.periodName = prioritySchedule.periodName;
-      }
+      // 9호선 역사 고정시간표와 100% 동일하게, 시간표 예정 시각 기준으로 실시간 카운팅
+      const isImminent = pNext.diffSec <= 35;
+      const livePlate1 = (busItem && busItem.plainNo1) ? busItem.plainNo1 : '';
+
+      next = {
+        sec: pNext.diffSec,
+        rawSec: pNext.diffSec,
+        arrmsg: `${pNext.time} 정시운행`,
+        stopText: isImminent ? '정류소 진입 중' : `정시 시간표 (${prioritySchedule.periodName})`,
+        plainNo: livePlate1,
+        isArrivingSoon: isImminent,
+        isWait: false,
+        isEnd: false,
+        targetTime: pNext.targetTime,
+        isEstimate: false,
+        isPriority: true,
+        priorityTime: pNext.time,
+        periodName: prioritySchedule.periodName
+      };
 
       if (pNext2) {
-        if (!next2 || next2.isWait || next2.isEnd || next2.sec <= 0) {
-          next2 = {
-            sec: pNext2.diffSec,
-            rawSec: pNext2.diffSec,
-            arrmsg: `${pNext2.time} 정시운행`,
-            stopText: `차기 순번 (${pNext2.time})`,
-            plainNo: (busItem && busItem.plainNo2) || '',
-            isWait: false,
-            isEnd: false,
-            targetTime: pNext2.targetTime,
-            isEstimate: false,
-            isPriority: true,
-            priorityTime: pNext2.time,
-            priorityRange: pNext2.rangeText
-          };
-        } else {
-          next2.isPriority = true;
-          next2.priorityTime = pNext2.time;
-          next2.priorityRange = pNext2.rangeText;
-        }
+        const livePlate2 = (busItem && busItem.plainNo2) ? busItem.plainNo2 : '';
+        next2 = {
+          sec: pNext2.diffSec,
+          rawSec: pNext2.diffSec,
+          arrmsg: `${pNext2.time} 정시운행`,
+          stopText: `차기 순번 (${pNext2.time})`,
+          plainNo: livePlate2,
+          isWait: false,
+          isEnd: false,
+          targetTime: pNext2.targetTime,
+          isEstimate: false,
+          isPriority: true,
+          priorityTime: pNext2.time
+        };
       }
     }
 
@@ -827,7 +815,7 @@ class TransitManager {
       let nextScheduleBadge = '';
       if (next.isPriority && next.priorityTime) {
         nextArrClock = next.priorityTime;
-        nextScheduleBadge = `<span class="badge-priority-timetable" style="display:inline-flex; align-items:center; background:#fef3c7; color:#92400e; font-size:10.5px; padding:1px 6px; border-radius:4px; font-weight:800; margin-left:6px; border:1px solid #fde68a;" title="${next.priorityRange || ''}">📋 시간표 우선</span>`;
+        nextScheduleBadge = `<span class="badge-priority-timetable" style="display:inline-flex; align-items:center; background:#fef3c7; color:#92400e; font-size:10.5px; padding:1px 6px; border-radius:4px; font-weight:800; margin-left:6px; border:1px solid #fde68a;">🗓️ 공식 시간표</span>`;
       } else if (next.targetTime && !next.isWait && !next.isEnd) {
         const nextArrTime = new Date(next.targetTime);
         nextArrClock = `${String(nextArrTime.getHours()).padStart(2, '0')}:${String(nextArrTime.getMinutes()).padStart(2, '0')}`;
@@ -849,7 +837,7 @@ class TransitManager {
           </div>
           <div class="next-transit-sub">
             <span class="transit-sub-pos">${nextSubLoc}</span>
-            ${nextArrClock ? `<span class="transit-sub-time"><span class="transit-arr-label">도착 예정:</span> <b class="transit-clock-time" style="color:#0369a1; font-weight:900;">${nextArrClock}</b>${next.priorityRange ? `<span style="font-size:10.5px; color:#b45309; font-weight:700; margin-left:4px;">(${next.priorityRange})</span>` : ''}</span>` : ''}
+            ${nextArrClock ? `<span class="transit-sub-time"><span class="transit-arr-label">도착 예정:</span> <b class="transit-clock-time" style="color:#0369a1; font-weight:900;">${nextArrClock}</b></span>` : ''}
           </div>
         </div>
       `;
