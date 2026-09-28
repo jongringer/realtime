@@ -217,9 +217,10 @@
             <div class=analog-clock-panel id=analogClockPanel style=display:none;>
               <div class=clock-panel-inner>
                 <div class=clock-mode-tabs>
-                  <button type=button class=clock-mode-tab active id=clockModeHour>시</button>
+                  <button type=button class=clock-mode-tab id=clockToggleAmPm style="font-weight: 800; min-width: 46px; color: var(--primary, #0284c7);">오전</button>
+                  <button type=button class="clock-mode-tab active" id=clockModeHour>시</button>
                   <button type=button class=clock-mode-tab id=clockModeMinute>분</button>
-                  <button type=button class=clock-mode-tab clock-clear-btn id=btnClearClockTime>🗑️</button>
+                  <button type=button class="clock-mode-tab clock-clear-btn" id=btnClearClockTime title="시간 지우기">🗑️</button>
                 </div>
                 <canvas id=analogClockCanvas width=180 height=180 class=analog-clock-canvas></canvas>
                 <div class=clock-selected-display id=clockSelectedDisplay>시간 없음</div>

@@ -61,6 +61,33 @@ const DEFAULT_INITIAL_DATA = {
   schedules: []
 };
 
+function parseScheduleTimeToMinutes(timeStr) {
+  if (!timeStr || typeof timeStr !== 'string') return 9999;
+  const clean = timeStr.trim();
+  if (!clean) return 9999;
+
+  let isPM = false;
+  let isAM = false;
+  if (/오후|pm/i.test(clean)) isPM = true;
+  if (/오전|am/i.test(clean)) isAM = true;
+
+  const nums = clean.match(/\d+/g);
+  if (!nums || nums.length === 0) return 9999;
+
+  let hours = parseInt(nums[0], 10);
+  let minutes = nums.length > 1 ? parseInt(nums[1], 10) : 0;
+
+  if (isPM) {
+    if (hours < 12) hours += 12;
+  } else if (isAM) {
+    if (hours === 12) hours = 0;
+  }
+  hours = Math.max(0, Math.min(23, hours));
+  minutes = Math.max(0, Math.min(59, minutes));
+
+  return hours * 60 + minutes;
+}
+
 class ShiftStorage {
   constructor() {
     this.init();
@@ -225,10 +252,13 @@ class ShiftStorage {
       ...schedule
     };
     schedules.push(newSchedule);
-    // 날짜 및 시간순 정렬
+    // 날짜 및 00:00~23:59 시간순 정확한 정렬 (오전/오후 누락 없이 정렬)
     schedules.sort((a, b) => {
       if (a.dateStr !== b.dateStr) return a.dateStr.localeCompare(b.dateStr);
-      return a.timeStr.localeCompare(b.timeStr);
+      const minA = parseScheduleTimeToMinutes(a.timeStr);
+      const minB = parseScheduleTimeToMinutes(b.timeStr);
+      if (minA !== minB) return minA - minB;
+      return (a.id || '').localeCompare(b.id || '');
     });
     this.setSchedules(schedules);
     return newSchedule;
@@ -242,7 +272,13 @@ class ShiftStorage {
 
   getSchedulesForDate(dateStr) {
     const schedules = this.getSchedules();
-    return schedules.filter(s => s.dateStr === dateStr);
+    const dayList = schedules.filter(s => s.dateStr === dateStr);
+    return dayList.sort((a, b) => {
+      const minA = parseScheduleTimeToMinutes(a.timeStr);
+      const minB = parseScheduleTimeToMinutes(b.timeStr);
+      if (minA !== minB) return minA - minB;
+      return (a.id || '').localeCompare(b.id || '');
+    });
   }
 
   resetToDefault() {

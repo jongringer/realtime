@@ -163,6 +163,14 @@ class ShiftApp {
     this.clockSelectedHour = null;
     this.clockSelectedMinute = null;
     this.clockMode = 'hour'; // 'hour' | 'minute'
+    this.clockAmPm = '오전'; // '오전' | '오후'
+
+    // 팝업 모달 뒤로가기 스택 관리
+    this._modalHistoryStack = [];
+    this._isClosingFromPopstate = false;
+    try {
+      window.history.replaceState({ page: 'home', modalOpen: false }, '');
+    } catch (e) {}
 
     try { this.initElements(); } catch (e) { console.error('initElements error:', e); }
     try { this.initEvents(); } catch (e) { console.error('initEvents error:', e); }
@@ -256,6 +264,7 @@ class ShiftApp {
     this.btnToggleClock = document.getElementById('btnToggleClock');
     this.clockToggleTimeDisplay = document.getElementById('clockToggleTimeDisplay');
     this.clockToggleArrow = document.getElementById('clockToggleArrow');
+    this.clockToggleAmPm = document.getElementById('clockToggleAmPm');
     this.clockModeHour = document.getElementById('clockModeHour');
     this.clockModeMinute = document.getElementById('clockModeMinute');
     this.btnClearClockTime = document.getElementById('btnClearClockTime');
@@ -611,14 +620,11 @@ class ShiftApp {
     // 키보드 ESC 키 누를 시 열린 모달 닫기
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
-        const activeModals = Array.from(document.querySelectorAll('.modal-overlay.active'));
-        if (activeModals.length > 0) {
-          this.closeModal(activeModals[activeModals.length - 1]);
-        }
+        this.handleBackButton();
       }
     });
 
-    // 모바일 뒤로가기(하드웨어/제스처 뒤로가기 버튼) 시 앱 종료 방지 및 모달 닫기 (앱 첫화면 복귀)
+    // 모바일 뒤로가기(하드웨어/제스처 뒤로가기 버튼) 시 앱 종료 방지 및 모달 닫기
     window.addEventListener('popstate', (e) => {
       if (this._isClosingFromPopstate) {
         return;
@@ -626,18 +632,26 @@ class ShiftApp {
       const activeModals = Array.from(document.querySelectorAll('.modal-overlay.active'));
       if (activeModals.length > 0) {
         this._isClosingFromPopstate = true;
+        let targetModal = null;
         if (this._modalHistoryStack && this._modalHistoryStack.length > 0) {
-          const topModal = this._modalHistoryStack.pop();
-          if (topModal) topModal.classList.remove('active');
-        } else {
-          const topModal = activeModals[activeModals.length - 1];
-          if (topModal) topModal.classList.remove('active');
+          targetModal = this._modalHistoryStack.pop();
+        }
+        if (!targetModal || !targetModal.classList.contains('active')) {
+          targetModal = activeModals[activeModals.length - 1];
+        }
+        if (targetModal) {
+          targetModal.classList.remove('active');
         }
         setTimeout(() => {
           this._isClosingFromPopstate = false;
         }, 150);
       }
     });
+
+    // Android 네이티브 JavascriptInterface에서 호출할 수 있는 전역 뒤로가기 핸들러 등록
+    window.handleAppBackButton = () => {
+      return this.handleBackButton();
+    };
 
     // 아날로그 시계 피커 이벤트
     this.initAnalogClockEvents();
@@ -663,6 +677,17 @@ class ShiftApp {
         this.updateClockModeTabs();
       }
     });
+
+    // 오전 / 오후 토글 버튼
+    if (this.clockToggleAmPm) {
+      this.clockToggleAmPm.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.clockAmPm = this.clockAmPm === '오전' ? '오후' : '오전';
+        this.updateAmPmButtonUI();
+        this.updateClockDisplay();
+        this.drawAnalogClock();
+      });
+    }
 
     // 시/분 모드 탭
     if (this.clockModeHour) {
@@ -721,6 +746,19 @@ class ShiftApp {
     }
   }
 
+  updateAmPmButtonUI() {
+    if (this.clockToggleAmPm) {
+      this.clockToggleAmPm.textContent = this.clockAmPm;
+      if (this.clockAmPm === '오후') {
+        this.clockToggleAmPm.style.color = '#ea580c';
+        this.clockToggleAmPm.style.fontWeight = '900';
+      } else {
+        this.clockToggleAmPm.style.color = '#0284c7';
+        this.clockToggleAmPm.style.fontWeight = '900';
+      }
+    }
+  }
+
   updateClockModeTabs() {
     if (this.clockModeHour) {
       this.clockModeHour.classList.toggle('active', this.clockMode === 'hour');
@@ -728,6 +766,7 @@ class ShiftApp {
     if (this.clockModeMinute) {
       this.clockModeMinute.classList.toggle('active', this.clockMode === 'minute');
     }
+    this.updateAmPmButtonUI();
   }
 
   updateClockDisplay() {
@@ -742,14 +781,23 @@ class ShiftApp {
       return;
     }
 
-    const hourStr = h !== null ? String(h).padStart(2, '0') : '??';
     const minStr = m !== null ? String(m).padStart(2, '0') : '00';
-    const ampm = (h !== null && h >= 12) ? '오후' : '오전';
-    const displayH = h !== null ? (h > 12 ? h - 12 : (h === 0 ? 12 : h)) : '??';
-    const timeStr = h !== null ? `${String(displayH).padStart(2,'0')}:${minStr}` : `??:${minStr}`;
-    const fullStr = h !== null ? `${ampm} ${timeStr}` : timeStr;
+    const displayH = h !== null ? h : 12;
+    const ampm = this.clockAmPm || (h !== null && h >= 12 ? '오후' : '오전');
 
-    if (this.clockToggleTimeDisplay) this.clockToggleTimeDisplay.textContent = fullStr;
+    // 24시간제(00~23) 계산
+    let hour24 = displayH;
+    if (ampm === '오후') {
+      if (hour24 < 12) hour24 += 12;
+    } else { // 오전
+      if (hour24 === 12) hour24 = 0;
+    }
+    const hour24Str = String(hour24).padStart(2, '0');
+    const displayHour12 = displayH === 0 ? 12 : displayH;
+    const timeStr12 = `${ampm} ${String(displayHour12).padStart(2, '0')}:${minStr}`;
+    const fullStr = `${timeStr12} (${hour24Str}:${minStr})`;
+
+    if (this.clockToggleTimeDisplay) this.clockToggleTimeDisplay.textContent = timeStr12;
     if (this.clockSelectedDisplay) this.clockSelectedDisplay.textContent = fullStr;
     if (this.clockResultBadge) {
       this.clockResultBadge.style.display = 'block';
@@ -854,18 +902,61 @@ class ShiftApp {
     const h = this.clockSelectedHour;
     const m = this.clockSelectedMinute !== null ? this.clockSelectedMinute : 0;
     if (h === null) return '';
-    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+
+    let hour24 = h;
+    const ampm = this.clockAmPm || (h >= 12 ? '오후' : '오전');
+    if (ampm === '오후') {
+      if (hour24 < 12) hour24 += 12;
+    } else { // 오전
+      if (hour24 === 12) hour24 = 0;
+    }
+    return `${String(hour24).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  }
+
+  // 12시간제/24시간제/오전/오후 모든 시각 문자열을 일관된 "오전/오후 HH:MM" 표시용 문자열로 표준화
+  formatDisplayTime(timeStr) {
+    if (!timeStr || typeof timeStr !== 'string') return '';
+    const clean = timeStr.trim();
+    if (!clean) return '';
+
+    // 이미 "오전" 또는 "오후"가 포함된 경우
+    if (/오후|pm/i.test(clean) || /오전|am/i.test(clean)) {
+      const isPM = /오후|pm/i.test(clean);
+      const nums = clean.match(/\d+/g);
+      if (nums && nums.length > 0) {
+        let h = parseInt(nums[0], 10);
+        const m = nums.length > 1 ? String(nums[1]).padStart(2, '0') : '00';
+        if (h > 12) h -= 12;
+        if (h === 0) h = 12;
+        return `${isPM ? '오후' : '오전'} ${String(h).padStart(2, '0')}:${m}`;
+      }
+      return clean;
+    }
+
+    // "HH:MM" 24시간제 형태
+    const parts = clean.split(':');
+    if (parts.length >= 2) {
+      const h24 = parseInt(parts[0], 10);
+      const m = String(parts[1]).padStart(2, '0');
+      if (!isNaN(h24)) {
+        const ampm = h24 >= 12 ? '오후' : '오전';
+        const h12 = h24 === 0 ? 12 : (h24 > 12 ? h24 - 12 : h24);
+        return `${ampm} ${String(h12).padStart(2, '0')}:${m}`;
+      }
+    }
+    return clean;
   }
 
   openModal(modal) {
     if (!modal) return;
     if (!modal.classList.contains('active')) {
       modal.classList.add('active');
+      if (!this._modalHistoryStack) this._modalHistoryStack = [];
+      this._modalHistoryStack.push(modal);
+
       // 모바일/브라우저 뒤로가기 버튼 시 앱 종료 없이 모달만 닫히도록 히스토리 상태 푸시
       if (!this._isClosingFromPopstate) {
         window.history.pushState({ modalOpen: true, modalId: modal.id || '' }, '');
-        if (!this._modalHistoryStack) this._modalHistoryStack = [];
-        this._modalHistoryStack.push(modal);
       }
     }
   }
@@ -874,18 +965,49 @@ class ShiftApp {
     if (!modal) return;
     modal.classList.remove('active');
 
-    // X버튼, 닫기 버튼, 저장 등으로 직접 닫았을 때 히스토리 스택 정리
-    if (!this._isClosingFromPopstate && this._modalHistoryStack && this._modalHistoryStack.length > 0) {
+    // 스택에서 제거
+    if (this._modalHistoryStack && this._modalHistoryStack.length > 0) {
       const idx = this._modalHistoryStack.lastIndexOf(modal);
       if (idx !== -1) {
         this._modalHistoryStack.splice(idx, 1);
-        this._isClosingFromPopstate = true;
-        window.history.back();
-        setTimeout(() => {
-          this._isClosingFromPopstate = false;
-        }, 150);
       }
     }
+
+    // X버튼, 닫기 버튼 등으로 직접 닫았을 때 남아있는 history 상태 소비
+    if (!this._isClosingFromPopstate && window.history.state && window.history.state.modalOpen) {
+      this._isClosingFromPopstate = true;
+      window.history.back();
+      setTimeout(() => {
+        this._isClosingFromPopstate = false;
+      }, 150);
+    }
+  }
+
+  handleBackButton() {
+    // 1. 현재 열려 있는 모달 목록 검색
+    const activeModals = Array.from(document.querySelectorAll('.modal-overlay.active'));
+    if (activeModals.length > 0) {
+      let targetModal = null;
+      if (this._modalHistoryStack && this._modalHistoryStack.length > 0) {
+        targetModal = this._modalHistoryStack.pop();
+      }
+      if (!targetModal || !targetModal.classList.contains('active')) {
+        targetModal = activeModals[activeModals.length - 1];
+      }
+      if (targetModal) {
+        targetModal.classList.remove('active');
+        // 브라우저 history 상태와 동기화
+        if (window.history.state && window.history.state.modalOpen) {
+          this._isClosingFromPopstate = true;
+          window.history.back();
+          setTimeout(() => {
+            this._isClosingFromPopstate = false;
+          }, 150);
+        }
+        return true; // 팝업을 닫았으므로 뒤로가기 소비 (앱 홈 튕김/종료 방지)
+      }
+    }
+    return false; // 닫을 모달 없음 (기본 홈 상태이므로 앱 종료/홈 이동 허용)
   }
 
   renderAll() {
@@ -1593,8 +1715,12 @@ class ShiftApp {
         });
       }
       if (daySchedules.length > 0) {
-        daySchedules.forEach(sch => {
-          const timePrefix = sch.timeStr ? `${sch.timeStr} ` : '';
+        const sortedDaySchedules = [...daySchedules].sort((a, b) => {
+          return parseScheduleTimeToMinutes(a.timeStr) - parseScheduleTimeToMinutes(b.timeStr);
+        });
+        sortedDaySchedules.forEach(sch => {
+          const formattedTime = this.formatDisplayTime(sch.timeStr);
+          const timePrefix = formattedTime ? `${formattedTime} ` : '';
           const fullText = `${timePrefix}${sch.title.trim()}`;
           if (!personalNotes.some(p => p.text === fullText)) {
             personalNotes.push({
@@ -1793,6 +1919,9 @@ class ShiftApp {
     this.clockSelectedHour = null;
     this.clockSelectedMinute = null;
     this.clockMode = 'hour';
+    const curH = new Date().getHours();
+    this.clockAmPm = curH >= 12 ? '오후' : '오전';
+    this.updateAmPmButtonUI();
     if (this.clockToggleTimeDisplay) this.clockToggleTimeDisplay.textContent = '시간 없음';
     if (this.clockSelectedDisplay) this.clockSelectedDisplay.textContent = '시간 없음';
     if (this.clockResultBadge) this.clockResultBadge.style.display = 'none';
@@ -1800,7 +1929,7 @@ class ShiftApp {
     if (this.clockToggleArrow) this.clockToggleArrow.textContent = '▼';
     this.elEditNoteInput.value = '';
 
-    // 등록된 개인 일정 목록 렌더링
+    // 등록된 개인 일정 목록 렌더링 (00:00~23:59 오전/오후 누락 없이 순서대로 렌더링)
     this.renderDayScheduleList();
 
     this.openModal(this.modalDayEdit);
@@ -1834,7 +1963,15 @@ class ShiftApp {
       return;
     }
 
-    schedules.forEach(item => {
+    // 00:00부터 23:59까지 오전(AM) 및 오후(PM) 전체 시간대 누락 없이 순서대로 정렬
+    const sorted = [...schedules].sort((a, b) => {
+      const minA = parseScheduleTimeToMinutes(a.timeStr);
+      const minB = parseScheduleTimeToMinutes(b.timeStr);
+      if (minA !== minB) return minA - minB;
+      return (a.id || '').localeCompare(b.id || '');
+    });
+
+    sorted.forEach(item => {
       const itemRow = document.createElement('div');
       itemRow.className = 'day-schedule-item';
 
@@ -1851,11 +1988,12 @@ class ShiftApp {
       });
       leftDiv.appendChild(checkbox);
 
-      // 시각 뱃지
+      // 시각 뱃지: 00:00~23:59 오전/오후 완벽 대응 표시
       if (item.timeStr) {
         const timeBadge = document.createElement('span');
         timeBadge.className = 'day-schedule-time-badge';
-        timeBadge.textContent = item.timeStr;
+        timeBadge.textContent = this.formatDisplayTime(item.timeStr);
+        timeBadge.title = `설정 시각: ${item.timeStr}`;
         leftDiv.appendChild(timeBadge);
       }
 
@@ -1917,7 +2055,7 @@ class ShiftApp {
 
   saveDayEdit() {
     const title = this.elEditNoteInput.value.trim();
-    // 아날로그 시계에서 선택한 시간 가져오기
+    // 아날로그 시계에서 선택한 시간 가져오기 (오전/오후 완벽 반영)
     const timeStr = this.getSelectedTimeStr();
 
     if (!title) {
@@ -1945,7 +2083,10 @@ class ShiftApp {
     });
 
     this.elEditNoteInput.value = '';
-    this.populateEditTimeSelect('');
+    this.clockSelectedHour = null;
+    this.clockSelectedMinute = null;
+    this.updateClockDisplay();
+    this.drawAnalogClock();
     this.renderDayScheduleList();
     this.renderCalendar();
     this.renderTodayCard();

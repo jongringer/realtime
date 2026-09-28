@@ -10,12 +10,15 @@ import android.util.Log;
 import android.webkit.JavascriptInterface;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
+
 import com.getcapacitor.BridgeActivity;
 
 import java.util.ArrayList;
 
 public class MainActivity extends BridgeActivity {
     private static final String TAG = "ShiftAlarmApp";
+    private long lastBackPressTime = 0;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -28,6 +31,38 @@ public class MainActivity extends BridgeActivity {
             }
         } catch (Exception e) {
             Log.e(TAG, "Error registering AndroidAlarm interface", e);
+        }
+
+        // Android 뒤로가기(Back Button) 이벤트 우선순위 제어
+        // 팝업/모달이 열려있으면 팝업만 먼저 닫고, 모두 닫힌 기본 상태에서만 홈 복귀/앱 종료 처리
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (bridge != null && bridge.getWebView() != null) {
+                    bridge.getWebView().evaluateJavascript(
+                        "(function() { return (window.handleAppBackButton && window.handleAppBackButton()) ? 'MODAL_CLOSED' : 'NO_MODAL'; })();",
+                        value -> {
+                            if (value != null && value.contains("MODAL_CLOSED")) {
+                                Log.d(TAG, "Back button handled: modal was closed successfully.");
+                            } else {
+                                handleDefaultBackPress();
+                            }
+                        }
+                    );
+                } else {
+                    handleDefaultBackPress();
+                }
+            }
+        });
+    }
+
+    private void handleDefaultBackPress() {
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastBackPressTime < 2000) {
+            finish();
+        } else {
+            lastBackPressTime = currentTime;
+            Toast.makeText(this, "한 번 더 누르면 앱이 종료됩니다.", Toast.LENGTH_SHORT).show();
         }
     }
 
