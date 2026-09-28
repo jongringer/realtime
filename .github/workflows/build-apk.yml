@@ -47,19 +47,22 @@ jobs:
           cd android
           ./gradlew assembleRelease --no-daemon
 
-      - name: Sign Android Release APK
-        uses: r0adkll/sign-android-release@v1
-        id: sign_app
-        with:
-          releaseDirectory: android/app/build/outputs/apk/release
-          signingKey: ${{ secrets.KEYSTORE_BASE64 }}
-          keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
-          alias: ${{ secrets.KEY_ALIAS }}
-          keyPassword: ${{ secrets.KEY_PASSWORD }}
-
-      - name: Rename Signed APK with Tag Name
+      - name: Sign Android Release APK with apksigner
         run: |
-          cp ${{ steps.sign_app.outputs.signedFile }} ./ShiftAlarm-${{ github.ref_name }}.apk
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > release.keystore
+          UNSIGNED_APK=$(find android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          echo "Found unsigned APK: $UNSIGNED_APK"
+          BUILD_TOOLS_DIR=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -n 1)
+          echo "Using Android Build Tools: $BUILD_TOOLS_DIR"
+          $BUILD_TOOLS_DIR/apksigner sign \
+            --ks release.keystore \
+            --ks-key-alias "${{ secrets.KEY_ALIAS }}" \
+            --ks-pass "pass:${{ secrets.KEYSTORE_PASSWORD }}" \
+            --key-pass "pass:${{ secrets.KEY_PASSWORD }}" \
+            --out ./ShiftAlarm-${{ github.ref_name }}.apk \
+            "$UNSIGNED_APK"
+          $BUILD_TOOLS_DIR/apksigner verify --verbose ./ShiftAlarm-${{ github.ref_name }}.apk
+          echo "✓ 정식 서명 완료: ./ShiftAlarm-${{ github.ref_name }}.apk"
 
       - name: Publish Signed APK to GitHub Release with QR Code
         uses: softprops/action-gh-release@v2
