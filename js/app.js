@@ -2635,26 +2635,37 @@ class ShiftApp {
 
   executeSetAlarm() {
     if (!this.pendingAlarmData) return;
-    const { hour, minute, androidDay, message, shiftType, dateStr, dayName } = this.pendingAlarmData;
+    const { hour, minute, androidDay, shiftType, dayName } = this.pendingAlarmData;
     this.closeModal(this.modalAlarmPopup);
 
     const padMinute = String(minute).padStart(2, '0');
-    const msgText = `${shiftType} 근무알람 (${dayName}요일)`;
+    const msgText = `${shiftType} 근무알람`;
 
-    // 안드로이드 표준 AlarmClock intent URI
-    // DAYS 파라미터(해당 요일)를 전달하여 오류 방지
-    const intentUri = `intent:#Intent;action=android.intent.action.SET_ALARM;i.android.intent.extra.alarm.HOUR=${hour};i.android.intent.extra.alarm.MINUTES=${minute};S.android.intent.extra.alarm.MESSAGE=${encodeURIComponent(msgText)};B.android.intent.extra.alarm.SKIP_UI=false;al.android.intent.extra.alarm.DAYS=${androidDay};end`;
+    let calledNative = false;
 
-    try {
-      window.location.href = intentUri;
-    } catch (e) {
-      console.warn('Alarm Intent navigation failed:', e);
+    // 1. APK 네이티브 환경 (MainActivity의 AndroidAlarm 브릿지)
+    if (window.AndroidAlarm && typeof window.AndroidAlarm.setAlarm === 'function') {
+      try {
+        console.log('[ShiftAlarm] Calling native AndroidAlarm.setAlarm:', hour, minute, msgText, androidDay);
+        window.AndroidAlarm.setAlarm(hour, minute, msgText, androidDay);
+        calledNative = true;
+      } catch (err) {
+        console.error('[ShiftAlarm] Native bridge call failed:', err);
+      }
     }
 
-    // 사용자 피드백 안내
-    setTimeout(() => {
-      alert(`⏰ [${shiftType} 알람 ${hour}:${padMinute}]\n갤럭시/안드로이드 시계 어플로 설정 요청을 전송했습니다.\n(${dayName}요일 알람으로 등록됩니다)`);
-    }, 450);
+    // 2. 일반 웹 브라우저 환경 Fallback (Chrome Intent Schema)
+    if (!calledNative) {
+      const intentUri = `intent:#Intent;action=android.intent.action.SET_ALARM;i.android.intent.extra.alarm.HOUR=${hour};i.android.intent.extra.alarm.MINUTES=${minute};S.android.intent.extra.alarm.MESSAGE=${encodeURIComponent(msgText)};B.android.intent.extra.alarm.SKIP_UI=false;al.android.intent.extra.alarm.DAYS=${androidDay};end`;
+      try {
+        window.location.href = intentUri;
+      } catch (e) {
+        console.warn('Alarm Intent navigation failed:', e);
+      }
+    }
+
+    // 화면 전환을 방해하지 않는 깔끔한 토스트 안내
+    this.showWeatherToast(`⏰ ${shiftType} 알람 (${hour}:${padMinute}, ${dayName}요일) 시계 앱 연동 완료`);
   }
 }
 
