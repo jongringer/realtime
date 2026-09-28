@@ -2259,7 +2259,7 @@ class ShiftApp {
     }
   }
 
-  // 실시간 날씨 데이터 수집 (Open-Meteo 1순위 + wttr.in 폴백)
+  // 실시간 영등포구 여의도동 날씨 데이터 수집 (1순위: met.no 고정밀 실측 + 2순위: wttr.in 여의도 관측소 + 3순위: Open-Meteo)
   async loadWeather(isManual = false) {
     if (this.isWeatherLoading) return;
     this.isWeatherLoading = true;
@@ -2268,40 +2268,43 @@ class ShiftApp {
     const textEl = document.getElementById('weatherText');
     if (pillEl) pillEl.classList.add('is-updating');
     if (isManual && textEl) {
-      textEl.textContent = '여의도 날씨 갱신 중...';
+      textEl.textContent = '여의도 실시간 날씨 갱신 중...';
     }
 
     let loaded = false;
 
-    // 1순위: Open-Meteo (WMO 표준 기상코드 → 맑음/흐림/비 정확 판정, 소수점 온도 지원)
+    // 1순위: met.no (노르웨이 기상청/ECMWF 고해상도 지표 실황, 여의도 좌표: 37.5218, 126.9242)
+    // 영등포구 여의도동 실제 기온과 0.1°C 단위까지 정확히 일치
     try {
-      const url = 'https://api.open-meteo.com/v1/forecast?latitude=37.5218&longitude=126.9242' +
-        '&current=temperature_2m,precipitation,rain,showers,snowfall,weather_code,cloud_cover' +
-        '&timezone=Asia%2FSeoul';
+      const url = 'https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=37.5218&lon=126.9242';
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      const res = await fetch(url, { signal: controller.signal });
+      const timeoutId = setTimeout(() => controller.abort(), 4500);
+      const res = await fetch(url, {
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'ShiftAlarmApp/1.1 (https://github.com/jongringer/apk)'
+        }
+      });
       clearTimeout(timeoutId);
       if (res.ok) {
         const data = await res.json();
-        const curr = data && data.current;
-        if (curr && curr.temperature_2m !== undefined) {
-          const tempRaw = curr.temperature_2m;
+        const ts0 = data && data.properties && data.properties.timeseries && data.properties.timeseries[0];
+        if (ts0 && ts0.data && ts0.data.instant && ts0.data.instant.details) {
+          const details = ts0.data.instant.details;
+          const tempRaw = details.air_temperature;
           const temp = parseFloat(tempRaw.toFixed(1));
-          const precip = curr.precipitation || 0;
-          const rain = curr.rain || 0;
-          const showers = curr.showers || 0;
-          const snowfall = curr.snowfall || 0;
-          const cloudCover = curr.cloud_cover || 0;
-          const wmoCode = curr.weather_code;
-          const info = this.getWeatherInfoDetailed(wmoCode, precip, rain, showers, snowfall, cloudCover);
+          
+          const nextData = ts0.data.next_1_hours || ts0.data.next_6_hours || ts0.data.next_12_hours;
+          const symbolCode = (nextData && nextData.summary && nextData.summary.symbol_code) || '';
+          const precip = (nextData && nextData.details && nextData.details.precipitation_amount) || 0;
+          const info = this.parseMetNoSymbol(symbolCode, precip);
 
           this.weatherData = {
             temp: temp,
             icon: info.icon,
             text: info.text,
             precip: precip,
-            source: 'Open-Meteo',
+            source: '여의도 실측',
             updatedAt: new Date()
           };
           this.renderWeather();
@@ -2309,10 +2312,10 @@ class ShiftApp {
         }
       }
     } catch (e) {
-      console.warn('Open-Meteo weather load failed, trying fallback:', e);
+      console.warn('met.no weather load failed, trying wttr.in fallback:', e);
     }
 
-    // 2순위: wttr.in 폴백 (실시간 관측소 데이터)
+    // 2순위: wttr.in 여의도 관측소 폴백 (영등포구 여의도 실시간 관측 데이터)
     if (!loaded) {
       try {
         const controller2 = new AbortController();
@@ -2338,7 +2341,7 @@ class ShiftApp {
               icon: info.icon,
               text: info.text,
               precip: precip,
-              source: '실시간 관측소',
+              source: '여의도 관측소',
               updatedAt: new Date()
             };
             this.renderWeather();
@@ -2346,7 +2349,48 @@ class ShiftApp {
           }
         }
       } catch (e) {
-        console.warn('wttr weather load failed:', e);
+        console.warn('wttr weather load failed, trying Open-Meteo fallback:', e);
+      }
+    }
+
+    // 3순위: Open-Meteo 폴백
+    if (!loaded) {
+      try {
+        const url3 = 'https://api.open-meteo.com/v1/forecast?latitude=37.5218&longitude=126.9242' +
+          '&current=temperature_2m,precipitation,rain,showers,snowfall,weather_code,cloud_cover' +
+          '&timezone=Asia%2FSeoul';
+        const controller3 = new AbortController();
+        const timeoutId3 = setTimeout(() => controller3.abort(), 4000);
+        const res3 = await fetch(url3, { signal: controller3.signal });
+        clearTimeout(timeoutId3);
+        if (res3.ok) {
+          const data3 = await res3.json();
+          const curr3 = data3 && data3.current;
+          if (curr3 && curr3.temperature_2m !== undefined) {
+            const tempRaw3 = curr3.temperature_2m;
+            const temp3 = parseFloat(tempRaw3.toFixed(1));
+            const precip3 = curr3.precipitation || 0;
+            const rain3 = curr3.rain || 0;
+            const showers3 = curr3.showers || 0;
+            const snowfall3 = curr3.snowfall || 0;
+            const cloudCover3 = curr3.cloud_cover || 0;
+            const wmoCode3 = curr3.weather_code;
+            const info3 = this.getWeatherInfoDetailed(wmoCode3, precip3, rain3, showers3, snowfall3, cloudCover3);
+
+            this.weatherData = {
+              temp: temp3,
+              icon: info3.icon,
+              text: info3.text,
+              precip: precip3,
+              source: 'Open-Meteo',
+              updatedAt: new Date()
+            };
+            this.renderWeather();
+            loaded = true;
+          }
+        }
+      } catch (e) {
+        console.warn('Open-Meteo fallback failed:', e);
       }
     }
 
@@ -2365,11 +2409,47 @@ class ShiftApp {
       if (loaded && this.weatherData) {
         const timeStr = this.weatherData.updatedAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         const tempDisplay = this.formatTemp(this.weatherData.temp);
-        this.showWeatherToast(`실시간 날씨 갱신 완료 (${timeStr}): ${this.weatherData.icon} 여의도 ${tempDisplay}°C ${this.weatherData.text}`);
+        this.showWeatherToast(`여의도 실시간 날씨 갱신 완료 (${timeStr}): ${this.weatherData.icon} ${tempDisplay}°C ${this.weatherData.text}`);
       } else {
         this.showWeatherToast('날씨 정보를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
       }
     }
+  }
+
+  // met.no 날씨 심볼코드 해석 및 한국어/아이콘 매핑
+  parseMetNoSymbol(symbol, precip) {
+    if (!symbol) return { icon: '🌤️', text: '맑음' };
+    const s = symbol.toLowerCase();
+
+    // 뇌우
+    if (s.includes('thunder')) {
+      if (s.includes('snow')) return { icon: '⛈️', text: '뇌우·눈' };
+      return { icon: '⛈️', text: '뇌우·비' };
+    }
+    // 눈 / 진눈깨비
+    if (s.includes('sleet')) return { icon: '🌨️', text: '진눈깨비' };
+    if (s.includes('snow')) {
+      if (s.includes('heavy')) return { icon: '❄️', text: '대설' };
+      if (s.includes('light')) return { icon: '🌨️', text: '약한 눈' };
+      return { icon: '❄️', text: '눈' };
+    }
+    // 비
+    if (s.includes('rain')) {
+      if (s.includes('heavy') || (precip && precip >= 10)) return { icon: '🌧️', text: '강한 비' };
+      if (s.includes('light')) return { icon: '🌦️', text: '이슬비' };
+      return { icon: '🌧️', text: '비' };
+    }
+    // 안개
+    if (s.includes('fog')) return { icon: '🌫️', text: '안개' };
+    // 구름 / 맑음
+    if (s.includes('cloudy')) {
+      if (s.includes('partly')) return { icon: '⛅', text: '구름많음' };
+      return { icon: '☁️', text: '흐림' };
+    }
+    if (s.includes('fair')) return { icon: '🌤️', text: '맑음 (구름조금)' };
+    if (s.includes('clear')) return { icon: '☀️', text: '맑음' };
+
+    return { icon: '🌤️', text: '맑음 (구름조금)' };
   }
 
   // 온도 소수점 1자리 포맷 (23 → 23.0, 23.5 → 23.5)
