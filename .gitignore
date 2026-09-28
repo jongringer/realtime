@@ -6,3 +6,5 @@ dist/
 cloudflared.exe
 .DS_Store
 Thumbs.db
+scratch/
+
