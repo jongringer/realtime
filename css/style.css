@@ -461,6 +461,62 @@ body[data-theme="noble-gold"] .btn-home-today {
   border-color: rgba(251, 191, 36, 0.3);
 }
 
+/* 근무알람 버튼 */
+.month-alarm-wrap {
+  display: flex;
+  align-items: center;
+}
+
+.btn-shift-alarm {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: linear-gradient(135deg, #0284c7, #0369a1);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.32);
+  transition: all 0.18s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  line-height: 1.2;
+}
+
+.btn-shift-alarm:hover {
+  background: linear-gradient(135deg, #0369a1, #075985);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(2, 132, 199, 0.42);
+}
+
+.btn-shift-alarm:active {
+  transform: scale(0.95);
+}
+
+body[data-theme="obsidian"] .btn-shift-alarm {
+  background: linear-gradient(135deg, #0284c7, #38bdf8);
+  color: #0f172a;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(56, 189, 248, 0.3);
+}
+
+body[data-theme="noble-gold"] .btn-shift-alarm {
+  background: linear-gradient(135deg, #d97706, #fbbf24);
+  color: #1e1b18;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+}
+
+.shift-alarm-icon {
+  font-size: 14px;
+}
+.shift-alarm-text {
+  letter-spacing: -0.3px;
+}
+
 .month-arrows {
   display: flex;
   gap: 6px;

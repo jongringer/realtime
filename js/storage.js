@@ -1,9 +1,16 @@
-// 로컬 스토리지 관리 모듈
 const STORAGE_KEYS = {
   PROFILE: 'shift_app_profile',
   BASE_SETTINGS: 'shift_app_base_settings',
   OVERRIDES: 'shift_app_overrides',
-  SCHEDULES: 'shift_app_schedules'
+  SCHEDULES: 'shift_app_schedules',
+  ALARM_SETTINGS: 'shift_app_alarm_settings'
+};
+
+// 기본 알람 설정 (일근 06:00, 야근 15:00, 조근 05:20)
+const DEFAULT_ALARM_SETTINGS = {
+  day: '06:00',
+  night: '15:00',
+  early: '05:20'
 };
 
 // 스크린샷과 1:1로 일치하는 기본 초기 데이터
@@ -92,6 +99,22 @@ class ShiftStorage {
     if (!localStorage.getItem(STORAGE_KEYS.SCHEDULES)) {
       this.setSchedules(DEFAULT_INITIAL_DATA.schedules);
     }
+    if (!localStorage.getItem(STORAGE_KEYS.ALARM_SETTINGS)) {
+      this.setAlarmSettings(DEFAULT_ALARM_SETTINGS);
+    }
+  }
+
+  getAlarmSettings() {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.ALARM_SETTINGS);
+      return data ? { ...DEFAULT_ALARM_SETTINGS, ...JSON.parse(data) } : DEFAULT_ALARM_SETTINGS;
+    } catch (e) {
+      return DEFAULT_ALARM_SETTINGS;
+    }
+  }
+
+  setAlarmSettings(settings) {
+    localStorage.setItem(STORAGE_KEYS.ALARM_SETTINGS, JSON.stringify(settings));
   }
 
   getProfile() {
@@ -194,6 +217,7 @@ class ShiftStorage {
     this.setBaseSettings(DEFAULT_INITIAL_DATA.baseSettings);
     this.setOverrides(DEFAULT_INITIAL_DATA.overrides);
     this.setSchedules(DEFAULT_INITIAL_DATA.schedules);
+    this.setAlarmSettings(DEFAULT_ALARM_SETTINGS);
   }
 }
 

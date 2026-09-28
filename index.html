@@ -61,15 +61,16 @@
         </div>
       </div>
     </section>
-    <section class=month-nav-bar style="margin-top: 4px; margin-bottom: 4px;">
-      <div class=month-title-wrap>
-        <h1 class=month-title id=monthTitle>2026년 9월 근무표</h1>
-        <button type="button" class="shift-badge-pill" id="btnShiftBadgeHome" title="클릭 시 오늘(이번 달)로 바로 이동" onclick="window.app && window.app.goToToday && window.app.goToToday()">4교대근무</button>
+    <section class="month-nav-bar" style="margin-top: 4px; margin-bottom: 4px;">
+      <div class="month-title-wrap">
         <button type="button" class="btn-home-today" id="btnHomeToday" title="오늘(이번 달)로 바로 이동" onclick="window.app && window.app.goToToday && window.app.goToToday()">🏠</button>
+        <h1 class="month-title" id="monthTitle">2026년 9월 근무표</h1>
       </div>
-      <div class=month-arrows>
-        <button class=nav-arrow-btn id=btnPrevMonth title=이전달>&lt;</button>
-        <button class=nav-arrow-btn id=btnNextMonth title=다음달>&gt;</button>
+      <div class="month-alarm-wrap">
+        <button type="button" class="btn-shift-alarm" id="btnShiftAlarm" title="선택한 날짜 근무 알람 설정">
+          <span class="shift-alarm-icon">⏰</span>
+          <span class="shift-alarm-text">근무알람</span>
+        </button>
       </div>
     </section>
     <section class="calendar-card" id="calendarCard">
@@ -270,12 +271,64 @@
           </select>
           <p style=font-size: 11px; color: #64748b; margin-top: 4px;>* 4조 3교대 패턴: [일근 → 야근 → 조근 → 비번] 순으로 자동 순환 계산됩니다.</p>
         </div>
+        <div class="form-group" style="margin-bottom: 14px; background: rgba(2, 132, 199, 0.05); padding: 12px; border-radius: 12px; border: 1.5px solid rgba(2, 132, 199, 0.2);">
+          <label class="form-label" style="font-weight: 800; color: var(--primary-blue, #0284c7); margin-bottom: 8px; display: flex; align-items: center; gap: 4px;">
+            <span>⏰</span> <span>근무별 알람 시각 설정</span>
+          </label>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 13px; font-weight: 700;">일근 알람</span>
+              <input type="time" id="settingAlarmDay" class="form-input" style="width: 130px; height: 34px; padding: 4px 8px; text-align: center; font-weight: 700;" value="06:00">
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 13px; font-weight: 700;">야근 알람</span>
+              <input type="time" id="settingAlarmNight" class="form-input" style="width: 130px; height: 34px; padding: 4px 8px; text-align: center; font-weight: 700;" value="15:00">
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 13px; font-weight: 700;">조근 알람</span>
+              <input type="time" id="settingAlarmEarly" class="form-input" style="width: 130px; height: 34px; padding: 4px 8px; text-align: center; font-weight: 700;" value="05:20">
+            </div>
+          </div>
+          <p style="font-size: 11px; color: #64748b; margin-top: 6px; margin-bottom: 0;">* 달력에서 해당 날짜 선택 후 [근무알람]을 누르면 안드로이드 시계에 자동 연동됩니다.</p>
+        </div>
         <div style=border-top: 1px dashed #cbd5e1; padding-top: 12px; margin-top: 12px;>
           <button type=button class=btn-secondary id=btnResetAllData style=width: 100%; color: #ef4444; border-color: #fecaca; font-size: 12px;>데이터 전체 초기화</button>
         </div>
       </div>
       <div class=modal-footer>
         <button type=button class=btn-primary id=btnSaveSettings>설정 저장</button>
+      </div>
+    </div>
+  </div>
+  <!-- 근무알람 확인 및 실행 모달 -->
+  <div class="modal-overlay" id="modalAlarmPopup">
+    <div class="modal-container" style="max-width: 360px; text-align: center;">
+      <div class="modal-header" style="justify-content: center; border-bottom: none; padding-bottom: 4px;">
+        <h3 class="modal-title" style="font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 6px; color: var(--text-main);">
+          <span>⏰</span> <span>근무알람 자동 설정</span>
+        </h3>
+      </div>
+      <div class="modal-body" style="padding-top: 6px;">
+        <div id="alarmPopupShiftBadge" style="display: inline-block; padding: 6px 16px; border-radius: 9999px; font-weight: 800; font-size: 14px; margin-bottom: 12px; background: #e0f2fe; color: #0284c7;">
+          9월 28일 (월) 일근
+        </div>
+        <div style="background: var(--bg-card); border: 1.5px solid var(--card-border, #cbd5e1); border-radius: 12px; padding: 14px; margin-bottom: 12px; text-align: left; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 2px;">설정 알람 시각</div>
+          <div id="alarmPopupTargetTime" style="font-size: 22px; font-weight: 800; color: var(--text-main); margin-bottom: 10px;">오전 06:00</div>
+          <div style="border-top: 1px dashed #cbd5e1; padding-top: 8px;">
+            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 2px;">알람 예정 안내</div>
+            <div id="alarmPopupRemainTime" style="font-size: 16px; font-weight: 800; color: #0284c7;">
+              0일 20시간 30분 후에 울립니다
+            </div>
+          </div>
+        </div>
+        <p style="font-size: 12px; color: var(--text-muted); margin: 0; line-height: 1.45;">
+          아래 버튼을 누르면 <strong>갤럭시/안드로이드 시계 앱</strong>에 해당 요일 알람이 정확히 등록됩니다.
+        </p>
+      </div>
+      <div class="modal-footer" style="display: flex; gap: 8px; justify-content: stretch; padding-top: 10px;">
+        <button type="button" class="btn-secondary" id="btnCancelAlarmPopup" style="flex: 1;">닫기</button>
+        <button type="button" class="btn-primary" id="btnConfirmAlarmPopup" style="flex: 1.5; background: linear-gradient(135deg, #0284c7, #0369a1); font-weight: 700;">시계 알람 등록</button>
       </div>
     </div>
   </div>

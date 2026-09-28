@@ -197,6 +197,7 @@ class ShiftApp {
     this.btnNextMonth = document.getElementById('btnNextMonth');
     this.btnHomeToday = document.getElementById('btnHomeToday');
     this.btnShiftBadgeHome = document.getElementById('btnShiftBadgeHome');
+    this.btnShiftAlarm = document.getElementById('btnShiftAlarm');
 
     // 오늘 근무 카드
     this.elRealTimeClock = document.getElementById('realTimeClock');
@@ -269,8 +270,20 @@ class ShiftApp {
     this.inputSettingName = document.getElementById('inputSettingName');
     this.inputSettingTeam = document.getElementById('inputSettingTeam');
     this.selectLastMonthEndShift = document.getElementById('selectLastMonthEndShift');
+    this.settingAlarmDay = document.getElementById('settingAlarmDay');
+    this.settingAlarmNight = document.getElementById('settingAlarmNight');
+    this.settingAlarmEarly = document.getElementById('settingAlarmEarly');
     this.btnSaveSettings = document.getElementById('btnSaveSettings');
     this.btnResetAllData = document.getElementById('btnResetAllData');
+
+    // 근무알람 확인 팝업 모달
+    this.modalAlarmPopup = document.getElementById('modalAlarmPopup');
+    this.alarmPopupShiftBadge = document.getElementById('alarmPopupShiftBadge');
+    this.alarmPopupTargetTime = document.getElementById('alarmPopupTargetTime');
+    this.alarmPopupRemainTime = document.getElementById('alarmPopupRemainTime');
+    this.btnCancelAlarmPopup = document.getElementById('btnCancelAlarmPopup');
+    this.btnConfirmAlarmPopup = document.getElementById('btnConfirmAlarmPopup');
+    this.pendingAlarmData = null;
 
     // 월간 통계/요약 모달
     this.btnOpenSummary = document.getElementById('btnOpenSummary');
@@ -305,6 +318,19 @@ class ShiftApp {
     }
     if (this.btnShiftBadgeHome) {
       this.btnShiftBadgeHome.addEventListener('click', () => this.goToToday());
+    }
+
+    // 근무알람 버튼 클릭
+    if (this.btnShiftAlarm) {
+      this.btnShiftAlarm.addEventListener('click', () => this.handleShiftAlarmClick());
+    }
+
+    // 근무알람 팝업 닫기 / 시계 앱 등록 확인
+    if (this.btnCancelAlarmPopup) {
+      this.btnCancelAlarmPopup.addEventListener('click', () => this.closeModal(this.modalAlarmPopup));
+    }
+    if (this.btnConfirmAlarmPopup) {
+      this.btnConfirmAlarmPopup.addEventListener('click', () => this.executeSetAlarm());
     }
 
     // 개인 일정 등록 (폼이 존재할 때만 바인딩)
@@ -476,6 +502,13 @@ class ShiftApp {
         const profile = shiftStorage.getProfile();
         this.inputSettingName.value = profile.name;
         this.inputSettingTeam.value = profile.team;
+
+        // 알람 시각 설정 불러오기
+        const alarmSettings = shiftStorage.getAlarmSettings();
+        if (this.settingAlarmDay) this.settingAlarmDay.value = alarmSettings.day || '06:00';
+        if (this.settingAlarmNight) this.settingAlarmNight.value = alarmSettings.night || '15:00';
+        if (this.settingAlarmEarly) this.settingAlarmEarly.value = alarmSettings.early || '05:20';
+
         this.openModal(this.modalSettings);
       });
     }
@@ -490,6 +523,16 @@ class ShiftApp {
           name: this.inputSettingName.value.trim() || '최종철 님',
           team: this.inputSettingTeam.value.trim() || '생방기술1 · 직무 NDC',
           avatar: (this.inputSettingName.value.trim() || '최')[0]
+        });
+
+        // 알람 시각 설정 저장
+        const dayAlarm = this.settingAlarmDay ? this.settingAlarmDay.value : '06:00';
+        const nightAlarm = this.settingAlarmNight ? this.settingAlarmNight.value : '15:00';
+        const earlyAlarm = this.settingAlarmEarly ? this.settingAlarmEarly.value : '05:20';
+        shiftStorage.setAlarmSettings({
+          day: dayAlarm,
+          night: nightAlarm,
+          early: earlyAlarm
         });
 
         // 전달 말일 근무 설정 반영 시
@@ -1642,14 +1685,16 @@ class ShiftApp {
     this.renderTodayCard();
     this.populateScheduleDateOptions();
 
-    // 사용자가 다른 날짜를 클릭하여 확인 후 3.5초 뒤 항상 디폴트 오늘 날짜로 자동 복귀
+    // 사용자가 날짜 클릭 후 근무알람 등을 여유롭게 설정할 수 있도록 15초 유지 후 오늘 날짜로 복귀
     if (dateStr !== this.todayDateStr) {
       this.autoResetTodayTimer = setTimeout(() => {
+        // 알람 팝업이나 모달이 열려있는 중에는 복귀하지 않음
+        if (this.modalAlarmPopup && this.modalAlarmPopup.classList.contains('active')) return;
         this.selectedDateStr = this.todayDateStr;
         this.renderCalendar();
         this.renderTodayCard();
         this.populateScheduleDateOptions();
-      }, 3500);
+      }, 15000);
     }
   }
 
@@ -2493,6 +2538,123 @@ class ShiftApp {
       toast.style.opacity = '0';
       toast.style.transform = 'translateX(-50%) translateY(15px)';
     }, 2500);
+  }
+
+  // =========================================================================
+  // 근무알람 기능 (갤럭시 / 안드로이드 시계 앱 알람 연동)
+  // =========================================================================
+  handleShiftAlarmClick() {
+    const targetDateStr = this.selectedDateStr || this.todayDateStr;
+    const [y, m, d] = targetDateStr.split('-').map(Number);
+    const dateObj = new Date(y, m - 1, d);
+    const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
+    const dayOfWeek = dateObj.getDay(); // 0(일) ~ 6(토)
+    const dayName = weekDays[dayOfWeek];
+
+    // 해당 날짜의 근무 형태 조회
+    const overrides = shiftStorage.getOverrides();
+    const baseSettings = shiftStorage.getBaseSettings();
+    const shiftInfo = getShiftInfoForDate(targetDateStr, overrides, baseSettings);
+    const shiftType = shiftInfo.shiftType || '일근';
+
+    // 환경설정에 저장된 알람 시각 조회
+    const alarmSettings = shiftStorage.getAlarmSettings();
+    let alarmTimeStr = '06:00';
+    let shiftBadgeText = shiftType;
+
+    if (shiftType.includes('야근')) {
+      alarmTimeStr = alarmSettings.night || '15:00';
+    } else if (shiftType.includes('조근')) {
+      alarmTimeStr = alarmSettings.early || '05:20';
+    } else if (shiftType.includes('일근')) {
+      alarmTimeStr = alarmSettings.day || '06:00';
+    } else {
+      // 비번 / 휴가 / 기타
+      alarmTimeStr = alarmSettings.day || '06:00';
+      shiftBadgeText = `${shiftType} (일근 기준 알람)`;
+    }
+
+    const [h, min] = alarmTimeStr.split(':').map(Number);
+    const targetAlarmDate = new Date(y, m - 1, d, h, min, 0);
+    const now = new Date();
+    const diffMs = targetAlarmDate.getTime() - now.getTime();
+
+    let remainText = '';
+    if (diffMs <= 0) {
+      remainText = '선택한 일시가 지남 (시계 앱에서 해당 요일 반복으로 등록됩니다)';
+    } else {
+      const diffTotalMins = Math.floor(diffMs / (1000 * 60));
+      const diffDays = Math.floor(diffTotalMins / (24 * 60));
+      const diffHours = Math.floor((diffTotalMins % (24 * 60)) / 60);
+      const diffMins = diffTotalMins % 60;
+
+      if (diffDays > 0) {
+        remainText = `${diffDays}일 ${diffHours}시간 ${diffMins}분 후에 울립니다`;
+      } else if (diffHours > 0) {
+        remainText = `${diffHours}시간 ${diffMins}분 후에 울립니다`;
+      } else {
+        remainText = `${diffMins}분 후에 울립니다`;
+      }
+    }
+
+    const periodStr = h < 12 ? '오전' : '오후';
+    const displayHour = h === 0 ? 12 : (h > 12 ? h - 12 : h);
+    const displayTime = `${periodStr} ${String(displayHour).padStart(2, '0')}:${String(min).padStart(2, '0')} (${alarmTimeStr})`;
+
+    if (this.alarmPopupShiftBadge) {
+      this.alarmPopupShiftBadge.textContent = `${m}월 ${d}일 (${dayName}) · ${shiftBadgeText}`;
+    }
+    if (this.alarmPopupTargetTime) {
+      this.alarmPopupTargetTime.textContent = displayTime;
+    }
+    if (this.alarmPopupRemainTime) {
+      this.alarmPopupRemainTime.textContent = remainText;
+    }
+
+    // 안드로이드 Calendar 요일 상수: 1(일) ~ 7(토)
+    const androidDay = dayOfWeek + 1;
+
+    this.pendingAlarmData = {
+      hour: h,
+      minute: min,
+      dayOfWeek: dayOfWeek,
+      androidDay: androidDay,
+      dayName: dayName,
+      dateStr: targetDateStr,
+      shiftType: shiftType,
+      message: `${m}/${d} ${shiftType} 알람`
+    };
+
+    if (this.autoResetTodayTimer) {
+      clearTimeout(this.autoResetTodayTimer);
+      this.autoResetTodayTimer = null;
+    }
+
+    this.openModal(this.modalAlarmPopup);
+  }
+
+  executeSetAlarm() {
+    if (!this.pendingAlarmData) return;
+    const { hour, minute, androidDay, message, shiftType, dateStr, dayName } = this.pendingAlarmData;
+    this.closeModal(this.modalAlarmPopup);
+
+    const padMinute = String(minute).padStart(2, '0');
+    const msgText = `${shiftType} 근무알람 (${dayName}요일)`;
+
+    // 안드로이드 표준 AlarmClock intent URI
+    // DAYS 파라미터(해당 요일)를 전달하여 오류 방지
+    const intentUri = `intent:#Intent;action=android.intent.action.SET_ALARM;i.android.intent.extra.alarm.HOUR=${hour};i.android.intent.extra.alarm.MINUTES=${minute};S.android.intent.extra.alarm.MESSAGE=${encodeURIComponent(msgText)};B.android.intent.extra.alarm.SKIP_UI=false;al.android.intent.extra.alarm.DAYS=${androidDay};end`;
+
+    try {
+      window.location.href = intentUri;
+    } catch (e) {
+      console.warn('Alarm Intent navigation failed:', e);
+    }
+
+    // 사용자 피드백 안내
+    setTimeout(() => {
+      alert(`⏰ [${shiftType} 알람 ${hour}:${padMinute}]\n갤럭시/안드로이드 시계 어플로 설정 요청을 전송했습니다.\n(${dayName}요일 알람으로 등록됩니다)`);
+    }, 450);
   }
 }
 
