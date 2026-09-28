@@ -3,7 +3,8 @@ const STORAGE_KEYS = {
   BASE_SETTINGS: 'shift_app_base_settings',
   OVERRIDES: 'shift_app_overrides',
   SCHEDULES: 'shift_app_schedules',
-  ALARM_SETTINGS: 'shift_app_alarm_settings'
+  ALARM_SETTINGS: 'shift_app_alarm_settings',
+  ACTIVE_ALARMS: 'shift_app_active_alarms'
 };
 
 // 기본 알람 설정 (일근 06:00, 야근 15:00, 조근 05:20)
@@ -117,6 +118,38 @@ class ShiftStorage {
     localStorage.setItem(STORAGE_KEYS.ALARM_SETTINGS, JSON.stringify(settings));
   }
 
+  getActiveAlarms() {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.ACTIVE_ALARMS);
+      return data ? JSON.parse(data) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  isAlarmActive(dateStr) {
+    const alarms = this.getActiveAlarms();
+    return !!alarms[dateStr];
+  }
+
+  addActiveAlarm(dateStr, alarmData = {}) {
+    const alarms = this.getActiveAlarms();
+    alarms[dateStr] = {
+      time: alarmData.time || '',
+      type: alarmData.type || '',
+      setAt: Date.now()
+    };
+    localStorage.setItem(STORAGE_KEYS.ACTIVE_ALARMS, JSON.stringify(alarms));
+  }
+
+  removeActiveAlarm(dateStr) {
+    const alarms = this.getActiveAlarms();
+    if (alarms[dateStr]) {
+      delete alarms[dateStr];
+      localStorage.setItem(STORAGE_KEYS.ACTIVE_ALARMS, JSON.stringify(alarms));
+    }
+  }
+
   getProfile() {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.PROFILE);
@@ -218,6 +251,7 @@ class ShiftStorage {
     this.setOverrides(DEFAULT_INITIAL_DATA.overrides);
     this.setSchedules(DEFAULT_INITIAL_DATA.schedules);
     this.setAlarmSettings(DEFAULT_ALARM_SETTINGS);
+    localStorage.removeItem(STORAGE_KEYS.ACTIVE_ALARMS);
   }
 }
 

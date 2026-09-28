@@ -282,6 +282,7 @@ class ShiftApp {
     this.alarmPopupTargetTime = document.getElementById('alarmPopupTargetTime');
     this.alarmPopupRemainTime = document.getElementById('alarmPopupRemainTime');
     this.btnCancelAlarmPopup = document.getElementById('btnCancelAlarmPopup');
+    this.btnDismissAlarmPopup = document.getElementById('btnDismissAlarmPopup');
     this.btnConfirmAlarmPopup = document.getElementById('btnConfirmAlarmPopup');
     this.pendingAlarmData = null;
 
@@ -325,9 +326,12 @@ class ShiftApp {
       this.btnShiftAlarm.addEventListener('click', () => this.handleShiftAlarmClick());
     }
 
-    // 근무알람 팝업 닫기 / 시계 앱 등록 확인
+    // 근무알람 팝업 닫기 / 시계 앱 등록 확인 / 알람 해제
     if (this.btnCancelAlarmPopup) {
       this.btnCancelAlarmPopup.addEventListener('click', () => this.closeModal(this.modalAlarmPopup));
+    }
+    if (this.btnDismissAlarmPopup) {
+      this.btnDismissAlarmPopup.addEventListener('click', () => this.executeDismissAlarm());
     }
     if (this.btnConfirmAlarmPopup) {
       this.btnConfirmAlarmPopup.addEventListener('click', () => this.executeSetAlarm());
@@ -1461,6 +1465,13 @@ class ShiftApp {
           dayNum.style.fontWeight = '900';
         }
         headerRow.appendChild(dayNum);
+        if (shiftStorage.isAlarmActive(dateStr)) {
+          const alarmIcon = document.createElement('span');
+          alarmIcon.className = 'day-alarm-indicator';
+          alarmIcon.textContent = '⏰';
+          alarmIcon.title = '근무알람 설정됨';
+          headerRow.appendChild(alarmIcon);
+        }
         cell.appendChild(headerRow);
 
         if (shiftInfo.badgeText) {
@@ -1524,6 +1535,13 @@ class ShiftApp {
         dayNum.style.fontWeight = '900';
       }
       headerRow.appendChild(dayNum);
+      if (shiftStorage.isAlarmActive(dateStr)) {
+        const alarmIcon = document.createElement('span');
+        alarmIcon.className = 'day-alarm-indicator';
+        alarmIcon.textContent = '⏰';
+        alarmIcon.title = '근무알람 설정됨';
+        headerRow.appendChild(alarmIcon);
+      }
       cell.appendChild(headerRow);
 
       // 공휴일 정보 뱃지 (날짜 아래 별도 2줄 배치로 날짜에 절대 간섭 없음)
@@ -1653,6 +1671,13 @@ class ShiftApp {
           dayNum.style.fontWeight = '900';
         }
         headerRow.appendChild(dayNum);
+        if (shiftStorage.isAlarmActive(dateStr)) {
+          const alarmIcon = document.createElement('span');
+          alarmIcon.className = 'day-alarm-indicator';
+          alarmIcon.textContent = '⏰';
+          alarmIcon.title = '근무알람 설정됨';
+          headerRow.appendChild(alarmIcon);
+        }
         cell.appendChild(headerRow);
 
         if (shiftInfo.badgeText) {
@@ -2625,6 +2650,15 @@ class ShiftApp {
       message: `${m}/${d} ${shiftType} 알람`
     };
 
+    // 현재 알람 활성화 여부 확인 및 UI 동기화
+    const isAlreadyActive = shiftStorage.isAlarmActive(targetDateStr);
+    if (this.btnDismissAlarmPopup) {
+      this.btnDismissAlarmPopup.style.display = isAlreadyActive ? 'inline-block' : 'none';
+    }
+    if (this.btnConfirmAlarmPopup) {
+      this.btnConfirmAlarmPopup.textContent = isAlreadyActive ? '시계 알람 재설정' : '시계 알람 등록';
+    }
+
     if (this.autoResetTodayTimer) {
       clearTimeout(this.autoResetTodayTimer);
       this.autoResetTodayTimer = null;
@@ -2635,7 +2669,7 @@ class ShiftApp {
 
   executeSetAlarm() {
     if (!this.pendingAlarmData) return;
-    const { hour, minute, androidDay, shiftType, dayName } = this.pendingAlarmData;
+    const { hour, minute, androidDay, shiftType, dayName, dateStr } = this.pendingAlarmData;
     this.closeModal(this.modalAlarmPopup);
 
     const padMinute = String(minute).padStart(2, '0');
@@ -2664,8 +2698,27 @@ class ShiftApp {
       }
     }
 
+    // 달력의 해당 날짜에 알람시계 이모티콘 ⏰ 저장 및 즉시 리렌더링
+    shiftStorage.addActiveAlarm(dateStr, {
+      time: `${hour}:${padMinute}`,
+      type: shiftType
+    });
+    this.renderCalendar();
+
     // 화면 전환을 방해하지 않는 깔끔한 토스트 안내
-    this.showWeatherToast(`⏰ ${shiftType} 알람 (${hour}:${padMinute}, ${dayName}요일) 시계 앱 연동 완료`);
+    this.showWeatherToast(`⏰ ${shiftType} 알람 (${hour}:${padMinute}, ${dayName}요일) 등록 완료`);
+  }
+
+  executeDismissAlarm() {
+    if (!this.pendingAlarmData) return;
+    const { dateStr, shiftType, dayName } = this.pendingAlarmData;
+    this.closeModal(this.modalAlarmPopup);
+
+    // 알람 해제: 스토리지에서 삭제 후 달력에서 ⏰ 아이콘 즉시 제거
+    shiftStorage.removeActiveAlarm(dateStr);
+    this.renderCalendar();
+
+    this.showWeatherToast(`🔕 ${dayName}요일 ${shiftType} 근무알람이 해제되었습니다.`);
   }
 }
 
