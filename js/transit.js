@@ -511,6 +511,65 @@ class TransitManager {
       };
     }
 
+    // 15154 정류소(이대목동병원) 6620 / 603번 버스 최우선 운행 시간표 데이터 확인
+    const prioritySchedule = (typeof getPriorityBusSchedule === 'function')
+      ? getPriorityBusSchedule(routeConfig.routeNum, (routeConfig.stId === '114000052' || routeConfig.arsId === '15-154') ? '15154' : '', now)
+      : null;
+
+    if (prioritySchedule && prioritySchedule.next) {
+      const pNext = prioritySchedule.next;
+      const pNext2 = prioritySchedule.next2;
+
+      // 실시간 데이터가 없는 경우 시간표 데이터를 100% 최우선 카운트다운 소스로 채택
+      if (!next || next.isWait || next.isEnd || next.sec <= 0) {
+        next = {
+          sec: pNext.diffSec,
+          rawSec: pNext.diffSec,
+          arrmsg: `${pNext.time} 정시운행`,
+          stopText: `시간표 기준 (${prioritySchedule.periodName})`,
+          plainNo: (busItem && busItem.plainNo1) || '',
+          isArrivingSoon: pNext.diffSec <= 40,
+          isWait: false,
+          isEnd: false,
+          targetTime: pNext.targetTime,
+          isEstimate: false,
+          isPriority: true,
+          priorityTime: pNext.time,
+          priorityRange: pNext.rangeText,
+          periodName: prioritySchedule.periodName
+        };
+      } else {
+        // 실시간 위치/차량이 있는 경우라도 도착 예정 기준 시각은 시간표를 최우선 적용
+        next.isPriority = true;
+        next.priorityTime = pNext.time;
+        next.priorityRange = pNext.rangeText;
+        next.periodName = prioritySchedule.periodName;
+      }
+
+      if (pNext2) {
+        if (!next2 || next2.isWait || next2.isEnd || next2.sec <= 0) {
+          next2 = {
+            sec: pNext2.diffSec,
+            rawSec: pNext2.diffSec,
+            arrmsg: `${pNext2.time} 정시운행`,
+            stopText: `차기 순번 (${pNext2.time})`,
+            plainNo: (busItem && busItem.plainNo2) || '',
+            isWait: false,
+            isEnd: false,
+            targetTime: pNext2.targetTime,
+            isEstimate: false,
+            isPriority: true,
+            priorityTime: pNext2.time,
+            priorityRange: pNext2.rangeText
+          };
+        } else {
+          next2.isPriority = true;
+          next2.priorityTime = pNext2.time;
+          next2.priorityRange = pNext2.rangeText;
+        }
+      }
+    }
+
     return { next, next2 };
   }
 
@@ -763,9 +822,13 @@ class TransitManager {
         nextSubLoc = `위치: <b>운행 중</b>`;
       }
 
-      // 도착 예정 시각
+      // 도착 예정 시각 및 시간표 우선 정보 매핑
       let nextArrClock = '';
-      if (next.targetTime && !next.isWait && !next.isEnd) {
+      let nextScheduleBadge = '';
+      if (next.isPriority && next.priorityTime) {
+        nextArrClock = next.priorityTime;
+        nextScheduleBadge = `<span class="badge-priority-timetable" style="display:inline-flex; align-items:center; background:#fef3c7; color:#92400e; font-size:10.5px; padding:1px 6px; border-radius:4px; font-weight:800; margin-left:6px; border:1px solid #fde68a;" title="${next.priorityRange || ''}">📋 시간표 우선</span>`;
+      } else if (next.targetTime && !next.isWait && !next.isEnd) {
         const nextArrTime = new Date(next.targetTime);
         nextArrClock = `${String(nextArrTime.getHours()).padStart(2, '0')}:${String(nextArrTime.getMinutes()).padStart(2, '0')}`;
       }
@@ -786,7 +849,7 @@ class TransitManager {
           </div>
           <div class="next-transit-sub">
             <span class="transit-sub-pos">${nextSubLoc}</span>
-            ${nextArrClock ? `<span class="transit-sub-time"><span class="transit-arr-label">도착 예정:</span> <b class="transit-clock-time">${nextArrClock}</b></span>` : ''}
+            ${nextArrClock ? `<span class="transit-sub-time"><span class="transit-arr-label">도착 예정:</span> <b class="transit-clock-time" style="color:#0369a1; font-weight:900;">${nextArrClock}</b>${next.priorityRange ? `<span style="font-size:10.5px; color:#b45309; font-weight:700; margin-left:4px;">(${next.priorityRange})</span>` : ''}</span>` : ''}
           </div>
         </div>
       `;
@@ -805,9 +868,10 @@ class TransitManager {
           next2SubText = '종료';
         } else if (next2.targetTime) {
           const next2ArrTime = new Date(next2.targetTime);
-          const next2Clock = `${String(next2ArrTime.getHours()).padStart(2, '0')}:${String(next2ArrTime.getMinutes()).padStart(2, '0')}`;
+          const next2Clock = next2.priorityTime || `${String(next2ArrTime.getHours()).padStart(2, '0')}:${String(next2ArrTime.getMinutes()).padStart(2, '0')}`;
           next2TimeHtml = `<span class="live-countdown next2-countdown" data-target-time="${next2.targetTime}">${this.formatSec(next2.sec)}</span>`;
-          next2SubText = `<b class="transit-clock-time">${next2Clock}</b>${next2.stopText ? ` · ${next2.stopText}` : ''}`;
+          const priorityTag = next2.isPriority ? ` <span style="font-size:10px; color:#b45309; font-weight:700;">[시간표]</span>` : '';
+          next2SubText = `<b class="transit-clock-time">${next2Clock}</b>${priorityTag}${next2.stopText ? ` · ${next2.stopText}` : ''}`;
         }
 
         const vehicleBadge2 = next2.plainNo ? `<span style="font-size:10.5px; color:#475569; font-weight:600; margin-left:4px;">(${next2.plainNo})</span>` : '';
@@ -828,6 +892,7 @@ class TransitManager {
             <div style="display:flex; align-items:center; gap:6px;">
               <span class="${r.badgeClass}">${r.routeNum}</span>
               <span class="bit-route-type-label">${r.typeText}</span>
+              ${nextScheduleBadge}
             </div>
           </div>
           ${nextHtml}
