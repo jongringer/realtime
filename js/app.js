@@ -947,6 +947,22 @@ class ShiftApp {
     this.showWeatherToast(`오늘(${realMonth}월 ${now.getDate()}일) 날짜로 이동했습니다. 🏠`);
   }
 
+  // 화면 줌(확대) 상태 감지: 100% 정상 화면비에서만 스와이프 달 넘김을 허용하고, 확대 상태에서는 차단하여 좌우 다른 달 이동 방지
+  isPageZoomed() {
+    try {
+      // 1. 모던 브라우저 및 안드로이드 웹뷰 표준 Visual Viewport API
+      if (window.visualViewport && typeof window.visualViewport.scale === 'number') {
+        return window.visualViewport.scale > 1.05;
+      }
+      // 2. 폴백: window innerWidth vs documentElement clientWidth 비율
+      if (window.innerWidth && document.documentElement && document.documentElement.clientWidth) {
+        const ratio = document.documentElement.clientWidth / window.innerWidth;
+        if (ratio > 1.05) return true;
+      }
+    } catch (e) {}
+    return false;
+  }
+
   // ========= 스와이프 제스처 (좌우 손가락 실시간 드래그 & 부드러운 넘김) =========
   initSwipeGesture() {
     const card = document.getElementById('calendarCard');
@@ -959,6 +975,13 @@ class ShiftApp {
 
     // 터치 시작
     card.addEventListener('touchstart', (e) => {
+      // 1. 화면 확대 상태(줌인 > 100%)일 때는 좌우 달 이동 스와이프 전면 차단 (확대 화면 좌우 탐색 보장)
+      if (this.isPageZoomed()) {
+        isDragging = false;
+        isHorizontalGesture = false;
+        return;
+      }
+
       // 핀치 줌(확대/축소) 또는 멀티터치 제스처 시 스와이프 개입 차단 (네이티브 줌 100% 보장)
       if (e.touches && e.touches.length > 1) {
         isDragging = false;
@@ -989,6 +1012,17 @@ class ShiftApp {
     card.addEventListener('touchmove', (e) => {
       if (!isDragging) return;
 
+      // 화면이 확대되었으면 즉시 스와이프 중단하고 화면 확대 이동으로 양보
+      if (this.isPageZoomed()) {
+        isDragging = false;
+        isHorizontalGesture = false;
+        if (this.elCalendarGrid) {
+          this.elCalendarGrid.style.transform = '';
+          this.elCalendarGrid.style.opacity = '';
+        }
+        return;
+      }
+
       // 두 손가락 이상이면 즉시 중단하고 화면 확대/축소로 양보
       if (e.touches && e.touches.length > 1) {
         isDragging = false;
@@ -1017,7 +1051,7 @@ class ShiftApp {
         return;
       }
 
-      // 수평 스와이프인 경우: 손가락 움직임에 따라 실시간으로 넘김 시각화 피드백!
+      // 수평 스와이프인 경우: 손가락 움직임에 따라 실시간으로 넘김 시각화 피드백! (오직 100% 화면비에서만)
       if (isHorizontalGesture === true && this.elCalendarGrid) {
         const dampDx = dx * 0.75;
         const opacityVal = Math.max(0.45, 1 - Math.abs(dx) / 350);
@@ -1030,6 +1064,16 @@ class ShiftApp {
     card.addEventListener('touchend', (e) => {
       if (!isDragging) return;
       isDragging = false;
+
+      // 화면 확대 상태이면 달 이동 전면 차단하고 원래 위치로 원복
+      if (this.isPageZoomed()) {
+        isHorizontalGesture = null;
+        if (this.elCalendarGrid) {
+          this.elCalendarGrid.style.transform = '';
+          this.elCalendarGrid.style.opacity = '';
+        }
+        return;
+      }
 
       const dx = currentX - startX;
       const grid = this.elCalendarGrid;
