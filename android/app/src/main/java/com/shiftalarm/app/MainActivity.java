@@ -28,9 +28,12 @@ public class MainActivity extends BridgeActivity {
             if (this.bridge != null && this.bridge.getWebView() != null) {
                 this.bridge.getWebView().addJavascriptInterface(new NativeAlarmInterface(this), "AndroidAlarm");
                 Log.d(TAG, "Native AndroidAlarm JavascriptInterface registered successfully.");
+
+                // 앱 열자마자 화면 어디서나 핀치 줌인/줌아웃 100% 즉시 활성화
+                enablePinchZoom();
             }
         } catch (Exception e) {
-            Log.e(TAG, "Error registering AndroidAlarm interface", e);
+            Log.e(TAG, "Error configuring WebView settings", e);
         }
 
         // Android 뒤로가기(Back Button) 이벤트 우선순위 제어
@@ -63,6 +66,29 @@ public class MainActivity extends BridgeActivity {
         } else {
             lastBackPressTime = currentTime;
             Toast.makeText(this, "한 번 더 누르면 앱이 종료됩니다.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        enablePinchZoom();
+    }
+
+    private void enablePinchZoom() {
+        try {
+            if (this.bridge != null && this.bridge.getWebView() != null) {
+                android.webkit.WebView webView = this.bridge.getWebView();
+                android.webkit.WebSettings settings = webView.getSettings();
+                settings.setSupportZoom(true);
+                settings.setBuiltInZoomControls(true);
+                settings.setDisplayZoomControls(false); // 화면 위 불필요한 +/- 줌 버튼 UI 제거, 핀치 제스처만 깔끔하게 동작
+                settings.setUseWideViewPort(true);
+                settings.setLoadWithOverviewMode(true);
+                Log.d(TAG, "Native WebView pinch zoom enabled successfully.");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to enable pinch zoom", e);
         }
     }
 

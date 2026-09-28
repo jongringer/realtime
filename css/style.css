@@ -3933,3 +3933,49 @@ body[data-theme="noble-gold"] .clock-panel-inner {
   100% { transform: scale(1); opacity: 0.95; }
 }
 
+/* ==========================================================================
+   일정 편집 모달 - 오전/오후 30분 단위 시간 선택기 & 우측 끝 정렬 버튼 스타일
+   ========================================================================== */
+#scheduleTimePickerRow {
+  background: rgba(0, 0, 0, 0.02);
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--card-border, #e2e8f0);
+}
+
+#scheduleTimePickerRow select {
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+#scheduleTimePickerRow select:focus {
+  border-color: var(--primary, #0284c7);
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2);
+}
+
+body[data-theme="obsidian"] #scheduleTimePickerRow,
+body[data-theme="noble-gold"] #scheduleTimePickerRow {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+body[data-theme="obsidian"] #editScheduleTimeBadge,
+body[data-theme="noble-gold"] #editScheduleTimeBadge {
+  background: rgba(2, 132, 199, 0.2) !important;
+  color: #38bdf8 !important;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+#btnSaveShiftType,
+#btnSaveDayEdit {
+  margin-left: auto;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
+  transition: transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+#btnSaveShiftType:active,
+#btnSaveDayEdit:active {
+  transform: scale(0.97);
+}
+

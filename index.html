@@ -2,7 +2,7 @@
 <html lang=ko>
 <head>
   <meta charset=UTF-8>
-  <meta name=viewport content=width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=5.0, user-scalable=yes>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=5.0, user-scalable=yes">
   <title>4조 3교대 스마트 근무표</title>
   <meta http-equiv=Cache-Control content=no-cache, no-store, must-revalidate>
   <meta http-equiv=Pragma content=no-cache>
@@ -188,10 +188,10 @@
         <button class=modal-close-btn id=btnCloseDayEdit>✕</button>
       </div>
       <div class=modal-body style=display: flex; flex-direction: column; gap: 14px;>
-        <div class=form-group style=margin-bottom: 0;>
-          <label class=form-label for=editShiftSelect style=font-weight: 700;>근무 형태</label>
-          <div style=display: flex; gap: 6px;>
-            <select id=editShiftSelect class=form-select style=flex: 1;>
+        <div class=form-group style="margin-bottom: 0;">
+          <label class=form-label for=editShiftSelect style="font-weight: 700; margin-bottom: 6px;">근무 형태</label>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <select id=editShiftSelect class=form-select style="flex: 1; height: 38px;">
               <option value=일근>일근 (기본)</option>
               <option value=야근>야근 (기본)</option>
               <option value=조근>조근 (기본)</option>
@@ -203,34 +203,43 @@
               <option value=야근휴가>🌿 야근휴가 (녹색)</option>
               <option value=조근휴가>🌿 조근휴가 (녹색)</option>
             </select>
-            <button type=button class=btn-primary id=btnSaveShiftType style=padding: 0 14px; font-size: 13px; white-space: nowrap;>근무 저장</button>
+            <button type=button class=btn-primary id=btnSaveShiftType style="padding: 0 16px; font-size: 13px; font-weight: 700; white-space: nowrap; height: 38px; margin-left: auto;">근무 저장</button>
           </div>
         </div>
-        <div class=day-schedule-add-box style=background: var(--bg-card); border: 1.5px solid var(--card-border, #cbd5e1); border-radius: 12px; padding: 12px;>
-          <label class=form-label style=font-weight: 800; font-size: 13px; margin-bottom: 8px; display: block;>➕ 개인 일정 추가</label>
-          <div class=analog-clock-wrap id=analogClockWrap>
-            <div class=analog-clock-toggle-btn id=btnToggleClock title=시간 선택 (클릭)>
-              <span class=clock-toggle-icon>⏰</span>
-              <span class=clock-toggle-time id=clockToggleTimeDisplay>시간 없음</span>
-              <span class=clock-toggle-arrow id=clockToggleArrow>▼</span>
-            </div>
-            <div class=analog-clock-panel id=analogClockPanel style=display:none;>
-              <div class=clock-panel-inner>
-                <div class=clock-mode-tabs>
-                  <button type=button class=clock-mode-tab id=clockToggleAmPm style="font-weight: 800; min-width: 46px; color: var(--primary, #0284c7);">오전</button>
-                  <button type=button class="clock-mode-tab active" id=clockModeHour>시</button>
-                  <button type=button class=clock-mode-tab id=clockModeMinute>분</button>
-                  <button type=button class="clock-mode-tab clock-clear-btn" id=btnClearClockTime title="시간 지우기">🗑️</button>
-                </div>
-                <canvas id=analogClockCanvas width=180 height=180 class=analog-clock-canvas></canvas>
-                <div class=clock-selected-display id=clockSelectedDisplay>시간 없음</div>
-              </div>
-            </div>
+        <div class=day-schedule-add-box style="background: var(--bg-card); border: 1.5px solid var(--card-border, #cbd5e1); border-radius: 12px; padding: 12px;">
+          <label class=form-label style="font-weight: 800; font-size: 13px; margin-bottom: 8px; display: block;">➕ 개인 일정 추가</label>
+          <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 8px; flex-wrap: wrap;" id=scheduleTimePickerRow>
+            <span style="font-size: 12.5px; font-weight: 700; color: var(--text-secondary); white-space: nowrap;">⏰ 시간:</span>
+            <select id=editScheduleAmPm class=form-select style="width: auto; min-width: 68px; height: 36px; padding: 4px 8px; font-size: 13px; font-weight: 700;">
+              <option value=오전>오전</option>
+              <option value=오후>오후</option>
+            </select>
+            <select id=editScheduleHour class=form-select style="width: auto; min-width: 70px; height: 36px; padding: 4px 8px; font-size: 13px; font-weight: 700;">
+              <option value="1">1시</option>
+              <option value="2">2시</option>
+              <option value="3">3시</option>
+              <option value="4">4시</option>
+              <option value="5">5시</option>
+              <option value="6">6시</option>
+              <option value="7">7시</option>
+              <option value="8">8시</option>
+              <option value="9" selected>9시</option>
+              <option value="10">10시</option>
+              <option value="11">11시</option>
+              <option value="12">12시</option>
+            </select>
+            <select id=editScheduleMinute class=form-select style="width: auto; min-width: 72px; height: 36px; padding: 4px 8px; font-size: 13px; font-weight: 700;">
+              <option value="00" selected>00분</option>
+              <option value="30">30분</option>
+            </select>
+            <button type=button id=btnEditScheduleTimeClear class=btn-secondary style="height: 36px; padding: 0 10px; font-size: 12px; white-space: nowrap; font-weight: 600;" title="시간 설정 취소 (시간 없이 등록)">시간 없음</button>
           </div>
-          <div class=clock-result-badge id=clockResultBadge style=display:none;>⏰ <span id=clockResultText></span></div>
-          <div style=display: flex; gap: 6px; align-items: center; margin-top: 8px;>
-            <input type=text id=editNoteInput class=form-input placeholder=일정 내용 입력 style=flex: 1;>
-            <button type=button class=btn-primary id=btnSaveDayEdit style=padding: 0 14px; font-size: 13px; white-space: nowrap; height: 38px;>저장</button>
+          <div id=editScheduleTimeBadge style="font-size: 11.5px; font-weight: 700; color: #0284c7; background: #e0f2fe; padding: 4px 10px; border-radius: 6px; display: inline-block; margin-bottom: 8px;">
+            ⏰ 설정 시각: <span id=editScheduleTimeBadgeText>오전 09:00</span>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <input type=text id=editNoteInput class=form-input placeholder="일정 내용 입력" style="flex: 1; height: 38px;">
+            <button type=button class=btn-primary id=btnSaveDayEdit style="padding: 0 16px; font-size: 13px; font-weight: 700; white-space: nowrap; height: 38px; margin-left: auto;">일정 저장</button>
           </div>
         </div>
         <div class=day-schedule-list-section>
@@ -350,7 +359,8 @@
   <script src=js/shift-engine.js?v=20260927_v25></script>
   <script src=js/storage.js?v=20260927_v25></script>
   <script src=js/ocr-parser.js?v=20260927_v25></script>
-  <script src=js/app.js?v=20260927_v25></script>
+  <script src=js/zoom-engine.js?v=20260929_zoom></script>
+  <script src=js/app.js?v=20260929_time></script>
   <script src=js/transit.js?v=20260929_seoulbus></script>
 </body>
 </html>

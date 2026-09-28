@@ -250,7 +250,6 @@ class ShiftApp {
     this.elEditDateTitle = document.getElementById('editDateTitle');
     this.elEditShiftSelect = document.getElementById('editShiftSelect');
     this.btnSaveShiftType = document.getElementById('btnSaveShiftType');
-    this.elEditScheduleTimeSelect = null; // 아날로그 시계로 교체됨
     this.elEditNoteInput = document.getElementById('editNoteInput');
     this.btnSaveDayEdit = document.getElementById('btnSaveDayEdit');
     this.dayScheduleCount = document.getElementById('dayScheduleCount');
@@ -258,19 +257,14 @@ class ShiftApp {
     this.dayScheduleItemsContainer = document.getElementById('dayScheduleItemsContainer');
     this.btnResetDayEdit = document.getElementById('btnResetDayEdit');
 
-    // 아날로그 시계 피커
-    this.analogClockPanel = document.getElementById('analogClockPanel');
-    this.analogClockCanvas = document.getElementById('analogClockCanvas');
-    this.btnToggleClock = document.getElementById('btnToggleClock');
-    this.clockToggleTimeDisplay = document.getElementById('clockToggleTimeDisplay');
-    this.clockToggleArrow = document.getElementById('clockToggleArrow');
-    this.clockToggleAmPm = document.getElementById('clockToggleAmPm');
-    this.clockModeHour = document.getElementById('clockModeHour');
-    this.clockModeMinute = document.getElementById('clockModeMinute');
-    this.btnClearClockTime = document.getElementById('btnClearClockTime');
-    this.clockSelectedDisplay = document.getElementById('clockSelectedDisplay');
-    this.clockResultBadge = document.getElementById('clockResultBadge');
-    this.clockResultText = document.getElementById('clockResultText');
+    // 시간 선택기 (오전/오후, 1~12시, 30분 단위)
+    this.editScheduleAmPm = document.getElementById('editScheduleAmPm');
+    this.editScheduleHour = document.getElementById('editScheduleHour');
+    this.editScheduleMinute = document.getElementById('editScheduleMinute');
+    this.btnEditScheduleTimeClear = document.getElementById('btnEditScheduleTimeClear');
+    this.editScheduleTimeBadge = document.getElementById('editScheduleTimeBadge');
+    this.editScheduleTimeBadgeText = document.getElementById('editScheduleTimeBadgeText');
+    this.isScheduleTimeEnabled = true;
 
     // 설정 모달
     this.modalSettings = document.getElementById('modalSettings');
@@ -653,264 +647,80 @@ class ShiftApp {
       return this.handleBackButton();
     };
 
-    // 아날로그 시계 피커 이벤트
-    this.initAnalogClockEvents();
+    // 일정 시간 선택기 이벤트 등록
+    this.initScheduleTimeEvents();
   }
 
-  // ========= 아날로그 시계 피커 초기화 =========
-  initAnalogClockEvents() {
-    if (!this.btnToggleClock) return;
+  // ========= 개인 일정 시간 선택기 (오전/오후, 1~12시, 30분 단위) =========
+  initScheduleTimeEvents() {
+    const onTimeChange = () => {
+      this.isScheduleTimeEnabled = true;
+      this.updateScheduleTimeBadge();
+    };
 
-    // 토글 버튼 클릭 → 시계 패널 열기/닫기
-    this.btnToggleClock.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const panel = this.analogClockPanel;
-      if (!panel) return;
-      const isVisible = panel.style.display !== 'none';
-      panel.style.display = isVisible ? 'none' : 'block';
-      if (this.clockToggleArrow) {
-        this.clockToggleArrow.textContent = isVisible ? '▼' : '▲';
-      }
-      if (!isVisible) {
-        this.clockMode = 'hour';
-        this.drawAnalogClock();
-        this.updateClockModeTabs();
-      }
-    });
-
-    // 오전 / 오후 토글 버튼
-    if (this.clockToggleAmPm) {
-      this.clockToggleAmPm.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.clockAmPm = this.clockAmPm === '오전' ? '오후' : '오전';
-        this.updateAmPmButtonUI();
-        this.updateClockDisplay();
-        this.drawAnalogClock();
-      });
+    if (this.editScheduleAmPm) {
+      this.editScheduleAmPm.addEventListener('change', onTimeChange);
+    }
+    if (this.editScheduleHour) {
+      this.editScheduleHour.addEventListener('change', onTimeChange);
+    }
+    if (this.editScheduleMinute) {
+      this.editScheduleMinute.addEventListener('change', onTimeChange);
     }
 
-    // 시/분 모드 탭
-    if (this.clockModeHour) {
-      this.clockModeHour.addEventListener('click', () => {
-        this.clockMode = 'hour';
-        this.updateClockModeTabs();
-        this.drawAnalogClock();
+    if (this.btnEditScheduleTimeClear) {
+      this.btnEditScheduleTimeClear.addEventListener('click', () => {
+        this.isScheduleTimeEnabled = !this.isScheduleTimeEnabled;
+        this.updateScheduleTimeBadge();
       });
-    }
-    if (this.clockModeMinute) {
-      this.clockModeMinute.addEventListener('click', () => {
-        this.clockMode = 'minute';
-        this.updateClockModeTabs();
-        this.drawAnalogClock();
-      });
-    }
-    // 지우기 버튼
-    if (this.btnClearClockTime) {
-      this.btnClearClockTime.addEventListener('click', () => {
-        this.clockSelectedHour = null;
-        this.clockSelectedMinute = null;
-        this.updateClockDisplay();
-        this.drawAnalogClock();
-      });
-    }
-
-    // 캔버스 클릭 → 시간 선택
-    if (this.analogClockCanvas) {
-      const handleClockClick = (clientX, clientY) => {
-        const rect = this.analogClockCanvas.getBoundingClientRect();
-        const x = clientX - rect.left - rect.width / 2;
-        const y = clientY - rect.top - rect.height / 2;
-        const angle = Math.atan2(x, -y);
-        const angleDeg = (angle * 180 / Math.PI + 360) % 360;
-        if (this.clockMode === 'hour') {
-          const hr = Math.round(angleDeg / 30) % 12;
-          this.clockSelectedHour = hr === 0 ? 12 : hr;
-          // 시 선택 후 자동으로 분 모드로 전환
-          this.clockMode = 'minute';
-          this.updateClockModeTabs();
-        } else {
-          this.clockSelectedMinute = Math.round(angleDeg / 6) % 60;
-        }
-        this.updateClockDisplay();
-        this.drawAnalogClock();
-      };
-
-      this.analogClockCanvas.addEventListener('click', (e) => {
-        handleClockClick(e.clientX, e.clientY);
-      });
-      this.analogClockCanvas.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        const t = e.changedTouches[0];
-        handleClockClick(t.clientX, t.clientY);
-      }, { passive: false });
     }
   }
 
-  updateAmPmButtonUI() {
-    if (this.clockToggleAmPm) {
-      this.clockToggleAmPm.textContent = this.clockAmPm;
-      if (this.clockAmPm === '오후') {
-        this.clockToggleAmPm.style.color = '#ea580c';
-        this.clockToggleAmPm.style.fontWeight = '900';
-      } else {
-        this.clockToggleAmPm.style.color = '#0284c7';
-        this.clockToggleAmPm.style.fontWeight = '900';
+  updateScheduleTimeBadge() {
+    if (!this.editScheduleTimeBadge || !this.editScheduleTimeBadgeText) return;
+
+    if (!this.isScheduleTimeEnabled) {
+      this.editScheduleTimeBadgeText.textContent = '시간 없음 (종일 일정)';
+      this.editScheduleTimeBadge.style.background = '#f1f5f9';
+      this.editScheduleTimeBadge.style.color = '#64748b';
+      if (this.btnEditScheduleTimeClear) {
+        this.btnEditScheduleTimeClear.textContent = '시간 설정';
+        this.btnEditScheduleTimeClear.style.color = '#0284c7';
       }
-    }
-  }
-
-  updateClockModeTabs() {
-    if (this.clockModeHour) {
-      this.clockModeHour.classList.toggle('active', this.clockMode === 'hour');
-    }
-    if (this.clockModeMinute) {
-      this.clockModeMinute.classList.toggle('active', this.clockMode === 'minute');
-    }
-    this.updateAmPmButtonUI();
-  }
-
-  updateClockDisplay() {
-    const h = this.clockSelectedHour;
-    const m = this.clockSelectedMinute;
-
-    if (h === null && m === null) {
-      const timeStr = '시간 없음';
-      if (this.clockToggleTimeDisplay) this.clockToggleTimeDisplay.textContent = timeStr;
-      if (this.clockSelectedDisplay) this.clockSelectedDisplay.textContent = timeStr;
-      if (this.clockResultBadge) this.clockResultBadge.style.display = 'none';
-      return;
-    }
-
-    const minStr = m !== null ? String(m).padStart(2, '0') : '00';
-    const displayH = h !== null ? h : 12;
-    const ampm = this.clockAmPm || (h !== null && h >= 12 ? '오후' : '오전');
-
-    // 24시간제(00~23) 계산
-    let hour24 = displayH;
-    if (ampm === '오후') {
-      if (hour24 < 12) hour24 += 12;
-    } else { // 오전
-      if (hour24 === 12) hour24 = 0;
-    }
-    const hour24Str = String(hour24).padStart(2, '0');
-    const displayHour12 = displayH === 0 ? 12 : displayH;
-    const timeStr12 = `${ampm} ${String(displayHour12).padStart(2, '0')}:${minStr}`;
-    const fullStr = `${timeStr12} (${hour24Str}:${minStr})`;
-
-    if (this.clockToggleTimeDisplay) this.clockToggleTimeDisplay.textContent = timeStr12;
-    if (this.clockSelectedDisplay) this.clockSelectedDisplay.textContent = fullStr;
-    if (this.clockResultBadge) {
-      this.clockResultBadge.style.display = 'block';
-      if (this.clockResultText) this.clockResultText.textContent = fullStr;
-    }
-  }
-
-  drawAnalogClock() {
-    const canvas = this.analogClockCanvas;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const w = canvas.width;
-    const h = canvas.height;
-    const cx = w / 2;
-    const cy = h / 2;
-    const r = Math.min(cx, cy) - 8;
-
-    // 다크모드 감지
-    const isDark = document.body.getAttribute('data-theme') !== 'apple-light';
-    const bgColor = isDark ? '#1e293b' : '#f8fafc';
-    const faceColor = isDark ? '#0f172a' : '#ffffff';
-    const textColor = isDark ? '#f1f5f9' : '#0f172a';
-    const primaryColor = '#0284c7';
-    const handColor = isDark ? '#38bdf8' : '#0284c7';
-
-    ctx.clearRect(0, 0, w, h);
-
-    // 배경 원
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fillStyle = faceColor;
-    ctx.fill();
-    ctx.strokeStyle = isDark ? '#334155' : '#cbd5e1';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    const count = this.clockMode === 'hour' ? 12 : 60;
-    const selectedVal = this.clockMode === 'hour' ? this.clockSelectedHour : this.clockSelectedMinute;
-
-    for (let i = 0; i < count; i++) {
-      const angle = (i / count) * Math.PI * 2 - Math.PI / 2;
-      const numR = r - 18;
-      const nx = cx + numR * Math.cos(angle);
-      const ny = cy + numR * Math.sin(angle);
-
-      const displayNum = this.clockMode === 'hour' ? (i === 0 ? 12 : i) : i;
-      // 분 모드에서는 5의 배수만 숫자 표시
-      const showLabel = this.clockMode === 'hour' || i % 5 === 0;
-
-      if (this.clockMode === 'minute' && i % 5 !== 0) {
-        // 소점 표시
-        ctx.beginPath();
-        ctx.arc(nx, ny, 2, 0, Math.PI * 2);
-        ctx.fillStyle = isDark ? '#475569' : '#94a3b8';
-        ctx.fill();
-        continue;
+      if (this.editScheduleAmPm) this.editScheduleAmPm.style.opacity = '0.5';
+      if (this.editScheduleHour) this.editScheduleHour.style.opacity = '0.5';
+      if (this.editScheduleMinute) this.editScheduleMinute.style.opacity = '0.5';
+    } else {
+      const ampm = this.editScheduleAmPm ? this.editScheduleAmPm.value : '오전';
+      const h = this.editScheduleHour ? this.editScheduleHour.value : '9';
+      const m = this.editScheduleMinute ? this.editScheduleMinute.value : '00';
+      const formatted = `${ampm} ${String(h).padStart(2, '0')}:${m}`;
+      this.editScheduleTimeBadgeText.textContent = formatted;
+      this.editScheduleTimeBadge.style.background = '#e0f2fe';
+      this.editScheduleTimeBadge.style.color = '#0284c7';
+      if (this.btnEditScheduleTimeClear) {
+        this.btnEditScheduleTimeClear.textContent = '시간 없음';
+        this.btnEditScheduleTimeClear.style.color = '';
       }
-
-      const isSelected = selectedVal !== null && displayNum === selectedVal;
-
-      if (isSelected) {
-        ctx.beginPath();
-        ctx.arc(nx, ny, 14, 0, Math.PI * 2);
-        ctx.fillStyle = primaryColor;
-        ctx.fill();
-        ctx.fillStyle = '#ffffff';
-      } else {
-        ctx.fillStyle = textColor;
-      }
-
-      if (showLabel) {
-        ctx.font = `bold 12px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(String(displayNum), nx, ny);
-      }
-    }
-
-    // 선택 핸드
-    if (selectedVal !== null) {
-      const handAngle = this.clockMode === 'hour'
-        ? ((selectedVal % 12) / 12) * Math.PI * 2 - Math.PI / 2
-        : (selectedVal / 60) * Math.PI * 2 - Math.PI / 2;
-      const handR = r - 28;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.lineTo(cx + handR * Math.cos(handAngle), cy + handR * Math.sin(handAngle));
-      ctx.strokeStyle = handColor;
-      ctx.lineWidth = 3;
-      ctx.lineCap = 'round';
-      ctx.stroke();
-
-      // 중심점
-      ctx.beginPath();
-      ctx.arc(cx, cy, 5, 0, Math.PI * 2);
-      ctx.fillStyle = handColor;
-      ctx.fill();
+      if (this.editScheduleAmPm) this.editScheduleAmPm.style.opacity = '1';
+      if (this.editScheduleHour) this.editScheduleHour.style.opacity = '1';
+      if (this.editScheduleMinute) this.editScheduleMinute.style.opacity = '1';
     }
   }
 
   getSelectedTimeStr() {
-    const h = this.clockSelectedHour;
-    const m = this.clockSelectedMinute !== null ? this.clockSelectedMinute : 0;
-    if (h === null) return '';
+    if (!this.isScheduleTimeEnabled) return '';
+    const ampm = this.editScheduleAmPm ? this.editScheduleAmPm.value : '오전';
+    const h = parseInt(this.editScheduleHour ? this.editScheduleHour.value : '9', 10);
+    const m = this.editScheduleMinute ? this.editScheduleMinute.value : '00';
 
     let hour24 = h;
-    const ampm = this.clockAmPm || (h >= 12 ? '오후' : '오전');
     if (ampm === '오후') {
       if (hour24 < 12) hour24 += 12;
-    } else { // 오전
+    } else {
       if (hour24 === 12) hour24 = 0;
     }
-    return `${String(hour24).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    return `${String(hour24).padStart(2, '0')}:${m}`;
   }
 
   // 12시간제/24시간제/오전/오후 모든 시각 문자열을 일관된 "오전/오후 HH:MM" 표시용 문자열로 표준화
@@ -1916,17 +1726,19 @@ class ShiftApp {
       });
     }
 
-    this.clockSelectedHour = null;
-    this.clockSelectedMinute = null;
-    this.clockMode = 'hour';
-    const curH = new Date().getHours();
-    this.clockAmPm = curH >= 12 ? '오후' : '오전';
-    this.updateAmPmButtonUI();
-    if (this.clockToggleTimeDisplay) this.clockToggleTimeDisplay.textContent = '시간 없음';
-    if (this.clockSelectedDisplay) this.clockSelectedDisplay.textContent = '시간 없음';
-    if (this.clockResultBadge) this.clockResultBadge.style.display = 'none';
-    if (this.analogClockPanel) this.analogClockPanel.style.display = 'none';
-    if (this.clockToggleArrow) this.clockToggleArrow.textContent = '▼';
+    // 시간 선택기 초기화 (현재 시각 기준 오전/오후 및 30분 단위)
+    const now = new Date();
+    const curH = now.getHours();
+    const curM = now.getMinutes();
+    const isPm = curH >= 12;
+    const h12 = curH % 12 === 0 ? 12 : curH % 12;
+    const m30 = curM < 30 ? '00' : '30';
+
+    if (this.editScheduleAmPm) this.editScheduleAmPm.value = isPm ? '오후' : '오전';
+    if (this.editScheduleHour) this.editScheduleHour.value = String(h12);
+    if (this.editScheduleMinute) this.editScheduleMinute.value = m30;
+    this.isScheduleTimeEnabled = true;
+    this.updateScheduleTimeBadge();
     this.elEditNoteInput.value = '';
 
     // 등록된 개인 일정 목록 렌더링 (00:00~23:59 오전/오후 누락 없이 순서대로 렌더링)
@@ -2083,10 +1895,6 @@ class ShiftApp {
     });
 
     this.elEditNoteInput.value = '';
-    this.clockSelectedHour = null;
-    this.clockSelectedMinute = null;
-    this.updateClockDisplay();
-    this.drawAnalogClock();
     this.renderDayScheduleList();
     this.renderCalendar();
     this.renderTodayCard();
