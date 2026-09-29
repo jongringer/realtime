@@ -768,7 +768,83 @@ class TransitManager {
       });
     }
 
-    return results;
+    return this.adjustSubwaySchedule(results);
+  }
+
+  /**
+   * "HH:MM:SS" 또는 "HH:MM" 형식의 시간 문자열에서 특정 분(minutes)만큼 앞당기는 유틸 함수
+   */
+  shiftTimeEarlier(timeStr, minutesToShift = 1) {
+    if (!timeStr || typeof timeStr !== 'string') return timeStr;
+
+    const parts = timeStr.trim().split(':');
+    if (parts.length < 2) return timeStr;
+
+    let hours = parseInt(parts[0], 10);
+    let minutes = parseInt(parts[1], 10);
+    const seconds = parts.length > 2 ? parts[2] : null;
+
+    if (isNaN(hours) || isNaN(minutes)) return timeStr;
+
+    let totalMinutes = hours * 60 + minutes - minutesToShift;
+    if (totalMinutes < 0) totalMinutes += 24 * 60;
+
+    const newH = String(Math.floor(totalMinutes / 60) % 24).padStart(2, '0');
+    const newM = String(totalMinutes % 60).padStart(2, '0');
+
+    return seconds !== null ? `${newH}:${newM}:${seconds}` : `${newH}:${newM}`;
+  }
+
+  /**
+   * API로 받아온 9호선 열차 목록 데이터의 시간을 일괄 1분씩 당기는 함수
+   * @param {Array<Object>} timetableList - 지하철 시간표 목록
+   * @returns {Array<Object>} - 1분 앞당겨진 시간표 목록
+   */
+  adjustSubwaySchedule(timetableList) {
+    if (!Array.isArray(timetableList)) return [];
+
+    return timetableList.map((train) => {
+      // API 필드명에 맞춰 보정 (예: arrtime, deptime, ARRIVETIME 등)
+      const adjusted = { ...train };
+
+      // 도착 시간 필드가 있는 경우 1분 차감
+      if (adjusted.arrtime) {
+        adjusted.arrtime = this.shiftTimeEarlier(adjusted.arrtime, 1);
+      }
+      if (adjusted.ARRIVETIME) {
+        adjusted.ARRIVETIME = this.shiftTimeEarlier(adjusted.ARRIVETIME, 1);
+      }
+
+      // 출발 시간 필드가 있는 경우 1분 차감
+      if (adjusted.deptime) {
+        adjusted.deptime = this.shiftTimeEarlier(adjusted.deptime, 1);
+      }
+      if (adjusted.LEFTTIME) {
+        adjusted.LEFTTIME = this.shiftTimeEarlier(adjusted.LEFTTIME, 1);
+      }
+      if (adjusted.departureTime) {
+        adjusted.departureTime = this.shiftTimeEarlier(adjusted.departureTime, 1);
+      }
+
+      // 실시간 '도착 예정 잔여 초(barvlDt)' 데이터가 오는 경우 (단위: 초)
+      if (adjusted.barvlDt !== undefined && !isNaN(Number(adjusted.barvlDt))) {
+        const remainingSec = Number(adjusted.barvlDt);
+        // 1분(60초) 차감하되 0초 미만이면 0(도착 진입)으로 고정
+        adjusted.barvlDt = String(Math.max(0, remainingSec - 60));
+      }
+
+      // 잔여 초 및 목표 시각도 1분(60초) 차감 보정
+      if (adjusted.sec !== undefined && !isNaN(Number(adjusted.sec))) {
+        adjusted.sec = Math.max(0, Number(adjusted.sec) - 60);
+        adjusted.remainSeconds = adjusted.sec;
+        adjusted.remainMinutes = Math.floor(adjusted.sec / 60);
+      }
+      if (adjusted.targetTime !== undefined && !isNaN(Number(adjusted.targetTime))) {
+        adjusted.targetTime = adjusted.targetTime - 60000;
+      }
+
+      return adjusted;
+    });
   }
 
   renderResult(busDataMap) {
