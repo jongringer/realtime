@@ -951,13 +951,22 @@ class ShiftApp {
   isPageZoomed() {
     try {
       // 1. 모던 브라우저 및 안드로이드 웹뷰 표준 Visual Viewport API
-      if (window.visualViewport && typeof window.visualViewport.scale === 'number') {
-        return window.visualViewport.scale > 1.05;
+      if (window.visualViewport) {
+        // 배율이 100%를 조금이라도 초과(1.01 이상)하면 확대 상태로 판정
+        if (typeof window.visualViewport.scale === 'number' && window.visualViewport.scale > 1.01) {
+          return true;
+        }
+        // 시각적 뷰포트 너비가 화면 너비보다 작아졌으면 확대 상태 (2px 이상 차이)
+        if (window.visualViewport.width && window.innerWidth) {
+          if (window.innerWidth - window.visualViewport.width > 2) {
+            return true;
+          }
+        }
       }
       // 2. 폴백: window innerWidth vs documentElement clientWidth 비율
       if (window.innerWidth && document.documentElement && document.documentElement.clientWidth) {
         const ratio = document.documentElement.clientWidth / window.innerWidth;
-        if (ratio > 1.05) return true;
+        if (ratio > 1.01) return true;
       }
     } catch (e) {}
     return false;

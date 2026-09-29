@@ -179,7 +179,7 @@ body {
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow-x: hidden;
+  overflow-x: visible;
   padding: 6px 10px 16px 10px;
 }
 
@@ -926,7 +926,7 @@ body[data-theme="obsidian"] .today-weather-pill:hover {
   transition: background-color 0.25s ease, border-color 0.25s ease;
   overflow: hidden;
   position: relative;
-  touch-action: pan-y pinch-zoom; /* 두 손가락 핀치 줌(확대/축소) 100% 허용 + 부드러운 스크롤 */
+  touch-action: pan-x pan-y pinch-zoom; /* 확대 상태에서 상하좌우 어디든 자유 이동(pan-x pan-y) + 핀치 줌 100% 보장 */
 }
 
 .calendar-weekdays {
@@ -1020,7 +1020,7 @@ body[data-theme="apple-light"] .calendar-day-cell:not(.sun):not(.sat):not(.holid
   cursor: pointer;
   transition: background-color 0.15s ease;
   user-select: none;
-  touch-action: pan-y pinch-zoom;           /* 달력 날짜 칸 위에서도 즉시 핀치 줌 확대/축소 가능 */
+  touch-action: pan-x pan-y pinch-zoom;           /* 달력 날짜 칸 위에서도 확대 후 상하좌우 자유 이동 및 핀치 줌 100% 보장 */
   overflow: hidden !important;              /* 칸 간격 유지 */
 }
 
