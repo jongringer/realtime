@@ -143,5 +143,48 @@ public class MainActivity extends BridgeActivity {
             });
             return true;
         }
+
+        /**
+         * 1회성 특정 날짜 기반 자체 정밀 알람 등록 (Android AlarmManager + FullScreenActivity)
+         * JS 호출: window.AndroidAlarm.setShiftAlarm(year, month, day, hour, minute, shiftType)
+         */
+        @JavascriptInterface
+        public boolean setShiftAlarm(int year, int month, int day, int hour, int minute, String shiftType) {
+            Log.d(TAG, "Native setShiftAlarm requested: " + year + "-" + month + "-" + day + " " + hour + ":" + minute + " [" + shiftType + "]");
+            try {
+                com.shiftalarm.app.alarm.ShiftAlarmScheduler scheduler = new com.shiftalarm.app.alarm.ShiftAlarmScheduler(context);
+                int alarmId = (year * 10000 + month * 100 + day) ^ (hour * 60 + minute);
+                if (alarmId < 0) alarmId = -alarmId;
+                com.shiftalarm.app.alarm.ShiftAlarmItem item = new com.shiftalarm.app.alarm.ShiftAlarmItem(alarmId, year, month, day, hour, minute, shiftType);
+                boolean success = scheduler.schedule(item);
+                if (success) {
+                    new Handler(Looper.getMainLooper()).post(() -> {
+                        String dateStr = String.format("%d월 %d일", month, day);
+                        Toast.makeText(context, "⏰ [" + dateStr + "] " + shiftType + " 알람이 등록되었습니다.", Toast.LENGTH_SHORT).show();
+                    });
+                }
+                return success;
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to schedule exact shift alarm", e);
+                return false;
+            }
+        }
+
+        /**
+         * 특정 날짜 알람 취소
+         */
+        @JavascriptInterface
+        public boolean cancelShiftAlarm(int year, int month, int day, int hour, int minute) {
+            try {
+                com.shiftalarm.app.alarm.ShiftAlarmScheduler scheduler = new com.shiftalarm.app.alarm.ShiftAlarmScheduler(context);
+                int alarmId = (year * 10000 + month * 100 + day) ^ (hour * 60 + minute);
+                if (alarmId < 0) alarmId = -alarmId;
+                scheduler.cancel(alarmId);
+                return true;
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to cancel exact shift alarm", e);
+                return false;
+            }
+        }
     }
 }

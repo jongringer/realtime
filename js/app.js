@@ -2755,16 +2755,23 @@ class ShiftApp {
     this.closeModal(this.modalAlarmPopup);
 
     const padMinute = String(minute).padStart(2, '0');
-    const msgText = `${shiftType} 근무알람`;
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const msgText = `[${m}/${d}(${dayName})] ${shiftType} 근무알람`;
 
     let calledNative = false;
 
-    // 1. APK 네이티브 환경 (MainActivity의 AndroidAlarm 브릿지)
-    if (window.AndroidAlarm && typeof window.AndroidAlarm.setAlarm === 'function') {
+    // 1. APK 네이티브 환경: 자체 1회성 날짜 정밀 알람(setShiftAlarm) 최우선 실행!
+    if (window.AndroidAlarm) {
       try {
-        console.log('[ShiftAlarm] Calling native AndroidAlarm.setAlarm:', hour, minute, msgText, androidDay);
-        window.AndroidAlarm.setAlarm(hour, minute, msgText, androidDay);
-        calledNative = true;
+        if (typeof window.AndroidAlarm.setShiftAlarm === 'function') {
+          console.log('[ShiftAlarm] Calling native AndroidAlarm.setShiftAlarm:', y, m, d, hour, minute, shiftType);
+          calledNative = window.AndroidAlarm.setShiftAlarm(y, m, d, hour, minute, shiftType);
+        }
+        if (!calledNative && typeof window.AndroidAlarm.setAlarm === 'function') {
+          console.log('[ShiftAlarm] Calling fallback AndroidAlarm.setAlarm:', hour, minute, msgText, androidDay);
+          window.AndroidAlarm.setAlarm(hour, minute, msgText, androidDay);
+          calledNative = true;
+        }
       } catch (err) {
         console.error('[ShiftAlarm] Native bridge call failed:', err);
       }
@@ -2788,19 +2795,30 @@ class ShiftApp {
     this.renderCalendar();
 
     // 화면 전환을 방해하지 않는 깔끔한 토스트 안내
-    this.showWeatherToast(`⏰ ${shiftType} 알람 (${hour}:${padMinute}, ${dayName}요일) 등록 완료`);
+    this.showWeatherToast(`⏰ ${m}월 ${d}일(${dayName}) ${shiftType} 알람 (${hour}:${padMinute}) 등록 완료`);
   }
 
   executeDismissAlarm() {
     if (!this.pendingAlarmData) return;
-    const { dateStr, shiftType, dayName } = this.pendingAlarmData;
+    const { dateStr, shiftType, dayName, hour, minute } = this.pendingAlarmData;
     this.closeModal(this.modalAlarmPopup);
+
+    const [y, m, d] = dateStr.split('-').map(Number);
+
+    // 네이티브 자체 정밀 알람 취소 호출
+    if (window.AndroidAlarm && typeof window.AndroidAlarm.cancelShiftAlarm === 'function') {
+      try {
+        window.AndroidAlarm.cancelShiftAlarm(y, m, d, hour, minute);
+      } catch (e) {
+        console.warn('Native cancelShiftAlarm failed:', e);
+      }
+    }
 
     // 알람 해제: 스토리지에서 삭제 후 달력에서 ⏰ 아이콘 즉시 제거
     shiftStorage.removeActiveAlarm(dateStr);
     this.renderCalendar();
 
-    this.showWeatherToast(`🔕 ${dayName}요일 ${shiftType} 근무알람이 해제되었습니다.`);
+    this.showWeatherToast(`🔕 ${m}월 ${d}일 ${shiftType} 근무알람이 해제되었습니다.`);
   }
 }
 
