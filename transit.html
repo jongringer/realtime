@@ -808,10 +808,32 @@
       return { next, next2 };
     }
 
+    /**
+     * 시간표 딕셔너리의 모든 분(minute)을 minutesToShift(1분)만큼 일괄 앞당기는 헬퍼
+     */
+    function shiftScheduleDictEarlier(scheduleDict, minutesToShift = 1) {
+      const adjusted = {};
+      for (const [hStr, mins] of Object.entries(scheduleDict)) {
+        const h = Number(hStr);
+        for (const m of mins) {
+          let totalMin = h * 60 + m - minutesToShift;
+          if (totalMin < 0) totalMin += 24 * 60;
+          const newH = Math.floor(totalMin / 60) % 24;
+          const newM = totalMin % 60;
+          if (!adjusted[newH]) adjusted[newH] = [];
+          adjusted[newH].push(newM);
+        }
+      }
+      for (const h in adjusted) {
+        adjusted[h].sort((a, b) => a - b);
+      }
+      return adjusted;
+    }
+
     // ==========================================
-    // 1. 국회의사당역 (개화 방면 - 퇴근용) 역사 고정 시간표
+    // 1. 국회의사당역 (개화 방면 - 퇴근용) 역사 고정 시간표 (1분 앞당김 적용)
     // ==========================================
-    const NATIONAL_ASSEMBLY_WEEKDAY = {
+    const NATIONAL_ASSEMBLY_WEEKDAY = shiftScheduleDictEarlier({
       5: [42, 53],
       6: [6, 22, 37, 50],
       7: [3, 16, 29, 42, 50],
@@ -832,9 +854,9 @@
       22: [5, 8, 19, 30, 41, 52],
       23: [3, 14, 25, 36, 47, 58],
       24: [9, 20, 31, 42, 53] // 42분 마곡나루행, 53분 염창행
-    };
+    }, 1);
 
-    const NATIONAL_ASSEMBLY_WEEKEND = {
+    const NATIONAL_ASSEMBLY_WEEKEND = shiftScheduleDictEarlier({
       5: [41, 52],
       6: [5, 18, 35, 50],
       7: [2, 14, 26, 38, 50],
@@ -854,12 +876,12 @@
       21: [1, 11, 23, 34, 45, 56],
       22: [7, 18, 29, 40, 52],
       23: [6, 18, 33, 50] // 50분 염창행
-    };
+    }, 1);
 
     // ==========================================
-    // 2. 선유도역 (당산·중앙보훈병원 방면 - 출근용) 역사 고정 시간표
+    // 2. 선유도역 (당산·중앙보훈병원 방면 - 출근용) 역사 고정 시간표 (1분 앞당김 적용)
     // ==========================================
-    const SEONYUDO_WEEKDAY = {
+    const SEONYUDO_WEEKDAY = shiftScheduleDictEarlier({
       5: [34, 48, 59],
       6: [11, 23, 35, 43, 50, 59],
       7: [5, 11, 18, 24, 30, 37, 43, 49, 56],
@@ -880,9 +902,9 @@
       22: [8, 19, 30, 41, 52],
       23: [3, 14, 25, 36, 47, 57],
       24: [7, 18, 30, 43, 56] // 18분 삼전행, 30분 신논현행, 43분 동작행, 56분 당산행 막차
-    };
+    }, 1);
 
-    const SEONYUDO_WEEKEND = {
+    const SEONYUDO_WEEKEND = shiftScheduleDictEarlier({
       5: [36, 47, 57],
       6: [9, 21, 33, 45, 57],
       7: [9, 21, 33, 45, 57],
@@ -902,7 +924,7 @@
       21: [4, 15, 26, 37, 50],
       22: [3, 16, 30, 44, 56],
       23: [11, 27, 41, 55] // 27분 신논현행, 41분 동작행, 55분 당산행 막차
-    };
+    }, 1);
 
     function isKoreanHoliday(date) {
       if (typeof window !== 'undefined' && typeof window.isKoreanHoliday === 'function') {
@@ -1015,7 +1037,7 @@
         });
       }
 
-      return adjustSubwaySchedule(results);
+      return results;
     }
 
     /**

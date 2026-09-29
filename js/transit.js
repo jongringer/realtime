@@ -583,11 +583,33 @@ class TransitManager {
     return day === 0 || day === 6 || this.isKoreanHoliday(date);
   }
 
+  /**
+   * 시간표 딕셔너리의 모든 분(minute)을 minutesToShift(1분)만큼 일괄 앞당기는 헬퍼
+   */
+  shiftScheduleDictEarlier(scheduleDict, minutesToShift = 1) {
+    const adjusted = {};
+    for (const [hStr, mins] of Object.entries(scheduleDict)) {
+      const h = Number(hStr);
+      for (const m of mins) {
+        let totalMin = h * 60 + m - minutesToShift;
+        if (totalMin < 0) totalMin += 24 * 60;
+        const newH = Math.floor(totalMin / 60) % 24;
+        const newM = totalMin % 60;
+        if (!adjusted[newH]) adjusted[newH] = [];
+        adjusted[newH].push(newM);
+      }
+    }
+    for (const h in adjusted) {
+      adjusted[h].sort((a, b) => a - b);
+    }
+    return adjusted;
+  }
+
   // ==========================================
-  // 9호선 역사 공식 고정 시간표 배차 엔진
+  // 9호선 역사 공식 고정 시간표 배차 엔진 (1분 앞당김 보정 적용)
   // ==========================================
   getStationSchedules() {
-    return {
+    const rawSchedules = {
       NATIONAL_ASSEMBLY_WEEKDAY: {
         5: [42, 53],
         6: [6, 22, 37, 50],
@@ -674,6 +696,14 @@ class TransitManager {
         22: [3, 16, 30, 44, 56],
         23: [11, 27, 41, 55] // 27분 신논현행, 41분 동작행, 55분 당산행 막차
       }
+    };
+
+    // 사용자의 요구에 따라 전체 시간표를 일괄 1분씩 앞당겨 적용
+    return {
+      NATIONAL_ASSEMBLY_WEEKDAY: this.shiftScheduleDictEarlier(rawSchedules.NATIONAL_ASSEMBLY_WEEKDAY, 1),
+      NATIONAL_ASSEMBLY_WEEKEND: this.shiftScheduleDictEarlier(rawSchedules.NATIONAL_ASSEMBLY_WEEKEND, 1),
+      SEONYUDO_WEEKDAY: this.shiftScheduleDictEarlier(rawSchedules.SEONYUDO_WEEKDAY, 1),
+      SEONYUDO_WEEKEND: this.shiftScheduleDictEarlier(rawSchedules.SEONYUDO_WEEKEND, 1)
     };
   }
 
@@ -768,7 +798,7 @@ class TransitManager {
       });
     }
 
-    return this.adjustSubwaySchedule(results);
+    return results;
   }
 
   /**
