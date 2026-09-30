@@ -2,7 +2,7 @@ import { Filesystem, Directory } from '@capacitor/filesystem';
 import { FileOpener } from '@capawesome-team/capacitor-file-opener';
 
 // [설정] 현재 앱 버전 및 GitHub 저장소 (계정명/저장소명 입력)
-export const CURRENT_APP_VERSION = 'v1.2.2';
+export const CURRENT_APP_VERSION = 'v1.2.3';
 const GITHUB_REPO = 'jongringer/apk'; 
 
 /**
