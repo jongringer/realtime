@@ -1359,8 +1359,8 @@ body[data-theme="noble-gold"] .shift-badge.shift-vacation {
 /* 개인 일정 미니 뱃지 (달력 안: 사용자 요청 2~3줄 표기 완벽 지원) */
 .schedule-badge-mini {
   display: block !important;
-  background-color: #fee2e2;
-  color: #991b1b;
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #ffffff !important;
   font-size: 8px !important;
   font-weight: 700;
   line-height: 1.25 !important;
@@ -1369,7 +1369,7 @@ body[data-theme="noble-gold"] .shift-badge.shift-vacation {
   margin-top: 2px;
   white-space: normal !important;          /* 사용자 요청: 2~3줄 표기 허용 */
   word-break: break-all !important;        /* 칸 너비 초과 시 자연스러운 줄바꿈 */
-  border-left: 2px solid #ef4444;
+  border-left: 2px solid #94a3b8;
   text-align: left;
   overflow: hidden;
   box-sizing: border-box;
@@ -1382,16 +1382,19 @@ body[data-theme="noble-gold"] .shift-badge.shift-vacation {
   display: inline;
 }
 
+/* 낮 모드 (애플 퓨어 라이트): 검은색 글씨 & 깔끔한 소프트 그레이 배경 */
 body[data-theme="apple-light"] .schedule-badge-mini {
-  background-color: #fef2f2;
-  color: #991b1b;
-  border-left: 2px solid #ef4444;
+  background-color: #f1f5f9;
+  color: #000000 !important;
+  border-left: 2px solid #475569;
 }
 
-body[data-theme="obsidian"] .schedule-badge-mini {
-  background-color: #450a0a;
-  color: #fecaca;
-  border-left: 2px solid #f87171;
+/* 밤 모드 (옵시디언 다크 / 노블 골드): 흰색 글씨 & 다크 반투명 배경 */
+body[data-theme="obsidian"] .schedule-badge-mini,
+body[data-theme="noble-gold"] .schedule-badge-mini {
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #ffffff !important;
+  border-left: 2px solid #94a3b8;
 }
 
 /* --------------------------------------------------------------------------
