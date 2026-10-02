@@ -2766,8 +2766,7 @@ class ShiftApp {
         if (typeof window.AndroidAlarm.setShiftAlarm === 'function') {
           console.log('[ShiftAlarm] Calling native AndroidAlarm.setShiftAlarm:', y, m, d, hour, minute, shiftType);
           calledNative = window.AndroidAlarm.setShiftAlarm(y, m, d, hour, minute, shiftType);
-        }
-        if (typeof window.AndroidAlarm.setAlarm === 'function') {
+        } else if (typeof window.AndroidAlarm.setAlarm === 'function') {
           console.log('[ShiftAlarm] Calling AndroidAlarm.setAlarm for Galaxy Clock App:', hour, minute, msgText, androidDay);
           window.AndroidAlarm.setAlarm(hour, minute, msgText, androidDay);
           calledNative = true;

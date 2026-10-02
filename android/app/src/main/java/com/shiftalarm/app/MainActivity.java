@@ -160,8 +160,12 @@ public class MainActivity extends BridgeActivity {
                 boolean success = scheduler.schedule(item);
 
                 // 2. 갤럭시/안드로이드 삼성 공식 시계 알람 어플(AlarmClock.ACTION_SET_ALARM)로 즉시 전송 및 전달
+                java.util.Calendar cal = java.util.Calendar.getInstance();
+                cal.set(year, month - 1, day);
+                int dayOfWeek = cal.get(java.util.Calendar.DAY_OF_WEEK); // 1=일, 2=월, 3=화, 4=수, 5=목, 6=금, 7=토
+
                 String msgText = String.format("[%d/%d] %s 근무알람", month, day, shiftType);
-                setAlarm(hour, minute, msgText, 0);
+                setAlarm(hour, minute, msgText, dayOfWeek);
 
                 if (success) {
                     new Handler(Looper.getMainLooper()).post(() -> {
