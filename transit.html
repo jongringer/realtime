@@ -554,7 +554,7 @@
       </button>
     </div>
 
-
+    <div id="commuteEstimationSummaryBox" class="commute-estimation-box"></div>
 
     <div id="cardsContainer" style="display: flex; flex-direction: column; gap: 12px;"></div>
 
@@ -1360,6 +1360,111 @@
       } else {
         container.innerHTML = subHtml + busHtml;
       }
+
+      renderEstimationBox(isCommute);
+    }
+
+    function renderEstimationBox(isCommute) {
+      const box = document.getElementById('commuteEstimationSummaryBox');
+      if (!box) return;
+
+      const now = new Date();
+      const nowMs = now.getTime();
+      const WALK_HOME_BUS = 8;
+      const WALK_BUS_SUBWAY = 3;
+      const WALK_SUBWAY_OFFICE = 9;
+      const RIDE_BUS = 5;
+      const RIDE_SUBWAY = 4;
+      const WAIT_EST = 5;
+
+      const totalMins = WALK_HOME_BUS + WALK_BUS_SUBWAY + WALK_SUBWAY_OFFICE + RIDE_BUS + RIDE_SUBWAY + WAIT_EST;
+      const arrDate = new Date(nowMs + totalMins * 60 * 1000);
+
+      const fmtTime = (d) => {
+        const h = String(d.getHours()).padStart(2, '0');
+        const m = String(d.getMinutes()).padStart(2, '0');
+        return `${h}:${m}`;
+      };
+
+      const fmtClockFull = (d) => {
+        const h = d.getHours();
+        const m = d.getMinutes();
+        const ampm = h >= 12 ? '오후' : '오전';
+        const h12 = h % 12 === 0 ? 12 : h % 12;
+        const mStr = String(m).padStart(2, '0');
+        return `${ampm} ${h12}시 ${mStr}분`;
+      };
+
+      const destName = isCommute ? '회사' : '집';
+      const stepsHtml = isCommute ? `
+        <div class="est-timeline-step">
+          <div class="est-step-node start">🏠</div>
+          <div class="est-step-content"><span class="est-step-name">집 출발</span><span class="est-step-clock">${fmtTime(now)}</span></div>
+        </div>
+        <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 도보 8분 (6단지 정류장)</span></div>
+        <div class="est-timeline-step">
+          <div class="est-step-node">🚌</div>
+          <div class="est-step-content"><div><div class="est-step-name">6단지 버스정류장</div><div class="est-step-detail">🚌 버스 승차 (5분 이동)</div></div><span class="est-step-clock">${fmtTime(new Date(nowMs + 8*60000))}</span></div>
+        </div>
+        <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 도보 3분 환승</span></div>
+        <div class="est-timeline-step">
+          <div class="est-step-node">🚇</div>
+          <div class="est-step-content"><div><div class="est-step-name">선유도역 9호선 승차장</div><div class="est-step-detail">🚇 9호선 탑승 (4분 이동)</div></div><span class="est-step-clock">${fmtTime(new Date(nowMs + 16*60000))}</span></div>
+        </div>
+        <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 도보 9분 (회사)</span></div>
+        <div class="est-timeline-step">
+          <div class="est-step-node end">🎯</div>
+          <div class="est-step-content" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4);">
+            <span class="est-step-name" style="color:#a7f3d0;">🏢 회사 도착 예정</span>
+            <span class="est-step-clock" style="color:#34d399; font-weight:900;">${fmtClockFull(arrDate)}</span>
+          </div>
+        </div>
+      ` : `
+        <div class="est-timeline-step">
+          <div class="est-step-node start">🏢</div>
+          <div class="est-step-content"><span class="est-step-name">회사 출발</span><span class="est-step-clock">${fmtTime(now)}</span></div>
+        </div>
+        <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 도보 9분 (국회의사당역)</span></div>
+        <div class="est-timeline-step">
+          <div class="est-step-node">🚇</div>
+          <div class="est-step-content"><div><div class="est-step-name">국회의사당역 9호선</div><div class="est-step-detail">🚇 9호선 탑승 (4분 이동)</div></div><span class="est-step-clock">${fmtTime(new Date(nowMs + 9*60000))}</span></div>
+        </div>
+        <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 도보 3분 환승</span></div>
+        <div class="est-timeline-step">
+          <div class="est-step-node">🚌</div>
+          <div class="est-step-content"><div><div class="est-step-name">선유도역 버스정류장</div><div class="est-step-detail">🚌 버스 승차 (5분 이동)</div></div><span class="est-step-clock">${fmtTime(new Date(nowMs + 16*60000))}</span></div>
+        </div>
+        <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 도보 8분 (집)</span></div>
+        <div class="est-timeline-step">
+          <div class="est-step-node end">🎯</div>
+          <div class="est-step-content" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4);">
+            <span class="est-step-name" style="color:#a7f3d0;">🏠 집 도착 예정</span>
+            <span class="est-step-clock" style="color:#34d399; font-weight:900;">${fmtClockFull(arrDate)}</span>
+          </div>
+        </div>
+      `;
+
+      box.innerHTML = `
+        <div class="est-summary-card">
+          <div class="est-main-header">
+            <div class="est-dest-title">
+              <span class="est-dest-icon">${isCommute ? '🏢' : '🏠'}</span>
+              <div class="est-dest-text">
+                <div class="est-dest-label">${destName}까지 약 <span class="est-total-min">${totalMins}분</span> 예상</div>
+                <div class="est-dep-time">지금(${fmtTime(now)}) 출발 기준</div>
+              </div>
+            </div>
+            <div class="est-arr-box">
+              <span class="est-arr-sub">도착 예정 시각</span>
+              <span class="est-arr-time">${fmtClockFull(arrDate)}</span>
+            </div>
+          </div>
+          <div class="est-timeline-flow">${stepsHtml}</div>
+          <div class="est-breakdown-bar">
+            <span>💡 총 소요시간 구성: 🚶 도보 20분 + 🚏 대기 ${WAIT_EST}분 + 🚍 승차 9분 = <b>총 ${totalMins}분 소요</b></span>
+          </div>
+        </div>
+      `;
     }
 
     function setMode(mode) {
