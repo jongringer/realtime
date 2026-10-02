@@ -3983,19 +3983,20 @@ body[data-theme="noble-gold"] #editScheduleTimeBadge {
 }
 
 /* ==========================================================================
-   출퇴근 실시간 소요시간 & 도착예정시각 그래픽 전광판 카드 (High-End Graphic)
+   출퇴근 실시간 소요시간 & 도착예정시각 그래픽 전광판 카드 (Light / Dark Adaptive)
    ========================================================================== */
 .commute-estimation-box {
   width: 100%;
 }
 
+/* --- ☀️ 낮 모드 (기본 라이트 테마: 하얀 바탕) --- */
 .est-summary-card {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  color: #ffffff;
+  background: #ffffff;
+  color: #0f172a;
   border-radius: 16px;
   padding: 16px 14px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.22);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
+  border: 1px solid #cbd5e1;
   margin-top: 10px;
   margin-bottom: 12px;
   animation: fadeIn 0.3s ease-in-out;
@@ -4006,7 +4007,7 @@ body[data-theme="noble-gold"] #editScheduleTimeBadge {
   justify-content: space-between;
   align-items: center;
   padding-bottom: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid #e2e8f0;
   margin-bottom: 14px;
   gap: 10px;
 }
@@ -4019,7 +4020,7 @@ body[data-theme="noble-gold"] #editScheduleTimeBadge {
 
 .est-dest-icon {
   font-size: 26px;
-  background: rgba(255, 255, 255, 0.1);
+  background: #f1f5f9;
   padding: 6px 8px;
   border-radius: 12px;
   line-height: 1;
@@ -4028,48 +4029,50 @@ body[data-theme="noble-gold"] #editScheduleTimeBadge {
 .est-dest-label {
   font-size: 15px;
   font-weight: 800;
-  color: #f8fafc;
+  color: #0f172a;
   letter-spacing: -0.4px;
   white-space: nowrap;
 }
 
 .est-total-min {
-  color: #38bdf8;
+  color: #0284c7;
   font-size: 18.5px;
   font-weight: 900;
 }
 
 .est-dep-time {
   font-size: 11.5px;
-  color: #94a3b8;
+  color: #64748b;
   margin-top: 2px;
 }
 
+/* 📍 도착예정시각 박스 (시간 글자 앞쪽과 일치하도록 text-align: left, 도착 시각 빨간색 강조) */
 .est-arr-box {
-  background: rgba(56, 189, 248, 0.12);
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  background: #fef2f2;
+  border: 1.5px solid #fecaca;
   padding: 8px 12px;
   border-radius: 12px;
-  text-align: right;
+  text-align: left; /* 앞쪽(왼쪽) 정렬 */
   flex-shrink: 0;
 }
 
 .est-arr-sub {
   display: block;
   font-size: 11px;
-  color: #7dd3fc;
-  font-weight: 700;
+  color: #991b1b;
+  font-weight: 800;
+  margin-bottom: 2px;
 }
 
 .est-arr-time {
   display: block;
   font-size: 16px;
   font-weight: 900;
-  color: #ffffff;
+  color: #dc2626 !important; /* 🔥 도착시각 빨간색 강조 */
   margin-top: 1px;
 }
 
-/* Timeline Flow Graphics */
+/* Timeline Flow Graphics (Light Mode) */
 .est-timeline-flow {
   display: flex;
   flex-direction: column;
@@ -4088,8 +4091,8 @@ body[data-theme="noble-gold"] #editScheduleTimeBadge {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: #334155;
-  border: 2px solid #38bdf8;
+  background: #f1f5f9;
+  border: 2px solid #0284c7;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4099,19 +4102,19 @@ body[data-theme="noble-gold"] #editScheduleTimeBadge {
 }
 
 .est-step-node.start {
-  background: #059669;
-  border-color: #6ee7b7;
+  background: #ecfdf5;
+  border-color: #10b981;
 }
 
 .est-step-node.end {
-  background: #e11d48;
-  border-color: #fca5a5;
+  background: #fef2f2;
+  border-color: #ef4444;
 }
 
 .est-step-content {
   flex: 1;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 10px;
   padding: 7px 10px;
   display: flex;
@@ -4120,15 +4123,26 @@ body[data-theme="noble-gold"] #editScheduleTimeBadge {
   min-width: 0;
 }
 
+.est-step-content.est-final-step {
+  background: #fef2f2;
+  border: 1.5px solid #fecaca;
+}
+
 .est-step-name {
   font-size: 12.5px;
   font-weight: 700;
-  color: #f1f5f9;
+  color: #1e293b;
+}
+
+.est-step-name.est-final-name {
+  color: #991b1b;
+  font-size: 13.5px;
+  font-weight: 800;
 }
 
 .est-step-detail {
   font-size: 11px;
-  color: #cbd5e1;
+  color: #64748b;
   font-weight: 600;
   margin-top: 1px;
 }
@@ -4136,15 +4150,21 @@ body[data-theme="noble-gold"] #editScheduleTimeBadge {
 .est-step-clock {
   font-size: 12px;
   font-weight: 800;
-  color: #38bdf8;
+  color: #0284c7;
   flex-shrink: 0;
   margin-left: 8px;
+}
+
+.est-step-clock.highlight-arr-clock {
+  color: #dc2626 !important; /* 🔥 도착 예정 시각 빨간색 강조 */
+  font-size: 14.5px !important;
+  font-weight: 900 !important;
 }
 
 .est-timeline-line {
   width: 2px;
   height: 16px;
-  background: linear-gradient(to bottom, #38bdf8, #818cf8);
+  background: linear-gradient(to bottom, #0284c7, #6366f1);
   margin-left: 14px;
   position: relative;
 }
@@ -4154,21 +4174,186 @@ body[data-theme="noble-gold"] #editScheduleTimeBadge {
   left: 10px;
   top: -1px;
   font-size: 10px;
-  color: #94a3b8;
+  color: #475569;
   white-space: nowrap;
-  background: rgba(15, 23, 42, 0.85);
+  background: #f1f5f9;
   padding: 1px 6px;
   border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid #cbd5e1;
 }
 
 .est-breakdown-bar {
   margin-top: 12px;
   padding-top: 10px;
-  border-top: 1px dashed rgba(255, 255, 255, 0.15);
+  border-top: 1px dashed #cbd5e1;
   font-size: 11.5px;
-  color: #94a3b8;
+  color: #64748b;
   text-align: center;
 }
+
+/* --- 🌙 밤 모드 (Dark Theme) 전용 전광판 스타일 오버라이드 --- */
+[data-theme="obsidian"] .est-summary-card,
+[data-theme="midnight"] .est-summary-card,
+[data-theme="noble-gold"] .est-summary-card,
+body.dark-theme .est-summary-card,
+body.dark-mode .est-summary-card {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.25) !important;
+}
+
+[data-theme="obsidian"] .est-main-header,
+[data-theme="midnight"] .est-main-header,
+[data-theme="noble-gold"] .est-main-header,
+body.dark-theme .est-main-header,
+body.dark-mode .est-main-header {
+  border-bottom-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+[data-theme="obsidian"] .est-dest-icon,
+[data-theme="midnight"] .est-dest-icon,
+[data-theme="noble-gold"] .est-dest-icon,
+body.dark-theme .est-dest-icon,
+body.dark-mode .est-dest-icon {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="obsidian"] .est-dest-label,
+[data-theme="midnight"] .est-dest-label,
+[data-theme="noble-gold"] .est-dest-label,
+body.dark-theme .est-dest-label,
+body.dark-mode .est-dest-label {
+  color: #f8fafc !important;
+}
+
+[data-theme="obsidian"] .est-total-min,
+[data-theme="midnight"] .est-total-min,
+[data-theme="noble-gold"] .est-total-min,
+body.dark-theme .est-total-min,
+body.dark-mode .est-total-min {
+  color: #38bdf8 !important;
+}
+
+[data-theme="obsidian"] .est-dep-time,
+[data-theme="midnight"] .est-dep-time,
+[data-theme="noble-gold"] .est-dep-time,
+body.dark-theme .est-dep-time,
+body.dark-mode .est-dep-time {
+  color: #94a3b8 !important;
+}
+
+[data-theme="obsidian"] .est-arr-box,
+[data-theme="midnight"] .est-arr-box,
+[data-theme="noble-gold"] .est-arr-box,
+body.dark-theme .est-arr-box,
+body.dark-mode .est-arr-box {
+  background: rgba(220, 38, 38, 0.2) !important;
+  border-color: rgba(248, 113, 113, 0.4) !important;
+  text-align: left !important;
+}
+
+[data-theme="obsidian"] .est-arr-sub,
+[data-theme="midnight"] .est-arr-sub,
+[data-theme="noble-gold"] .est-arr-sub,
+body.dark-theme .est-arr-sub,
+body.dark-mode .est-arr-sub {
+  color: #fca5a5 !important;
+}
+
+[data-theme="obsidian"] .est-arr-time,
+[data-theme="midnight"] .est-arr-time,
+[data-theme="noble-gold"] .est-arr-time,
+body.dark-theme .est-arr-time,
+body.dark-mode .est-arr-time {
+  color: #f87171 !important; /* 🔥 밤모드에서도 빨간색 강조! */
+}
+
+[data-theme="obsidian"] .est-step-node,
+[data-theme="midnight"] .est-step-node,
+[data-theme="noble-gold"] .est-step-node,
+body.dark-theme .est-step-node,
+body.dark-mode .est-step-node {
+  background: #334155 !important;
+  border-color: #38bdf8 !important;
+}
+
+[data-theme="obsidian"] .est-step-content,
+[data-theme="midnight"] .est-step-content,
+[data-theme="noble-gold"] .est-step-content,
+body.dark-theme .est-step-content,
+body.dark-mode .est-step-content {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="obsidian"] .est-step-content.est-final-step,
+[data-theme="midnight"] .est-step-content.est-final-step,
+[data-theme="noble-gold"] .est-step-content.est-final-step,
+body.dark-theme .est-step-content.est-final-step,
+body.dark-mode .est-step-content.est-final-step {
+  background: rgba(220, 38, 38, 0.2) !important;
+  border-color: rgba(248, 113, 113, 0.4) !important;
+}
+
+[data-theme="obsidian"] .est-step-name,
+[data-theme="midnight"] .est-step-name,
+[data-theme="noble-gold"] .est-step-name,
+body.dark-theme .est-step-name,
+body.dark-mode .est-step-name {
+  color: #f1f5f9 !important;
+}
+
+[data-theme="obsidian"] .est-step-name.est-final-name,
+[data-theme="midnight"] .est-step-name.est-final-name,
+[data-theme="noble-gold"] .est-step-name.est-final-name,
+body.dark-theme .est-step-name.est-final-name,
+body.dark-mode .est-step-name.est-final-name {
+  color: #fca5a5 !important;
+}
+
+[data-theme="obsidian"] .est-step-detail,
+[data-theme="midnight"] .est-step-detail,
+[data-theme="noble-gold"] .est-step-detail,
+body.dark-theme .est-step-detail,
+body.dark-mode .est-step-detail {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="obsidian"] .est-step-clock,
+[data-theme="midnight"] .est-step-clock,
+[data-theme="noble-gold"] .est-step-clock,
+body.dark-theme .est-step-clock,
+body.dark-mode .est-step-clock {
+  color: #38bdf8 !important;
+}
+
+[data-theme="obsidian"] .est-step-clock.highlight-arr-clock,
+[data-theme="midnight"] .est-step-clock.highlight-arr-clock,
+[data-theme="noble-gold"] .est-step-clock.highlight-arr-clock,
+body.dark-theme .est-step-clock.highlight-arr-clock,
+body.dark-mode .est-step-clock.highlight-arr-clock {
+  color: #f87171 !important; /* 🔥 밤모드에서도 도착 시각 빨간색 강조 */
+}
+
+[data-theme="obsidian"] .est-timeline-line-label,
+[data-theme="midnight"] .est-timeline-line-label,
+[data-theme="noble-gold"] .est-timeline-line-label,
+body.dark-theme .est-timeline-line-label,
+body.dark-mode .est-timeline-line-label {
+  background: rgba(15, 23, 42, 0.85) !important;
+  color: #94a3b8 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="obsidian"] .est-breakdown-bar,
+[data-theme="midnight"] .est-breakdown-bar,
+[data-theme="noble-gold"] .est-breakdown-bar,
+body.dark-theme .est-breakdown-bar,
+body.dark-mode .est-breakdown-bar {
+  border-top-color: rgba(255, 255, 255, 0.15) !important;
+  color: #94a3b8 !important;
+}
+
 
 

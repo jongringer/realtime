@@ -1390,9 +1390,9 @@ class TransitManager {
       <!-- Step 6: 회사 도착 -->
       <div class="est-timeline-step">
         <div class="est-step-node end">🎯</div>
-        <div class="est-step-content" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4);">
-          <span class="est-step-name" style="color:#a7f3d0; font-size:13.5px;">🏢 회사 도착 예정</span>
-          <span class="est-step-clock" style="color:#34d399; font-size:14.5px; font-weight:900;">${fmtClockFull(est.t_final)}</span>
+        <div class="est-step-content est-final-step">
+          <span class="est-step-name est-final-name">🏢 회사 도착 예정</span>
+          <span class="est-step-clock highlight-arr-clock">${fmtClockFull(est.t_final)}</span>
         </div>
       </div>
     ` : `
@@ -1461,9 +1461,9 @@ class TransitManager {
       <!-- Step 6: 집 도착 -->
       <div class="est-timeline-step">
         <div class="est-step-node end">🎯</div>
-        <div class="est-step-content" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4);">
-          <span class="est-step-name" style="color:#a7f3d0; font-size:13.5px;">🏠 집 도착 예정</span>
-          <span class="est-step-clock" style="color:#34d399; font-size:14.5px; font-weight:900;">${fmtClockFull(est.t_final)}</span>
+        <div class="est-step-content est-final-step">
+          <span class="est-step-name est-final-name">🏠 집 도착 예정</span>
+          <span class="est-step-clock highlight-arr-clock">${fmtClockFull(est.t_final)}</span>
         </div>
       </div>
     `;
