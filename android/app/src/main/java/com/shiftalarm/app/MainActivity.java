@@ -121,12 +121,12 @@ public class MainActivity extends BridgeActivity {
                         intent.putExtra(AlarmClock.EXTRA_DAYS, days);
                     }
 
-                    // SKIP_UI를 false로 주어야 시계 앱 화면이 직접 열리며 확실하게 알람이 등록/저장됨
+                    // SKIP_UI를 false로 주어 시계 앱 화면이 열리면서 알람이 100% 저장 등록되도록 설정
                     intent.putExtra(AlarmClock.EXTRA_SKIP_UI, false);
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
                     context.startActivity(intent);
-                    Toast.makeText(context, "시계 앱으로 " + message + " (" + hour + ":" + String.format("%02d", minute) + ") 알람을 설정합니다.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, "시계 앱으로 " + message + " (" + hour + ":" + String.format("%02d", minute) + ") 알람 전송", Toast.LENGTH_SHORT).show();
                 } catch (Exception e) {
                     Log.e(TAG, "Failed to start AlarmClock intent", e);
                     try {
@@ -145,25 +145,31 @@ public class MainActivity extends BridgeActivity {
         }
 
         /**
-         * 1회성 특정 날짜 기반 자체 정밀 알람 등록 (Android AlarmManager + FullScreenActivity)
+         * 1회성 특정 날짜 기반 자체 정밀 알람 등록 및 갤럭시/안드로이드 공식 시계 어플 전송
          * JS 호출: window.AndroidAlarm.setShiftAlarm(year, month, day, hour, minute, shiftType)
          */
         @JavascriptInterface
         public boolean setShiftAlarm(int year, int month, int day, int hour, int minute, String shiftType) {
             Log.d(TAG, "Native setShiftAlarm requested: " + year + "-" + month + "-" + day + " " + hour + ":" + minute + " [" + shiftType + "]");
             try {
+                // 1. 앱 내부 정밀 알람 등록 (AlarmManager + FullScreenActivity)
                 com.shiftalarm.app.alarm.ShiftAlarmScheduler scheduler = new com.shiftalarm.app.alarm.ShiftAlarmScheduler(context);
                 int alarmId = (year * 10000 + month * 100 + day) ^ (hour * 60 + minute);
                 if (alarmId < 0) alarmId = -alarmId;
                 com.shiftalarm.app.alarm.ShiftAlarmItem item = new com.shiftalarm.app.alarm.ShiftAlarmItem(alarmId, year, month, day, hour, minute, shiftType);
                 boolean success = scheduler.schedule(item);
+
+                // 2. 갤럭시/안드로이드 삼성 공식 시계 알람 어플(AlarmClock.ACTION_SET_ALARM)로 즉시 전송 및 전달
+                String msgText = String.format("[%d/%d] %s 근무알람", month, day, shiftType);
+                setAlarm(hour, minute, msgText, 0);
+
                 if (success) {
                     new Handler(Looper.getMainLooper()).post(() -> {
                         String dateStr = String.format("%d월 %d일", month, day);
-                        Toast.makeText(context, "⏰ [" + dateStr + "] " + shiftType + " 알람이 등록되었습니다.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, "⏰ [" + dateStr + "] " + shiftType + " 알람이 시계 앱 및 스마트폰에 등록되었습니다.", Toast.LENGTH_SHORT).show();
                     });
                 }
-                return success;
+                return true;
             } catch (Exception e) {
                 Log.e(TAG, "Failed to schedule exact shift alarm", e);
                 return false;

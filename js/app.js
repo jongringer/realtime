@@ -2760,15 +2760,15 @@ class ShiftApp {
 
     let calledNative = false;
 
-    // 1. APK 네이티브 환경: 자체 1회성 날짜 정밀 알람(setShiftAlarm) 최우선 실행!
+    // 1. APK 네이티브 환경: 자체 1회성 날짜 정밀 알람 & 갤럭시 시계 알람 어플(AlarmClock.ACTION_SET_ALARM) 전송
     if (window.AndroidAlarm) {
       try {
         if (typeof window.AndroidAlarm.setShiftAlarm === 'function') {
           console.log('[ShiftAlarm] Calling native AndroidAlarm.setShiftAlarm:', y, m, d, hour, minute, shiftType);
           calledNative = window.AndroidAlarm.setShiftAlarm(y, m, d, hour, minute, shiftType);
         }
-        if (!calledNative && typeof window.AndroidAlarm.setAlarm === 'function') {
-          console.log('[ShiftAlarm] Calling fallback AndroidAlarm.setAlarm:', hour, minute, msgText, androidDay);
+        if (typeof window.AndroidAlarm.setAlarm === 'function') {
+          console.log('[ShiftAlarm] Calling AndroidAlarm.setAlarm for Galaxy Clock App:', hour, minute, msgText, androidDay);
           window.AndroidAlarm.setAlarm(hour, minute, msgText, androidDay);
           calledNative = true;
         }
