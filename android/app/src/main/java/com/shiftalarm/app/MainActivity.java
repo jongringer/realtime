@@ -190,6 +190,17 @@ public class MainActivity extends BridgeActivity {
                 int alarmId = (year * 10000 + month * 100 + day) ^ (hour * 60 + minute);
                 if (alarmId < 0) alarmId = -alarmId;
                 scheduler.cancel(alarmId);
+
+                // 사용자가 시계 앱에서도 알람 스위치를 바로 끌 수 있도록 시계 앱 알람 목록 화면 자동 오픈
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    try {
+                        Intent intent = new Intent(AlarmClock.ACTION_SHOW_ALARMS);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        context.startActivity(intent);
+                    } catch (Exception ex) {
+                        Log.w(TAG, "Could not open clock app alarms list", ex);
+                    }
+                });
                 return true;
             } catch (Exception e) {
                 Log.e(TAG, "Failed to cancel exact shift alarm", e);
