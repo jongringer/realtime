@@ -1,5 +1,5 @@
 @echo off
-cd /d "C:\Users\KBS\근무표"
+cd /d "%~dp0"
 
 echo ========================================================
 echo   Pushing to GitHub: https://github.com/jongringer/apk
@@ -7,11 +7,11 @@ echo ========================================================
 echo.
 
 echo [Step 1] Pushing main branch...
-"C:\Program Files\Git\cmd\git.exe" push -u origin main
+git push -u origin main
 
 echo.
-echo [Step 2] Pushing tag v1.2.4...
-"C:\Program Files\Git\cmd\git.exe" push origin v1.2.4
+echo [Step 2] Pushing tag v1.2.14...
+git push origin v1.2.14
 
 echo.
 echo ========================================================
