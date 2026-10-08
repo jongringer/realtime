@@ -138,6 +138,8 @@ class TransitManager {
     this.tabCommute = document.getElementById('tabCommute');
     this.tabOffwork = document.getElementById('tabOffwork');
     this.cardsContainer = document.getElementById('transitCardsContainer');
+    this.commuteSummaryContainer = document.getElementById('commuteEstimationSummaryBox') || document.getElementById('estimationSummaryBox');
+    this.commuteDetailContainer = document.getElementById('commuteEstimationDetailBox');
 
     this.lastUpdated = document.getElementById('lastUpdated');
     this.btnHeaderReload = document.getElementById('btnHeaderReload');
@@ -1468,8 +1470,12 @@ class TransitManager {
       </div>
     `;
 
+    if (!this.commuteDetailContainer) {
+      this.commuteDetailContainer = document.getElementById('commuteEstimationDetailBox');
+    }
+
     this.commuteSummaryContainer.innerHTML = `
-      <div class="est-summary-card">
+      <div class="est-summary-card est-header-only-card">
         <div class="est-main-header">
           <div class="est-dest-title">
             <span class="est-dest-icon">${isCommute ? '🏢' : '🏠'}</span>
@@ -1483,16 +1489,29 @@ class TransitManager {
             <span class="est-arr-time">${fmtClockFull(est.t_final)}</span>
           </div>
         </div>
+      </div>
+    `;
 
+    const detailHtml = `
+      <div class="est-summary-card est-detail-timeline-card">
+        <div class="est-detail-title-bar">
+          <span>🧭 <b>${isCommute ? '출근' : '퇴근'} 이동 경로 및 순차 시각표</b></span>
+          <span class="est-detail-badge">도보·환승 연계</span>
+        </div>
         <div class="est-timeline-flow">
           ${stepsHtml}
         </div>
-
         <div class="est-breakdown-bar">
           <span>💡 소요시간 구성: 🚶 도보 20분 + 🚏 대기 ${est.busWaitMin + est.subWaitMin}분 + 🚍 승차 9분 = <b>총 ${est.totalMinutes}분 소요</b></span>
         </div>
       </div>
     `;
+
+    if (this.commuteDetailContainer) {
+      this.commuteDetailContainer.innerHTML = detailHtml;
+    } else {
+      this.commuteSummaryContainer.querySelector('.est-summary-card').insertAdjacentHTML('beforeend', detailHtml);
+    }
   }
 
   triggerManualRefresh(btn = null) {

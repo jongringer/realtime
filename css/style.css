@@ -4002,6 +4002,45 @@ body[data-theme="noble-gold"] #editScheduleTimeBadge {
   animation: fadeIn 0.3s ease-in-out;
 }
 
+/* 🏢/🏠 상단 도착 예정 시각 단독 카드 (깔끔한 컴팩트 레이아웃) */
+.est-header-only-card {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.est-header-only-card .est-main-header {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+/* 🧭 버스·지하철 시각 하단 이동 경로 순차표 카드 */
+.est-detail-timeline-card {
+  margin-top: 12px;
+  margin-bottom: 12px;
+}
+
+.est-detail-title-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 12px;
+  font-size: 13.5px;
+  color: #1e293b;
+}
+
+.est-detail-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #0284c7;
+  background: #e0f2fe;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid #bae6fd;
+}
+
 .est-main-header {
   display: flex;
   justify-content: space-between;
@@ -4209,6 +4248,25 @@ body.dark-mode .est-summary-card {
 body.dark-theme .est-main-header,
 body.dark-mode .est-main-header {
   border-bottom-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+[data-theme="obsidian"] .est-detail-title-bar,
+[data-theme="midnight"] .est-detail-title-bar,
+[data-theme="noble-gold"] .est-detail-title-bar,
+body.dark-theme .est-detail-title-bar,
+body.dark-mode .est-detail-title-bar {
+  border-bottom-color: rgba(255, 255, 255, 0.12) !important;
+  color: #f1f5f9 !important;
+}
+
+[data-theme="obsidian"] .est-detail-badge,
+[data-theme="midnight"] .est-detail-badge,
+[data-theme="noble-gold"] .est-detail-badge,
+body.dark-theme .est-detail-badge,
+body.dark-mode .est-detail-badge {
+  background: rgba(2, 132, 199, 0.25) !important;
+  color: #38bdf8 !important;
+  border-color: rgba(56, 189, 248, 0.35) !important;
 }
 
 [data-theme="obsidian"] .est-dest-icon,
