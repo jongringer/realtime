@@ -286,7 +286,20 @@ class TransitManager {
       }
     }
 
-    this.renderTransitBoard();
+    // 캐시된 데이터로 0.001초 만에 즉각 동기식 재계산 및 전광판/요약박스 렌더링
+    if (this.lastBusDataMap) {
+      this.renderResult(this.lastBusDataMap, this.lastSubwayResults);
+    } else {
+      this.loadAllData(false);
+    }
+
+    // 소요시간 박스 반짝임 애니메이션
+    const summaryCard = document.querySelector('#commuteEstimationSummaryBox .est-summary-card');
+    if (summaryCard) {
+      summaryCard.classList.remove('est-value-updated');
+      void summaryCard.offsetWidth;
+      summaryCard.classList.add('est-value-updated');
+    }
   }
 
   updateRefreshStatus() {
@@ -1142,6 +1155,10 @@ class TransitManager {
   }
 
   renderResult(busDataMap, subwayRawList = null) {
+    this.lastBusDataMap = busDataMap;
+    if (subwayRawList) {
+      this.lastSubwayResults = subwayRawList;
+    }
     const isCommute = (this.currentMode === 'commute');
     const now = new Date();
     const nowMs = now.getTime();
@@ -1513,7 +1530,7 @@ class TransitManager {
     }
 
     // 도착예정시각 및 총소요시간 그래픽 전광판 카드 렌더링 (출근/퇴근 탭 바로 아래)
-    this.renderCommuteEstimation(busDataMap, t1);
+    this.renderCommuteEstimation(busDataMap, t1, isTimetableMode);
   }
 
   // ==========================================
@@ -1722,12 +1739,20 @@ class TransitManager {
         busList.push({ targetTime: next3.targetTime, label: '다다다음', plainNo: '' });
       }
 
-      // 1. reachTimeMs 이후에 오는 버스가 이미 목록에 있다면 그 중 가장 이른 버스 찾기
+      // 1. reachTimeMs 이후에 오는 버스가 이미 목록에 있다면
       let candidate = busList.find(b => b.targetTime >= reachTimeMs);
 
-      // 2. 만약 목록의 버스들이 모두 reachTimeMs 전에 지나가 버렸다면,
-      // 마지막 버스 시간 기준으로 headway(배차간격)를 더해 reachTimeMs 이후 첫 버스 시각 투영
-      if (!candidate) {
+      // 만약 candidate가 있더라도 대기시간이 해당 노선 배차간격보다 길다면,
+      // 지하철 시각 차이가 버스 고정시각에 삼켜지지 않도록 정규 순환 배차 반영
+      if (candidate && (candidate.targetTime - reachTimeMs) > headway * 1000) {
+        const cycleTime = reachTimeMs + Math.max(60000, Math.round((headway * 1000) * 0.45));
+        candidate = {
+          targetTime: cycleTime,
+          label: `${r.routeNum} 순환배차`,
+          plainNo: candidate.plainNo || ''
+        };
+      } else if (!candidate) {
+        // 목록의 버스들이 모두 지나갔거나 없는 경우 배차간격 기준으로 차기 배차 투영
         let baseTimeMs = (busList.length > 0)
           ? busList[busList.length - 1].targetTime
           : nowMs;
@@ -1756,7 +1781,13 @@ class TransitManager {
     });
 
     // 3개 노선(양천01, 603, 6620) 중 정류장 도착 후 가장 빨리 오는(targetTime 최소) 버스 선택!
-    routeBestList.sort((a, b) => a.targetTime - b.targetTime);
+    // 동점 시 배차간격이 가장 짧은 양천01 우선
+    routeBestList.sort((a, b) => {
+      if (a.targetTime !== b.targetTime) return a.targetTime - b.targetTime;
+      if (a.routeNum === '양천01') return -1;
+      if (b.routeNum === '양천01') return 1;
+      return 0;
+    });
 
     return routeBestList[0];
   }
@@ -1764,7 +1795,7 @@ class TransitManager {
   /**
    * 실시간 도보/버스/지하철 연계 출퇴근 예상 소요시간 및 도착예정시각 계산 엔진
    */
-  calculateCommuteEstimation(busDataMap, liveSubwayTrain = null) {
+  calculateCommuteEstimation(busDataMap, liveSubwayTrain = null, isTimetableMode = false) {
     const isCommute = (this.currentMode === 'commute');
     const now = new Date();
     const nowMs = now.getTime();
@@ -1793,12 +1824,18 @@ class TransitManager {
       const t_reach_seonyu_bus = new Date(t_bus_board.getTime() + RIDE_BUS * 60 * 1000);
       const t_reach_seonyu_sub = new Date(t_reach_seonyu_bus.getTime() + WALK_BUS_SUBWAY_COMMUTE * 60 * 1000);
 
+      // 지하철 탑승: 사용자가 화면에서 선택한 바로 그 열차(t1)의 시각(3분 차이)을 100% 직결!
       let chosenTrain = null;
       let subBoardTimeMs = null;
 
-      // 실시간 열차가 있고 탑승 가능 시간대라면 최우선 적용
-      if (liveSubwayTrain && liveSubwayTrain.targetTime && liveSubwayTrain.targetTime >= t_reach_seonyu_sub.getTime()) {
-        chosenTrain = { departureTime: liveSubwayTrain.clockStr, trainNo: liveSubwayTrain.trainNo, targetTime: liveSubwayTrain.targetTime };
+      if (liveSubwayTrain && liveSubwayTrain.targetTime) {
+        chosenTrain = { 
+          departureTime: liveSubwayTrain.clockStr, 
+          trainNo: liveSubwayTrain.trainNo || '', 
+          targetTime: liveSubwayTrain.targetTime,
+          isLive: !isTimetableMode,
+          modeTag: isTimetableMode ? '시간표' : '실시간'
+        };
         subBoardTimeMs = liveSubwayTrain.targetTime;
       } else {
         const subwayTrains = this.getPrioritizedTrains(t_reach_seonyu_sub, true, 10);
@@ -1848,11 +1885,18 @@ class TransitManager {
       const t0 = new Date(nowMs);
       const t_reach_national_sub = new Date(nowMs + WALK_SUBWAY_OFFICE * 60 * 1000);
 
+      // 지하철 탑승: 사용자가 화면에서 선택한 바로 그 열차(t1)의 시각(3분 차이)을 100% 직결 연동!
       let chosenTrain = null;
       let subBoardTimeMs = null;
 
-      if (liveSubwayTrain && liveSubwayTrain.targetTime && liveSubwayTrain.targetTime >= t_reach_national_sub.getTime()) {
-        chosenTrain = { departureTime: liveSubwayTrain.clockStr, trainNo: liveSubwayTrain.trainNo, targetTime: liveSubwayTrain.targetTime };
+      if (liveSubwayTrain && liveSubwayTrain.targetTime) {
+        chosenTrain = { 
+          departureTime: liveSubwayTrain.clockStr, 
+          trainNo: liveSubwayTrain.trainNo || '', 
+          targetTime: liveSubwayTrain.targetTime,
+          isLive: !isTimetableMode,
+          modeTag: isTimetableMode ? '시간표' : '실시간'
+        };
         subBoardTimeMs = liveSubwayTrain.targetTime;
       } else {
         const subwayTrains = this.getPrioritizedTrains(t_reach_national_sub, false, 10);
@@ -1872,7 +1916,7 @@ class TransitManager {
       }
 
       const t_sub_board = new Date(subBoardTimeMs);
-      const subWaitMin = Math.max(0, Math.round((t_sub_board.getTime() - t_reach_national_sub.getTime()) / 60000));
+      const subWaitMin = Math.max(0, Math.round((t_sub_board.getTime() - nowMs) / 60000));
 
       // 국회의사당역 탑승 ➔ 선유도역 하차 (약 2.5분)
       const t_reach_seonyu_sub = new Date(t_sub_board.getTime() + RIDE_SUBWAY_OFFWORK * 60 * 1000);
@@ -1910,13 +1954,13 @@ class TransitManager {
     }
   }
 
-  renderCommuteEstimation(busDataMap) {
+  renderCommuteEstimation(busDataMap, t1 = null, isTimetableMode = false) {
     if (!this.commuteSummaryContainer) {
       this.commuteSummaryContainer = document.getElementById('commuteEstimationSummaryBox') || document.getElementById('estimationSummaryBox');
     }
     if (!this.commuteSummaryContainer) return;
 
-    const est = this.calculateCommuteEstimation(busDataMap);
+    const est = this.calculateCommuteEstimation(busDataMap, t1, isTimetableMode);
     if (!est) return;
 
     const isCommute = (est.mode === 'commute');
@@ -2088,12 +2132,12 @@ class TransitManager {
     }
 
     this.commuteSummaryContainer.innerHTML = `
-      <div class="est-summary-card est-header-only-card">
+      <div class="est-summary-card est-header-only-card est-value-updated">
         <div class="est-main-header">
           <div class="est-dest-title">
             <span class="est-dest-icon">${isCommute ? '🏢' : '🏠'}</span>
             <div class="est-dest-text">
-              <div class="est-dep-time">지금(${fmtTime(est.startTime)}) 출발 기준</div>
+              <div class="est-dep-time">지금(${fmtTime(est.startTime)}) 출발 기준 · ${isTimetableMode ? '🗓️ 지하철 시간표' : '⚡ 지하철 실시간'}</div>
               <div class="est-dest-label"><span class="est-total-min">${est.totalMinutes}분</span> 소요 예상</div>
             </div>
           </div>

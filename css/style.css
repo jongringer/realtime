@@ -4314,6 +4314,15 @@ body[data-theme="noble-gold"] #editScheduleTimeBadge {
   animation: fadeIn 0.3s ease-in-out;
 }
 
+@keyframes estValuePulse {
+  0% { transform: scale(1.06); filter: brightness(1.2); box-shadow: 0 0 16px rgba(3,105,161,0.45); }
+  50% { transform: scale(1.02); filter: brightness(1.1); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+.est-value-updated {
+  animation: estValuePulse 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
 /* 🏢/🏠 상단 도착 예정 시각 단독 카드 (깔끔한 컴팩트 레이아웃) */
 .est-header-only-card {
   margin-top: 10px;
