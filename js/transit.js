@@ -2008,11 +2008,11 @@ class TransitManager {
     };
 
     const busPlateNum = est.chosenBus?.plainNo ? (est.chosenBus.plainNo.length > 4 ? est.chosenBus.plainNo.slice(-4) : est.chosenBus.plainNo) : '';
-    const busPlateStr = busPlateNum ? ` <span class="neon-green-num">(${busPlateNum})</span>` : '';
+    const busPlateStr = busPlateNum ? ` <span class="dark-red-num">(${busPlateNum})</span>` : '';
     const busLabelBadge = `<b style="color:#0369a1;">${est.chosenBus?.routeNum || '버스'}</b> (${est.chosenBus?.label || '다음'})${busPlateStr}`;
 
     const subModeTag = isTimetableMode ? '[🗓️시간표]' : '[⚡실시간]';
-    const trainNoStr = (!isTimetableMode && est.chosenTrain?.trainNo) ? ` <span class="neon-green-num">(${est.chosenTrain.trainNo})</span>` : '';
+    const trainNoStr = (!isTimetableMode && est.chosenTrain?.trainNo) ? ` <span class="dark-red-num">(${est.chosenTrain.trainNo})</span>` : '';
     const trainLabelBadge = `<b style="color:#1d4ed8;">9호선 일반 (${est.chosenTrain?.departureTime || est.chosenTrain?.clockStr || ''} 탑승 ${subModeTag})</b>${trainNoStr}`;
 
     const stepsHtml = isCommute ? `

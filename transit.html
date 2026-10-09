@@ -853,18 +853,23 @@
       animation: estValuePulse 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
 
-    /* 🟢 실시간 타게 될 버스/지하철 번호 형광 녹색 강조 스타일 */
+    /* 🔴 실시간 타게 될 버스/지하철 번호 다크 레드 강조 스타일 */
+    .dark-red-num,
     .neon-green-num {
-      color: #00c853 !important;
+      color: #8b0000 !important;
       font-weight: 900 !important;
-      text-shadow: 0 0 6px rgba(0, 200, 83, 0.45);
       letter-spacing: -0.3px;
+      display: inline-block;
+      text-shadow: 0 0 1px rgba(139, 0, 0, 0.2);
     }
+    body:not([data-theme="apple-light"]) .dark-red-num,
     body:not([data-theme="apple-light"]) .neon-green-num,
+    [data-theme="obsidian"] .dark-red-num,
     [data-theme="obsidian"] .neon-green-num,
+    [data-theme="midnight"] .dark-red-num,
     [data-theme="midnight"] .neon-green-num {
-      color: #00e676 !important;
-      text-shadow: 0 0 8px rgba(0, 230, 118, 0.65);
+      color: #ff4d4f !important;
+      text-shadow: 0 0 6px rgba(255, 77, 79, 0.45);
     }
   </style>
 </head>
@@ -2360,11 +2365,11 @@
       const arrDate = est.t_final;
 
       const busPlateNum = est.chosenBus?.plainNo ? (est.chosenBus.plainNo.length > 4 ? est.chosenBus.plainNo.slice(-4) : est.chosenBus.plainNo) : '';
-      const busPlateStr = busPlateNum ? ` <span class="neon-green-num">(${busPlateNum})</span>` : '';
+      const busPlateStr = busPlateNum ? ` <span class="dark-red-num">(${busPlateNum})</span>` : '';
       const busLabelBadge = `<b style="color:#0369a1;">${est.chosenBus.routeNum}</b> (${est.chosenBus.label})${busPlateStr}`;
 
       const subModeTag = isTimetableMode ? '[🗓️시간표]' : '[⚡실시간]';
-      const trainNoStr = (!isTimetableMode && est.chosenTrain?.trainNo) ? ` <span class="neon-green-num">(${est.chosenTrain.trainNo})</span>` : '';
+      const trainNoStr = (!isTimetableMode && est.chosenTrain?.trainNo) ? ` <span class="dark-red-num">(${est.chosenTrain.trainNo})</span>` : '';
       const trainLabelBadge = `<b style="color:#1d4ed8;">9호선 일반 (${est.chosenTrain.clockStr} 탑승 ${subModeTag})</b>${trainNoStr}`;
 
       const stepsHtml = isCommute ? `
