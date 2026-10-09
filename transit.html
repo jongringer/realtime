@@ -679,57 +679,149 @@
     }
 
     /* 지하철 실시간 / 시간표 모드 전환 토글 스위처 */
+    @keyframes clickSparkle {
+      0% { transform: scale(0.92); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.8); }
+      50% { transform: scale(1.08); box-shadow: 0 0 14px 4px rgba(245, 158, 11, 0.6); }
+      100% { transform: scale(1); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15); }
+    }
+    @keyframes clickSparkleGreen {
+      0% { transform: scale(0.92); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.8); }
+      50% { transform: scale(1.08); box-shadow: 0 0 14px 4px rgba(16, 185, 129, 0.6); }
+      100% { transform: scale(1); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15); }
+    }
     .subway-source-toggle-group {
       display: inline-flex;
       align-items: center;
       background: #f1f5f9;
       border: 1.5px solid #cbd5e1;
       border-radius: 8px;
-      padding: 2px;
-      gap: 2px;
+      padding: 2.5px;
+      gap: 3px;
       box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
     }
     .subway-mode-btn {
-      background: transparent;
-      border: 1px solid transparent;
-      color: #64748b;
+      background: #ffffff;
+      border: 1.5px solid #e2e8f0;
+      color: #334155;
       font-size: 11px;
-      font-weight: 700;
-      padding: 2.5px 7px;
+      font-weight: 750;
+      padding: 3px 8px;
       border-radius: 6px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 3px;
-      transition: all 0.18s ease;
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
       white-space: nowrap;
       user-select: none;
     }
-    .subway-mode-btn:hover {
-      background: rgba(255, 255, 255, 0.7);
-      color: #1e293b;
+    .subway-mode-btn:active {
+      transform: scale(0.93);
     }
+    .subway-mode-btn.sparkle-active-green {
+      animation: clickSparkleGreen 0.4s ease-out;
+    }
+    .subway-mode-btn.sparkle-active-amber {
+      animation: clickSparkle 0.4s ease-out;
+    }
+    /* 실시간 활성화: 낮모드 진한 에메랄드 + 순백 굵은 텍스트 */
     .subway-mode-btn.active-realtime {
-      background: #ecfdf5 !important;
-      color: #065f46 !important;
-      border-color: #a7f3d0 !important;
-      font-weight: 800 !important;
-      box-shadow: 0 1px 3px rgba(16, 185, 129, 0.18);
+      background: #059669 !important;
+      color: #ffffff !important;
+      border-color: #047857 !important;
+      font-weight: 900 !important;
+      box-shadow: 0 2px 8px rgba(5, 150, 105, 0.4) !important;
     }
+    /* 시간표 활성화: 낮모드 딥 앰버 + 순백 굵은 텍스트 */
     .subway-mode-btn.active-timetable {
-      background: #fef3c7 !important;
-      color: #92400e !important;
-      border-color: #fde68a !important;
-      font-weight: 800 !important;
-      box-shadow: 0 1px 3px rgba(245, 158, 11, 0.18);
+      background: #d97706 !important;
+      color: #ffffff !important;
+      border-color: #b45309 !important;
+      font-weight: 900 !important;
+      box-shadow: 0 2px 8px rgba(217, 119, 6, 0.4) !important;
     }
+
+    /* 시각 표기 전용 클래스 (낮모드) */
+    .subway-clock-time {
+      color: #0369a1 !important;
+      font-size: 18.5px !important;
+      font-weight: 900 !important;
+      letter-spacing: -0.3px;
+    }
+    .subway-clock-time-next2 {
+      color: #1d4ed8 !important;
+      font-size: 16.5px !important;
+      font-weight: 900 !important;
+      letter-spacing: -0.2px;
+    }
+
+    /* 밤모드 (다크 모드) 스타일 */
+    body[data-theme="obsidian"],
+    body:not([data-theme="apple-light"]) {
+      background-color: #090d16;
+      color: #f1f5f9;
+    }
+    body:not([data-theme="apple-light"]) .bit-board-card {
+      background: #111827;
+      border-color: #1f2937;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+    }
+    body:not([data-theme="apple-light"]) .subway-source-toggle-group {
+      background: #0f172a !important;
+      border-color: #334155 !important;
+    }
+    body:not([data-theme="apple-light"]) .subway-mode-btn {
+      background: #1e293b !important;
+      color: #f8fafc !important;
+      border-color: #475569 !important;
+      font-weight: 800 !important;
+    }
+    body:not([data-theme="apple-light"]) .subway-mode-btn.active-realtime {
+      background: #10b981 !important;
+      color: #022c22 !important;
+      border: 1.5px solid #34d399 !important;
+      font-weight: 900 !important;
+      box-shadow: 0 0 14px rgba(16, 185, 129, 0.45) !important;
+    }
+    body:not([data-theme="apple-light"]) .subway-mode-btn.active-timetable {
+      background: #fbbf24 !important;
+      color: #09090b !important;
+      border: 1.5px solid #fde047 !important;
+      font-weight: 900 !important;
+      box-shadow: 0 0 14px rgba(251, 191, 36, 0.5) !important;
+    }
+    body:not([data-theme="apple-light"]) .btn-timetable-popup {
+      background: #1e293b !important;
+      color: #f8fafc !important;
+      border-color: #475569 !important;
+      font-weight: 800 !important;
+    }
+    body:not([data-theme="apple-light"]) .subway-clock-time {
+      color: #38bdf8 !important;
+      text-shadow: 0 0 10px rgba(56, 189, 248, 0.4) !important;
+    }
+    body:not([data-theme="apple-light"]) .subway-clock-time-next2 {
+      color: #60a5fa !important;
+    }
+    body:not([data-theme="apple-light"]) .next-transit-box {
+      background: rgba(30, 41, 59, 0.7);
+      border-color: #334155;
+    }
+    body:not([data-theme="apple-light"]) .next2-transit-box {
+      background: rgba(15, 23, 42, 0.6);
+      border-color: #1e293b;
+    }
+    body:not([data-theme="apple-light"]) .transit-arr-label {
+      color: #cbd5e1 !important;
+    }
+
     .btn-timetable-popup {
       background: #ffffff;
-      color: #475569;
-      border: 1px solid #cbd5e1;
+      color: #1e293b;
+      border: 1.5px solid #cbd5e1;
       font-size: 10.5px;
-      font-weight: 700;
-      padding: 2.5px 6px;
+      font-weight: 800;
+      padding: 3px 7px;
       border-radius: 6px;
       cursor: pointer;
       display: inline-flex;
@@ -740,7 +832,7 @@
     }
     .btn-timetable-popup:hover {
       background: #f8fafc;
-      color: #1e293b;
+      color: #0f172a;
       border-color: #94a3b8;
     }
   </style>
@@ -805,14 +897,35 @@
     let refreshCountdown = 25;
     let isFetching = false;
     let subwaySourceMode = localStorage.getItem('subway_source_mode') || 'realtime'; // 'realtime' | 'timetable'
+    let lastBusResults = null;
+    let lastSubwayRaw = null;
 
     function setSubwaySourceMode(mode) {
-      if (subwaySourceMode === mode) return;
       subwaySourceMode = mode;
       try {
         localStorage.setItem('subway_source_mode', mode);
       } catch (e) {}
-      renderCards();
+
+      // 누르는 즉각 0.001초 만에 버튼 색상 전환 및 반짝임 애니메이션 발동 (재터치 시에도 즉각 반응)
+      const btnReal = document.getElementById('btnSubwayRealtime');
+      const btnTime = document.getElementById('btnSubwayTimetable');
+      if (btnReal && btnTime) {
+        btnReal.classList.remove('sparkle-active-green', 'sparkle-active-amber');
+        btnTime.classList.remove('sparkle-active-green', 'sparkle-active-amber');
+        void btnReal.offsetWidth;
+        void btnTime.offsetWidth;
+
+        if (mode === 'realtime') {
+          btnReal.className = 'subway-mode-btn active-realtime sparkle-active-green';
+          btnTime.className = 'subway-mode-btn';
+        } else {
+          btnTime.className = 'subway-mode-btn active-timetable sparkle-active-amber';
+          btnReal.className = 'subway-mode-btn';
+        }
+      }
+
+      // 전체 화면 로딩 스피너 없이 즉시 지하철 도착시각 재계산 및 렌더링
+      renderCards(false);
     }
     window.setSubwaySourceMode = setSubwaySourceMode;
 
@@ -1501,7 +1614,7 @@
       });
     }
 
-    async function renderCards() {
+    async function renderCards(showLoading = true) {
       const container = document.getElementById('cardsContainer');
       const tabC = document.getElementById('tabCommute');
       const tabO = document.getElementById('tabOffwork');
@@ -1510,13 +1623,15 @@
       if (tabC) tabC.className = `tab-btn ${isCommute ? 'active' : ''}`;
       if (tabO) tabO.className = `tab-btn ${!isCommute ? 'active' : ''}`;
 
-      container.innerHTML = `
-        <div style="text-align:center; padding:32px 14px; background:#fff; border-radius:16px; border:1px solid #bae6fd; box-shadow:0 4px 14px rgba(2,132,199,0.08);">
-          <div style="font-size:28px; margin-bottom:8px; display:inline-block; animation:spin 1s infinite linear;">🔄</div>
-          <div style="font-size:15px; font-weight:800; color:#0284c7;">실시간 대중교통 최신 정보 수신 중...</div>
-          <p style="font-size:12px; color:#64748b; margin-top:4px;">서울시 버스(TOPIS) 및 9호선 역사 공식 시간표를 수신하고 있습니다.</p>
-        </div>
-      `;
+      if (showLoading && !lastBusResults) {
+        container.innerHTML = `
+          <div style="text-align:center; padding:32px 14px; background:#fff; border-radius:16px; border:1px solid #bae6fd; box-shadow:0 4px 14px rgba(2,132,199,0.08);">
+            <div style="font-size:28px; margin-bottom:8px; display:inline-block; animation:spin 1s infinite linear;">🔄</div>
+            <div style="font-size:15px; font-weight:800; color:#0284c7;">실시간 대중교통 최신 정보 수신 중...</div>
+            <p style="font-size:12px; color:#64748b; margin-top:4px;">서울시 버스(TOPIS) 및 9호선 역사 공식 시간표를 수신하고 있습니다.</p>
+          </div>
+        `;
+      }
 
       const startTime = Date.now();
       const config = BUS_CONFIGS[currentMode];
@@ -1536,13 +1651,16 @@
         subwayPromise
       ]);
 
+      if (busResults) lastBusResults = busResults;
+      if (subwayRaw) lastSubwayRaw = subwayRaw;
+
       const busDataMap = {};
       config.routes.forEach((r, idx) => {
         busDataMap[r.routeNum] = busResults[idx];
       });
 
       const elapsed = Date.now() - startTime;
-      if (elapsed < 250) {
+      if (showLoading && elapsed < 250) {
         await new Promise(r => setTimeout(r, 250 - elapsed));
       }
 
@@ -1737,14 +1855,13 @@
         let t2Html = '';
         if (t2) {
           const t2Plate = t2.trainNo ? `<span class="next2-train-plate" style="font-size:11px; color:#1e40af; font-weight:700; margin-left:4px;">(${formatPlateSmall(t2.trainNo)})</span>` : '';
-          const t2Loc = t2.curLocation ? `${t2.curLocation} · ` : '';
           const t2TimeHtml = (t2.isArrivingSoon || t2.sec <= 30)
             ? `<span style="color:#dc2626; font-weight:800; font-size:12px;">⚡ 곧 도착</span>`
             : `<span class="live-cd" data-time="${t2.targetTime}" style="font-weight:800; color:#1e40af; font-size:12px;">${formatSec(t2.sec)}</span>`;
           t2Html = `
             <div class="next2-transit-box" style="padding:6px 10px; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; justify-content:space-between; align-items:center;">
               <span class="next2-tag-blue" style="font-size:12px; white-space:nowrap;">
-                <span>🔵 다다음 (<b class="transit-clock-time" style="font-size:15px; font-weight:900; color:#78350f;">${t2.clockStr}</b> · ${t2Loc}${t2.destName}행):${t2Plate}</span>
+                <span>🔵 다다음 (<b class="transit-clock-time subway-clock-time-next2" style="font-size:16.5px; font-weight:900;">${t2.clockStr}</b>)${t2Plate}</span>
               </span>
               ${t2TimeHtml}
             </div>
@@ -1755,11 +1872,26 @@
           ? `<span class="badge-bus-plate badge-train-plate" style="display:inline-flex; align-items:center; background:#dbeafe; color:#1e3a8a; font-size:11px; padding:2px 7px; border-radius:5px; font-weight:800; margin-left:6px; border:1.5px solid #93c5fd;">${formatPlateWithBigDigits(t1.trainNo, '🚇')}</span>`
           : `<span class="badge-low-bus" style="background:#fef3c7; color:#b45309; border-color:#fde68a;">${isTimetableMode ? '🗓️ 정시시간표' : '역고정(공식)'}</span>`;
 
-        const subLoc = t1.curLocation
-          ? `${t1.curLocation} ${t1.statusMsg}`
-          : (isTimetableMode
-              ? (isCommute ? '선유도역 탑승' : '국회의사당역 탑승') + ' · 9호선 공식 시간표 기준'
-              : (t1.isLive ? t1.statusMsg : (isCommute ? '선유도역 탑승' : '국회의사당역 탑승') + ' · 고정시간표'));
+        // 위치 문구 간결화 (뒤의 도착 시각이 잘 보이도록 불필요한 '9호선 공식 시간표 기준' 완전 제거)
+        let subLoc = '';
+        if (isTimetableMode) {
+          subLoc = isCommute ? '선유도역 탑승' : '국회의사당역 탑승';
+        } else {
+          if (t1.curLocation) {
+            subLoc = `${t1.curLocation} ${t1.statusMsg || ''}`.trim();
+          } else {
+            subLoc = isCommute ? '선유도역 탑승' : '국회의사당역 탑승';
+          }
+        }
+        subLoc = subLoc.replace(/9호선\s*공식\s*시간표\s*기준/g, '')
+                       .replace(/공식\s*시간표\s*정시\s*운행/g, '')
+                       .replace(/공식\s*시간표/g, '')
+                       .replace(/시간표\s*기준/g, '')
+                       .replace(/역고정\s*\(공식\)/g, '')
+                       .trim();
+        if (!subLoc) {
+          subLoc = isCommute ? '선유도역 탑승' : '국회의사당역 탑승';
+        }
 
         const t1TimeHtml = (t1.isArrivingSoon || t1.sec <= 30)
           ? `<span style="color:#dc2626; font-weight:900; font-size:13.5px;">⚡ 곧 도착</span>`
@@ -1767,6 +1899,7 @@
 
         const arrivalLabel = isTimetableMode ? '시간표 도착:' : '도착 예정:';
 
+        // 어디행 제거 및 시각 폰트 18.5px / 고대비 컬러로 크게 노출
         subScheduleHtml = `
           <div class="next-transit-box" style="padding:7px 10px;">
             <div class="next-transit-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px; white-space:nowrap;">
@@ -1778,7 +1911,7 @@
             </div>
             <div class="next-transit-sub" style="font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; justify-content:space-between; align-items:center; border-top:1px dashed #bae6fd; padding-top:4px; margin-top:4px;">
               <span>위치: <b>${subLoc}</b></span>
-              <span class="transit-sub-time"><span class="transit-arr-label" style="font-size:12.5px; font-weight:800;">${arrivalLabel}</span> <b class="transit-clock-time" style="font-size:16px; font-weight:900; color:#78350f;">${t1.clockStr}</b> <span style="font-size:11px; font-weight:600;">(${t1.destName}행)</span></span>
+              <span class="transit-sub-time"><span class="transit-arr-label" style="font-size:13px; font-weight:800;">${arrivalLabel}</span> <b class="transit-clock-time subway-clock-time" style="font-size:18.5px; font-weight:900; margin-left:4px;">${t1.clockStr}</b></span>
             </div>
           </div>
           ${t2Html}
@@ -1804,13 +1937,15 @@
             </div>
             <div class="subway-source-toggle-group">
               <button type="button" 
+                      id="btnSubwayRealtime"
                       class="subway-mode-btn ${!isTimetableMode ? 'active-realtime' : ''}" 
                       onclick="setSubwaySourceMode('realtime')" 
                       title="서울시 지하철 실시간 도착정보 및 열차번호 연동">
-                <span class="bit-status-dot" style="${!isTimetableMode && isLiveSub ? 'background:#10b981;' : 'background:#94a3b8;'}"></span>
+                <span class="bit-status-dot" style="${!isTimetableMode && isLiveSub ? 'background:#ffffff;' : 'background:#94a3b8;'}"></span>
                 <span>${!isTimetableMode && isLiveSub ? '서울시 실시간' : '실시간'}</span>
               </button>
               <button type="button" 
+                      id="btnSubwayTimetable"
                       class="subway-mode-btn ${isTimetableMode ? 'active-timetable' : ''}" 
                       onclick="setSubwaySourceMode('timetable')" 
                       title="9호선 공식 역사 시간표 기준 도착시간으로 계산">

@@ -1338,11 +1338,16 @@ class ShiftApp {
     const isSaturday = (dayIndex === 6);
 
     this.elTodayDateText.classList.remove('is-holiday', 'is-sunday', 'is-saturday');
+    const isDayTheme = (this.currentTheme === 'apple-light');
     if (isHoliday || isSunday) {
       this.elTodayDateText.classList.add('is-holiday');
       if (isSunday) this.elTodayDateText.classList.add('is-sunday');
+      this.elTodayDateText.style.setProperty('color', isDayTheme ? '#dc2626' : '#f87171', 'important');
     } else if (isSaturday) {
       this.elTodayDateText.classList.add('is-saturday');
+      this.elTodayDateText.style.setProperty('color', isDayTheme ? '#2563eb' : '#60a5fa', 'important');
+    } else {
+      this.elTodayDateText.style.removeProperty('color');
     }
 
     if (this.elTodayTimeText) {

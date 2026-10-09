@@ -612,12 +612,12 @@ body:not([data-theme="apple-light"]) .today-card {
   line-height: 1.2;
 }
 
-body[data-theme="apple-light"] .today-date-text {
+body[data-theme="apple-light"] .today-date-text:not(.is-holiday):not(.is-sunday):not(.is-saturday) {
   color: #0f172a !important;
 }
 
-body[data-theme="obsidian"] .today-date-text,
-body:not([data-theme="apple-light"]) .today-date-text {
+body[data-theme="obsidian"] .today-date-text:not(.is-holiday):not(.is-sunday):not(.is-saturday),
+body:not([data-theme="apple-light"]) .today-date-text:not(.is-holiday):not(.is-sunday):not(.is-saturday) {
   color: #ffffff !important;
 }
 
@@ -3772,34 +3772,71 @@ body[data-theme="noble-gold"] .subway-9-card .next-time-big,
   font-weight: 800 !important;
 }
 
-/* 9호선 출발 시각 및 다다음 시각: 낮/밤 모드 똑같이 짙은 갈색(#78350f) 및 대형 글씨 */
+/* 9호선 출발 시각 및 다다음 시각: 낮모드는 딥 스카이블루/네이비, 밤모드는 눈에 확 띄는 밝은 시안/블루 */
+body[data-theme="apple-light"] .subway-9-card .transit-clock-time,
+.subway-9-card .transit-clock-time {
+  color: #0369a1 !important;
+  font-size: 19px !important;
+  font-weight: 900 !important;
+}
+
+body[data-theme="apple-light"] .subway-9-card .next2-transit-box .transit-clock-time,
+.subway-9-card .next2-transit-box .transit-clock-time {
+  color: #1d4ed8 !important;
+  font-size: 17px !important;
+  font-weight: 900 !important;
+}
+
 body[data-theme="obsidian"] .subway-9-card .transit-clock-time,
 body[data-theme="noble-gold"] .subway-9-card .transit-clock-time,
-.subway-9-card .transit-clock-time {
-  color: #78350f !important;
-  font-size: 1.18rem !important;
+body[data-theme="midnight"] .subway-9-card .transit-clock-time,
+body.dark-theme .subway-9-card .transit-clock-time,
+body.dark-mode .subway-9-card .transit-clock-time,
+body:not([data-theme="apple-light"]) .subway-9-card .transit-clock-time {
+  color: #38bdf8 !important; /* 어두운 배경에서 확 눈에 들어오는 선명한 시안 블루 */
+  font-size: 19px !important;
   font-weight: 900 !important;
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.4) !important;
 }
 
 body[data-theme="obsidian"] .subway-9-card .next2-transit-box .transit-clock-time,
 body[data-theme="noble-gold"] .subway-9-card .next2-transit-box .transit-clock-time,
-.subway-9-card .next2-transit-box .transit-clock-time {
-  color: #78350f !important;
-  font-size: 1.12rem !important;
+body[data-theme="midnight"] .subway-9-card .next2-transit-box .transit-clock-time,
+body.dark-theme .subway-9-card .next2-transit-box .transit-clock-time,
+body.dark-mode .subway-9-card .next2-transit-box .transit-clock-time,
+body:not([data-theme="apple-light"]) .subway-9-card .next2-transit-box .transit-clock-time {
+  color: #60a5fa !important; /* 밝고 깨끗한 스카이 블루 */
+  font-size: 17px !important;
   font-weight: 900 !important;
 }
 
-/* 9호선 카드 내부 시간 표시: 낮/밤 모드 똑같이 분은 빨간색(#dc2626), 초는 검은색(#0f172a) 유지 */
+/* 9호선 카드 내부 시간 표시: 낮모드는 분 레드(#dc2626)/초 다크(#0f172a), 밤모드는 분 코랄레드(#f87171)/초 선명한 화이트(#ffffff) */
+body[data-theme="apple-light"] .subway-9-card .transit-time-min,
+.subway-9-card .transit-time-min {
+  color: #dc2626 !important;
+}
+
+body[data-theme="apple-light"] .subway-9-card .transit-time-sec,
+.subway-9-card .transit-time-sec {
+  color: #0f172a !important;
+}
+
 body[data-theme="obsidian"] .subway-9-card .transit-time-min,
 body[data-theme="noble-gold"] .subway-9-card .transit-time-min,
-.subway-9-card .transit-time-min {
-  color: #dc2626 !important; /* 분은 빨간색 */
+body[data-theme="midnight"] .subway-9-card .transit-time-min,
+body.dark-theme .subway-9-card .transit-time-min,
+body.dark-mode .subway-9-card .transit-time-min,
+body:not([data-theme="apple-light"]) .subway-9-card .transit-time-min {
+  color: #f87171 !important; /* 밤모드 분: 선명한 코랄 레드 */
 }
 
 body[data-theme="obsidian"] .subway-9-card .transit-time-sec,
 body[data-theme="noble-gold"] .subway-9-card .transit-time-sec,
-.subway-9-card .transit-time-sec {
-  color: #0f172a !important; /* 초는 검은색 */
+body[data-theme="midnight"] .subway-9-card .transit-time-sec,
+body.dark-theme .subway-9-card .transit-time-sec,
+body.dark-mode .subway-9-card .transit-time-sec,
+body:not([data-theme="apple-light"]) .subway-9-card .transit-time-sec {
+  color: #ffffff !important; /* 밤모드 초: 선명한 순백색 */
 }
 
 body[data-theme="obsidian"] .subway-9-card .transit-time-arrive,
@@ -4852,64 +4889,82 @@ body:not([data-theme="apple-light"]) .next2-train-plate {
 /* ==========================================================================
    🚇 지하철 실시간 / 역사 시간표 도착정보 토글 스위처 디자인 시스템
    ========================================================================== */
+@keyframes clickSparkle {
+  0% { transform: scale(0.92); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.8); }
+  50% { transform: scale(1.08); box-shadow: 0 0 14px 4px rgba(245, 158, 11, 0.6); }
+  100% { transform: scale(1); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15); }
+}
+@keyframes clickSparkleGreen {
+  0% { transform: scale(0.92); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.8); }
+  50% { transform: scale(1.08); box-shadow: 0 0 14px 4px rgba(16, 185, 129, 0.6); }
+  100% { transform: scale(1); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15); }
+}
+
 .subway-source-toggle-group {
   display: inline-flex;
   align-items: center;
   background: #f1f5f9;
   border: 1.5px solid #cbd5e1;
   border-radius: 8px;
-  padding: 2px;
-  gap: 2px;
+  padding: 2.5px;
+  gap: 3px;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .subway-mode-btn {
-  background: transparent;
-  border: 1px solid transparent;
-  color: #64748b;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  color: #334155;
   font-size: 11px;
-  font-weight: 700;
-  padding: 2.5px 7px;
+  font-weight: 750;
+  padding: 3px 8px;
   border-radius: 6px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  transition: all 0.18s ease;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
   user-select: none;
 }
 
-.subway-mode-btn:hover {
-  background: rgba(255, 255, 255, 0.7);
-  color: #1e293b;
+.subway-mode-btn:active {
+  transform: scale(0.93);
 }
 
-/* 실시간 활성화 상태 (에메랄드 그린) */
+.subway-mode-btn.sparkle-active-green {
+  animation: clickSparkleGreen 0.4s ease-out;
+}
+
+.subway-mode-btn.sparkle-active-amber {
+  animation: clickSparkle 0.4s ease-out;
+}
+
+/* 실시간 활성화: 낮모드 & 밤모드 모두 글씨가 아주 진하고 선명한 고대비 */
 .subway-mode-btn.active-realtime {
-  background: #ecfdf5 !important;
-  color: #065f46 !important;
-  border-color: #a7f3d0 !important;
-  font-weight: 800 !important;
-  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.18);
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #047857 !important;
+  font-weight: 900 !important;
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.35) !important;
 }
 
-/* 시간표 활성화 상태 (웜 앰버 골드) */
+/* 시간표 활성화: 낮모드 & 밤모드 모두 글씨가 아주 진하고 선명한 고대비 */
 .subway-mode-btn.active-timetable {
-  background: #fef3c7 !important;
-  color: #92400e !important;
-  border-color: #fde68a !important;
-  font-weight: 800 !important;
-  box-shadow: 0 1px 3px rgba(245, 158, 11, 0.18);
+  background: #d97706 !important;
+  color: #ffffff !important;
+  border-color: #b45309 !important;
+  font-weight: 900 !important;
+  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.35) !important;
 }
 
 .btn-timetable-popup {
   background: #ffffff;
-  color: #475569;
-  border: 1px solid #cbd5e1;
+  color: #1e293b;
+  border: 1.5px solid #cbd5e1;
   font-size: 10.5px;
-  font-weight: 700;
-  padding: 2.5px 6px;
+  font-weight: 800;
+  padding: 3px 7px;
   border-radius: 6px;
   cursor: pointer;
   display: inline-flex;
@@ -4921,18 +4976,18 @@ body:not([data-theme="apple-light"]) .next2-train-plate {
 
 .btn-timetable-popup:hover {
   background: #f8fafc;
-  color: #1e293b;
+  color: #0f172a;
   border-color: #94a3b8;
 }
 
-/* 다크 모드 (밤 모드) 지하철 토글 대응 */
+/* 다크 모드 (밤 모드) 지하철 토글 & 시간표 글씨 대폭 진하고 선명하게 */
 body[data-theme="obsidian"] .subway-source-toggle-group,
 body[data-theme="midnight"] .subway-source-toggle-group,
 body.dark-theme .subway-source-toggle-group,
 body.dark-mode .subway-source-toggle-group,
 body:not([data-theme="apple-light"]) .subway-source-toggle-group {
-  background: rgba(255, 255, 255, 0.08) !important;
-  border-color: rgba(255, 255, 255, 0.16) !important;
+  background: #0f172a !important;
+  border-color: #334155 !important;
 }
 
 body[data-theme="obsidian"] .subway-mode-btn,
@@ -4940,7 +4995,10 @@ body[data-theme="midnight"] .subway-mode-btn,
 body.dark-theme .subway-mode-btn,
 body.dark-mode .subway-mode-btn,
 body:not([data-theme="apple-light"]) .subway-mode-btn {
-  color: #94a3b8 !important;
+  background: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #475569 !important;
+  font-weight: 800 !important;
 }
 
 body[data-theme="obsidian"] .subway-mode-btn.active-realtime,
@@ -4948,19 +5006,35 @@ body[data-theme="midnight"] .subway-mode-btn.active-realtime,
 body.dark-theme .subway-mode-btn.active-realtime,
 body.dark-mode .subway-mode-btn.active-realtime,
 body:not([data-theme="apple-light"]) .subway-mode-btn.active-realtime {
-  background: rgba(16, 185, 129, 0.22) !important;
-  color: #6ee7b7 !important;
-  border-color: rgba(16, 185, 129, 0.45) !important;
+  background: #10b981 !important;
+  color: #022c22 !important;
+  border: 1.5px solid #34d399 !important;
+  font-weight: 900 !important;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.45) !important;
 }
 
+/* 밤모드 누르는 시간표 버튼 글씨 대단히 진하고 굵은 제트 블랙(#09090b) + 고대비 골드 앰버(#fbbf24) */
 body[data-theme="obsidian"] .subway-mode-btn.active-timetable,
 body[data-theme="midnight"] .subway-mode-btn.active-timetable,
 body.dark-theme .subway-mode-btn.active-timetable,
 body.dark-mode .subway-mode-btn.active-timetable,
 body:not([data-theme="apple-light"]) .subway-mode-btn.active-timetable {
-  background: rgba(245, 158, 11, 0.22) !important;
-  color: #fde68a !important;
-  border-color: rgba(245, 158, 11, 0.45) !important;
+  background: #fbbf24 !important;
+  color: #09090b !important;
+  border: 1.5px solid #fde047 !important;
+  font-weight: 900 !important;
+  box-shadow: 0 0 14px rgba(251, 191, 36, 0.5) !important;
+}
+
+body[data-theme="obsidian"] .btn-timetable-toggle,
+body[data-theme="midnight"] .btn-timetable-toggle,
+body.dark-theme .btn-timetable-toggle,
+body.dark-mode .btn-timetable-toggle,
+body:not([data-theme="apple-light"]) .btn-timetable-toggle {
+  background: #fbbf24 !important;
+  color: #09090b !important;
+  border: 1.5px solid #fde047 !important;
+  font-weight: 900 !important;
 }
 
 body[data-theme="obsidian"] .btn-timetable-popup,
@@ -4968,19 +5042,24 @@ body[data-theme="midnight"] .btn-timetable-popup,
 body.dark-theme .btn-timetable-popup,
 body.dark-mode .btn-timetable-popup,
 body:not([data-theme="apple-light"]) .btn-timetable-popup {
-  background: rgba(255, 255, 255, 0.12) !important;
-  color: #e2e8f0 !important;
-  border-color: rgba(255, 255, 255, 0.25) !important;
+  background: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #475569 !important;
+  font-weight: 800 !important;
 }
 
 /* ==========================================================================
    📅 상단 오늘 날짜 (.today-date-text) 공휴일/일요일 빨간색, 토요일 파란색 스타일
+   - 낮모드(apple-light) 및 밤모드(다크) 100% 강제 적용
    ========================================================================== */
+body[data-theme="apple-light"] .today-date-text.is-holiday,
+body[data-theme="apple-light"] .today-date-text.is-sunday,
 .today-date-text.is-holiday,
 .today-date-text.is-sunday {
   color: #dc2626 !important; /* 선명하고 또렷한 레드 */
 }
 
+body[data-theme="apple-light"] .today-date-text.is-saturday,
 .today-date-text.is-saturday {
   color: #2563eb !important; /* 선명하고 또렷한 블루 */
 }

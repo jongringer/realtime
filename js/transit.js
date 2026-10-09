@@ -263,11 +263,29 @@ class TransitManager {
   }
 
   setSubwaySourceMode(mode) {
-    if (this.subwaySourceMode === mode) return;
     this.subwaySourceMode = mode;
     try {
       localStorage.setItem('subway_source_mode', mode);
     } catch (e) {}
+
+    // 누르는 즉각 0.001초 만에 버튼 색상 전환 및 반짝임 효과 (재터치 시에도 즉각 반응)
+    const btnReal = document.getElementById('btnSubwayRealtimeWidget');
+    const btnTime = document.getElementById('btnSubwayTimetableWidget');
+    if (btnReal && btnTime) {
+      btnReal.classList.remove('sparkle-active-green', 'sparkle-active-amber');
+      btnTime.classList.remove('sparkle-active-green', 'sparkle-active-amber');
+      void btnReal.offsetWidth;
+      void btnTime.offsetWidth;
+
+      if (mode === 'realtime') {
+        btnReal.className = 'subway-mode-btn active-realtime sparkle-active-green';
+        btnTime.className = 'subway-mode-btn';
+      } else {
+        btnTime.className = 'subway-mode-btn active-timetable sparkle-active-amber';
+        btnReal.className = 'subway-mode-btn';
+      }
+    }
+
     this.renderTransitBoard();
   }
 
@@ -1292,14 +1310,13 @@ class TransitManager {
       let t2Html = '';
       if (t2) {
         const t2VehicleTag = t2.trainNo ? `<span class="next2-train-plate" style="font-size:11px; color:#1e40af; font-weight:700; margin-left:4px;">(${this.formatPlateSmall(t2.trainNo)})</span>` : '';
-        const t2LocStr = t2.curLocation ? `${t2.curLocation} · ` : '';
         const t2TimeHtml = (t2.isArrivingSoon || t2.sec <= 30)
           ? `<span style="color:#dc2626; font-weight:800; font-size:12px;">⚡ 곧 도착</span>`
           : `<span class="live-countdown next2-countdown" data-target-time="${t2.targetTime}">${this.formatSec(t2.sec)}</span>`;
         t2Html = `
           <div class="next2-transit-box">
             <span class="next2-tag-blue">
-              <span>🔵 다다음 (<b class="transit-clock-time">${t2.clockStr}</b> · ${t2LocStr}${t2.destName}행):${t2VehicleTag}</span>
+              <span>🔵 다다음 (<b class="transit-clock-time subway-clock-time-next2" style="font-size:16.5px; font-weight:900;">${t2.clockStr}</b>)${t2VehicleTag}</span>
             </span>
             ${t2TimeHtml}
           </div>
@@ -1310,11 +1327,26 @@ class TransitManager {
         ? `<span class="badge-bus-plate badge-train-plate" style="display:inline-flex; align-items:center; background:#dbeafe; color:#1e3a8a; font-size:11px; padding:2px 7px; border-radius:5px; font-weight:800; margin-left:6px; border:1.5px solid #93c5fd;">${this.formatPlateWithBigDigits(t1.trainNo, '🚇')}</span>`
         : `<span class="badge-low-bus" style="background:#fef3c7; color:#b45309; border-color:#fde68a;">${isTimetableMode ? '🗓️ 정시시간표' : '역고정(공식)'}</span>`;
 
-      const subLoc = t1.curLocation
-        ? `${t1.curLocation} ${t1.statusMsg}`
-        : (isTimetableMode
-            ? (isCommute ? '선유도역 탑승' : '국회의사당역 탑승') + ' · 9호선 공식 시간표 기준'
-            : (t1.isLive ? t1.statusMsg : (isCommute ? '선유도역 탑승' : '국회의사당역 탑승') + ' · 고정시간표'));
+      // 위치 문구 간결화 (뒤의 도착 시각이 잘 보이도록 불필요한 '9호선 공식 시간표 기준' 완전 제거)
+      let subLoc = '';
+      if (isTimetableMode) {
+        subLoc = isCommute ? '선유도역 탑승' : '국회의사당역 탑승';
+      } else {
+        if (t1.curLocation) {
+          subLoc = `${t1.curLocation} ${t1.statusMsg || ''}`.trim();
+        } else {
+          subLoc = isCommute ? '선유도역 탑승' : '국회의사당역 탑승';
+        }
+      }
+      subLoc = subLoc.replace(/9호선\s*공식\s*시간표\s*기준/g, '')
+                     .replace(/공식\s*시간표\s*정시\s*운행/g, '')
+                     .replace(/공식\s*시간표/g, '')
+                     .replace(/시간표\s*기준/g, '')
+                     .replace(/역고정\s*\(공식\)/g, '')
+                     .trim();
+      if (!subLoc) {
+        subLoc = isCommute ? '선유도역 탑승' : '국회의사당역 탑승';
+      }
 
       const t1TimeHtml = (t1.isArrivingSoon || t1.sec <= 30)
         ? `<span style="color:#dc2626; font-weight:900; font-size:13.5px;">⚡ 곧 도착</span>`
@@ -1322,6 +1354,7 @@ class TransitManager {
 
       const arrivalLabel = isTimetableMode ? '시간표 도착:' : '도착 예정:';
 
+      // 어디행 제거 및 시각 폰트 18.5px / 고대비 컬러로 크게 노출
       subwayTrainsHtml = `
         <div class="next-transit-box">
           <div class="next-transit-header">
@@ -1334,7 +1367,7 @@ class TransitManager {
           </div>
           <div class="next-transit-sub">
             <span class="transit-sub-pos">위치: <b>${subLoc}</b></span>
-            <span class="transit-sub-time"><span class="transit-arr-label">${arrivalLabel}</span> <b class="transit-clock-time" style="color:#0369a1; font-weight:900;">${t1.clockStr}</b> <span class="transit-dest-sub">(${t1.destName}행)</span></span>
+            <span class="transit-sub-time"><span class="transit-arr-label" style="font-size:13px; font-weight:800;">${arrivalLabel}</span> <b class="transit-clock-time subway-clock-time" style="font-size:18.5px; font-weight:900; margin-left:4px;">${t1.clockStr}</b></span>
           </div>
         </div>
         ${t2Html}
@@ -1360,13 +1393,15 @@ class TransitManager {
           </div>
           <div class="subway-source-toggle-group">
             <button type="button" 
+                    id="btnSubwayRealtimeWidget"
                     class="subway-mode-btn ${!isTimetableMode ? 'active-realtime' : ''}" 
                     onclick="window.transitManager && window.transitManager.setSubwaySourceMode('realtime')" 
                     title="서울시 지하철 실시간 도착정보 및 열차번호 연동">
-              <span class="bit-status-dot" style="${!isTimetableMode && isLiveTrain ? 'background:#10b981;' : 'background:#94a3b8;'}"></span>
+              <span class="bit-status-dot" style="${!isTimetableMode && isLiveTrain ? 'background:#ffffff;' : 'background:#94a3b8;'}"></span>
               <span>${!isTimetableMode && isLiveTrain ? '서울시 실시간' : '실시간'}</span>
             </button>
             <button type="button" 
+                    id="btnSubwayTimetableWidget"
                     class="subway-mode-btn ${isTimetableMode ? 'active-timetable' : ''}" 
                     onclick="window.transitManager && window.transitManager.setSubwaySourceMode('timetable')" 
                     title="9호선 공식 역사 시간표 기준 도착시간으로 계산">
