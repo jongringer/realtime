@@ -1488,7 +1488,7 @@ class TransitManager {
           <div class="est-dest-title">
             <span class="est-dest-icon">${isCommute ? '🏢' : '🏠'}</span>
             <div class="est-dest-text">
-              <div class="est-dest-label">${destName}까지 약 <span class="est-total-min">${est.totalMinutes}분</span> 예상</div>
+              <div class="est-dest-label"><span class="est-total-min">${est.totalMinutes}분</span> 소요 예상</div>
               <div class="est-dep-time">지금(${fmtTime(est.startTime)}) 출발 기준</div>
             </div>
           </div>

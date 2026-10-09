@@ -559,10 +559,10 @@
 
     <div class="tab-wrap">
       <button type="button" class="tab-btn active" id="tabCommute" onclick="setMode('commute')">
-        🚶 <strong>출근</strong> (6단지앞 ➔ 선유도역)
+        <strong>출근</strong>
       </button>
       <button type="button" class="tab-btn" id="tabOffwork" onclick="setMode('offwork')">
-        🏠 <strong>퇴근</strong> (국회역 ➔ 선유도버스)
+        <strong>퇴근</strong>
       </button>
     </div>
 
@@ -1466,7 +1466,7 @@
             <div class="est-dest-title">
               <span class="est-dest-icon">${isCommute ? '🏢' : '🏠'}</span>
               <div class="est-dest-text">
-                <div class="est-dest-label">${destName}까지 약 <span class="est-total-min">${totalMins}분</span> 예상</div>
+                <div class="est-dest-label"><span class="est-total-min">${totalMins}분</span> 소요 예상</div>
                 <div class="est-dep-time">지금(${fmtTime(now)}) 출발 기준</div>
               </div>
             </div>

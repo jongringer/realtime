@@ -56,7 +56,7 @@
           <span class=weather-text id=weatherText>실시간 날씨 확인 중...</span>
           <span class=weather-refresh-btn id=weatherRefreshBtn title=실시간 날씨 새로고침>🔄</span>
           <a href="https://m.search.daum.net/search?q=%EC%97%AC%EC%9D%98%EB%8F%84%EB%8F%99+%EB%82%A0%EC%94%A8&w=tot" target="_self" class="weather-naver-link" id="weatherNaverLink" title="다음 날씨 상세 (뒤로가기 시 앱 복귀)" onclick="event.stopPropagation();">
-            <span class="naver-badge">D</span><span class="naver-arrow">↗</span>
+            <img src="icons/daum-d.png" alt="다음" class="daum-badge-img"><span class="naver-arrow">↗</span>
           </a>
         </div>
       </div>
@@ -97,8 +97,8 @@
         </div>
       </div>
       <div class=transit-tab-wrap>
-        <button type=button id=tabCommute class=transit-tab-btn active><strong class=highlight-shift-word commute-text>출근</strong> 6단지앞 ➔ 선유도역</button>
-        <button type=button id=tabOffwork class=transit-tab-btn><strong class=highlight-shift-word offwork-text>퇴근</strong> 국회역 ➔ 선유도버스</button>
+        <button type=button id=tabCommute class=transit-tab-btn active><strong class=highlight-shift-word commute-text>출근</strong></button>
+        <button type=button id=tabOffwork class=transit-tab-btn><strong class=highlight-shift-word offwork-text>퇴근</strong></button>
       </div>
       <div id="commuteEstimationSummaryBox" class="commute-estimation-box"></div>
       <div class=transit-widget-content id=transitCardsContainer style=display: flex; flex-direction: column; gap: 10px;></div>

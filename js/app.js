@@ -2628,7 +2628,7 @@ class ShiftApp {
     if (linkEl && daumUrl) {
       linkEl.href = daumUrl;
       linkEl.title = `${locTitle} 다음 날씨 상세 (뒤로가기 시 앱 복귀)`;
-      linkEl.textContent = 'D ↗';
+      linkEl.innerHTML = '<img src="icons/daum-d.png" alt="다음" class="daum-badge-img"><span class="naver-arrow">↗</span>';
     }
 
     if (pillEl) {
