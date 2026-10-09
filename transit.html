@@ -574,6 +574,109 @@
       transform: translateX(-50%) translateY(0);
       opacity: 1;
     }
+    /* 🧭 도착예정 및 소요시간 카드 스타일 */
+    .est-summary-card {
+      background: #ffffff;
+      color: #0f172a;
+      border-radius: 16px;
+      padding: 16px 14px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
+      border: 1px solid #cbd5e1;
+      margin-top: 10px;
+      margin-bottom: 12px;
+    }
+    .est-header-only-card {
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+    .est-header-only-card .est-main-header {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    .est-main-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: nowrap !important;
+      width: 100%;
+    }
+    .est-dest-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+    }
+    .est-dest-icon {
+      font-size: 26px;
+      background: #f1f5f9;
+      padding: 6px 8px;
+      border-radius: 12px;
+      line-height: 1;
+    }
+    .est-dest-text {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .est-dep-time {
+      display: block;
+      font-size: 11px;
+      color: #64748b;
+      font-weight: 800;
+      margin-bottom: 2px;
+      white-space: nowrap;
+      line-height: 1.2;
+    }
+    .est-dest-label {
+      display: block;
+      font-size: 15px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.4px;
+      white-space: nowrap;
+      line-height: 1.15;
+      margin-top: 1px;
+    }
+    .est-total-min {
+      color: #0284c7;
+      font-size: 20px !important;
+      font-weight: 900 !important;
+      letter-spacing: -0.3px;
+      white-space: nowrap;
+    }
+    .est-arr-box {
+      background: #fef2f2;
+      border: 1.5px solid #fecaca;
+      padding: 8px 14px;
+      border-radius: 12px;
+      text-align: left;
+      flex-shrink: 0 !important;
+      white-space: nowrap !important;
+      min-width: 108px;
+      box-sizing: border-box;
+    }
+    .est-arr-sub {
+      display: block;
+      font-size: 11px;
+      color: #991b1b;
+      font-weight: 800;
+      margin-bottom: 2px;
+      white-space: nowrap;
+    }
+    .est-arr-time {
+      display: block;
+      font-size: 20px !important;
+      font-weight: 900 !important;
+      color: #dc2626 !important;
+      margin-top: 1px;
+      line-height: 1.15;
+      white-space: nowrap !important;
+      letter-spacing: -0.3px;
+    }
   </style>
 </head>
 <body>
@@ -1509,8 +1612,8 @@
             <div class="est-dest-title">
               <span class="est-dest-icon">${isCommute ? '🏢' : '🏠'}</span>
               <div class="est-dest-text">
-                <div class="est-dest-label"><span class="est-total-min">${totalMins}분</span> 소요 예상</div>
                 <div class="est-dep-time">지금(${fmtTime(now)}) 출발 기준</div>
+                <div class="est-dest-label"><span class="est-total-min">${totalMins}분</span> 소요 예상</div>
               </div>
             </div>
             <div class="est-arr-box">

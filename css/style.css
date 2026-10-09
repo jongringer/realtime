@@ -3492,19 +3492,62 @@ body[data-theme="noble-gold"] .transit-tab-btn {
   color: #94a3b8 !important;
 }
 
+/* 밤모드 출근 버튼: 낮모드와 동일한 3D 베벨 표면 + 회전 라이트(빛) 레일 애니메이션 보장 */
 body[data-theme="obsidian"] #tabCommute.transit-tab-btn.active,
-body[data-theme="noble-gold"] #tabCommute.transit-tab-btn.active {
-  background: linear-gradient(135deg, #1d4ed8, #2563eb) !important;
+body[data-theme="noble-gold"] #tabCommute.transit-tab-btn.active,
+body.dark-theme #tabCommute.transit-tab-btn.active,
+body.dark-mode #tabCommute.transit-tab-btn.active {
+  background:
+    linear-gradient(145deg, #2563eb 0%, #1d4ed8 50%, #1e40af 100%) padding-box,
+    conic-gradient(
+      from var(--border-angle),
+      transparent 0%,
+      transparent 40%,
+      rgba(59, 130, 246, 0.4) 60%,
+      #3b82f6 75%,
+      #bfdbfe 88%,
+      #ffffff 94%,
+      #bfdbfe 97%,
+      rgba(59, 130, 246, 0.4) 100%
+    ) border-box !important;
+  border: 3px solid transparent !important;
+  border-radius: 9999px !important;
+  animation: borderRotate 2.5s linear infinite !important;
+  box-shadow:
+    inset 0 2px 2px rgba(255, 255, 255, 0.6),
+    inset 0 -2px 3px rgba(15, 23, 42, 0.4),
+    0 6px 18px rgba(37, 99, 235, 0.55) !important;
   color: #ffffff !important;
-  box-shadow: 0 4px 14px rgba(29, 78, 216, 0.5) !important;
 }
 
+/* 밤모드 퇴근 버튼: 낮모드와 동일한 3D 베벨 표면 + 회전 라이트(빛) 레일 애니메이션 보장 */
 body[data-theme="obsidian"] #tabOffwork.transit-tab-btn.active,
-body[data-theme="noble-gold"] #tabOffwork.transit-tab-btn.active {
-  background: linear-gradient(135deg, #881337, #991b1b) !important;
+body[data-theme="noble-gold"] #tabOffwork.transit-tab-btn.active,
+body.dark-theme #tabOffwork.transit-tab-btn.active,
+body.dark-mode #tabOffwork.transit-tab-btn.active {
+  background:
+    linear-gradient(145deg, #dc2626 0%, #b91c1c 50%, #881337 100%) padding-box,
+    conic-gradient(
+      from var(--border-angle),
+      transparent 0%,
+      transparent 40%,
+      rgba(239, 68, 68, 0.4) 60%,
+      #ef4444 75%,
+      #fecaca 88%,
+      #ffffff 94%,
+      #fecaca 97%,
+      rgba(239, 68, 68, 0.4) 100%
+    ) border-box !important;
+  border: 3px solid transparent !important;
+  border-radius: 9999px !important;
+  animation: borderRotate 2.5s linear infinite !important;
+  box-shadow:
+    inset 0 2px 2px rgba(255, 255, 255, 0.6),
+    inset 0 -2px 3px rgba(15, 23, 42, 0.4),
+    0 6px 18px rgba(220, 38, 38, 0.55) !important;
   color: #ffffff !important;
-  box-shadow: 0 4px 14px rgba(153, 27, 27, 0.5) !important;
 }
+
 
 body[data-theme="obsidian"] .bit-board-card,
 body[data-theme="noble-gold"] .bit-board-card {
@@ -4306,12 +4349,31 @@ body[data-theme="noble-gold"] #editScheduleTimeBadge {
   line-height: 1;
 }
 
+.est-dest-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.est-dep-time {
+  display: block;
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 800;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
 .est-dest-label {
+  display: block;
   font-size: 15px;
   font-weight: 800;
   color: #0f172a;
   letter-spacing: -0.4px;
   white-space: nowrap;
+  line-height: 1.15;
+  margin-top: 1px;
 }
 
 .est-total-min {
@@ -4319,13 +4381,6 @@ body[data-theme="noble-gold"] #editScheduleTimeBadge {
   font-size: 20px !important;
   font-weight: 900 !important;
   letter-spacing: -0.3px;
-  white-space: nowrap;
-}
-
-.est-dep-time {
-  font-size: 11.5px;
-  color: #64748b;
-  margin-top: 2px;
   white-space: nowrap;
 }
 
@@ -4555,18 +4610,22 @@ body.dark-mode .est-dep-time {
   color: #94a3b8 !important;
 }
 
+/* 📍 밤모드 도착예정시각 박스: 어두운 계열 탈피, 밝고 선명한 화이트 카드 + 또렷한 레드 텍스트로 시인성 극대화 */
 [data-theme="obsidian"] .est-arr-box,
 [data-theme="midnight"] .est-arr-box,
 [data-theme="noble-gold"] .est-arr-box,
 body.dark-theme .est-arr-box,
 body.dark-mode .est-arr-box {
-  background: rgba(220, 38, 38, 0.2) !important;
-  border-color: rgba(248, 113, 113, 0.4) !important;
+  background: #ffffff !important;
+  border: 1.5px solid #fca5a5 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), 0 0 10px rgba(239, 68, 68, 0.2) !important;
   text-align: left !important;
   padding: 8px 14px !important;
+  border-radius: 12px !important;
   min-width: 108px !important;
   white-space: nowrap !important;
   flex-shrink: 0 !important;
+  box-sizing: border-box !important;
 }
 
 [data-theme="obsidian"] .est-arr-sub,
@@ -4574,7 +4633,9 @@ body.dark-mode .est-arr-box {
 [data-theme="noble-gold"] .est-arr-sub,
 body.dark-theme .est-arr-sub,
 body.dark-mode .est-arr-sub {
-  color: #fca5a5 !important;
+  color: #991b1b !important;
+  font-weight: 800 !important;
+  font-size: 11px !important;
   white-space: nowrap !important;
 }
 
@@ -4583,7 +4644,7 @@ body.dark-mode .est-arr-sub {
 [data-theme="noble-gold"] .est-arr-time,
 body.dark-theme .est-arr-time,
 body.dark-mode .est-arr-time {
-  color: #f87171 !important; /* 🔥 밤모드에서도 빨간색 강조! */
+  color: #dc2626 !important; /* 🔥 밝은 화이트 배경 위에서 선명하게 돋보이는 20px 레드 볼드 */
   font-size: 20px !important;
   font-weight: 900 !important;
   line-height: 1.15;
