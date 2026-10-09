@@ -746,39 +746,35 @@ class TransitManager {
 
     if (filtered.length === 0) return null;
 
-    // barvlDt (도착 예정 초) 오름차순 정렬 (보정 후 초 기준)
+    // barvlDt (도착 예정 초) 오름차순 정렬
     filtered.sort((a, b) => {
-      const secA = Math.max(0, parseInt(a.barvlDt || '0', 10) - 60);
-      const secB = Math.max(0, parseInt(b.barvlDt || '0', 10) - 60);
+      const secA = parseInt(a.barvlDt || '0', 10);
+      const secB = parseInt(b.barvlDt || '0', 10);
       return secA - secB;
     });
 
     const formatTrain = (item) => {
-      // 1. 남은 시간 1분(60초) 앞당김 보정 로직 (서버 API 갱신 지연 보정)
       const rawSeconds = parseInt(item.barvlDt || '0', 10);
-      // 60초를 차감하여 보정 (음수 방지를 위해 최소값 0 설정)
-      const compensatedSeconds = Math.max(0, rawSeconds - 60);
-
       const trainNo = (item.btrainNo || '').trim();
       const dest = item.bstatnNm || (updnLine === '상행' ? '중앙보훈병원' : '개화');
       const curLoc = item.arvlMsg3 ? `[${item.arvlMsg3}]` : '';
       const statusMsg = (item.arvlMsg2 || '').trim();
 
-      // 2. 60초 이하로 남았거나 상태코드가 진입(0)/도착(1)이거나 메시지에 진입/도착 포함 시 즉시 '곧 도착' 처리
-      const isArrivingSoon = (compensatedSeconds === 0) ||
-        (item.arvlCd === '0' || item.arvlCd === '1') ||
-        statusMsg.includes('도착') || statusMsg.includes('진입');
+      // 진입(0)/도착(1)이거나 메시지에 진입/도착 포함 또는 35초 이하 시 '곧 도착' 처리
+      const isArrivingSoon = (item.arvlCd === '0' || item.arvlCd === '1') ||
+        statusMsg.includes('도착') || statusMsg.includes('진입') ||
+        (rawSeconds > 0 && rawSeconds <= 35);
 
       let displayEta = "";
       if (isArrivingSoon) {
         displayEta = "⚡ 곧 도착";
       } else {
-        const min = Math.floor(compensatedSeconds / 60);
-        const secRem = compensatedSeconds % 60;
+        const min = Math.floor(rawSeconds / 60);
+        const secRem = rawSeconds % 60;
         displayEta = min === 0 ? `${secRem}초 후` : `${min}분 ${secRem}초 후`;
       }
 
-      let sec = compensatedSeconds;
+      let sec = rawSeconds;
       if (isArrivingSoon && sec <= 0) sec = 25;
       else if (sec <= 0) sec = 45;
 
@@ -789,7 +785,6 @@ class TransitManager {
       return {
         sec: sec,
         rawSec: rawSeconds,
-        compensatedSec: compensatedSeconds,
         displayEta: displayEta,
         trainNo: trainNo,
         destName: dest,
@@ -860,33 +855,11 @@ class TransitManager {
     return 10 * 60;
   }
 
-  /**
-   * 시간표 딕셔너리의 모든 분(minute)을 minutesToShift(1분)만큼 일괄 앞당기는 헬퍼
-   */
-  shiftScheduleDictEarlier(scheduleDict, minutesToShift = 1) {
-    const adjusted = {};
-    for (const [hStr, mins] of Object.entries(scheduleDict)) {
-      const h = Number(hStr);
-      for (const m of mins) {
-        let totalMin = h * 60 + m - minutesToShift;
-        if (totalMin < 0) totalMin += 24 * 60;
-        const newH = Math.floor(totalMin / 60) % 24;
-        const newM = totalMin % 60;
-        if (!adjusted[newH]) adjusted[newH] = [];
-        adjusted[newH].push(newM);
-      }
-    }
-    for (const h in adjusted) {
-      adjusted[h].sort((a, b) => a - b);
-    }
-    return adjusted;
-  }
-
   // ==========================================
-  // 9호선 역사 공식 고정 시간표 배차 엔진 (1분 앞당김 보정 적용)
+  // 9호선 역사 공식 고정 시간표 배차 엔진
   // ==========================================
   getStationSchedules() {
-    const rawSchedules = {
+    return {
       NATIONAL_ASSEMBLY_WEEKDAY: {
         5: [42, 53],
         6: [6, 22, 37, 50],
@@ -973,14 +946,6 @@ class TransitManager {
         22: [3, 16, 30, 44, 56],
         23: [11, 27, 41, 55] // 27분 신논현행, 41분 동작행, 55분 당산행 막차
       }
-    };
-
-    // 사용자의 요구에 따라 전체 시간표를 일괄 1분씩 앞당겨 적용
-    return {
-      NATIONAL_ASSEMBLY_WEEKDAY: this.shiftScheduleDictEarlier(rawSchedules.NATIONAL_ASSEMBLY_WEEKDAY, 1),
-      NATIONAL_ASSEMBLY_WEEKEND: this.shiftScheduleDictEarlier(rawSchedules.NATIONAL_ASSEMBLY_WEEKEND, 1),
-      SEONYUDO_WEEKDAY: this.shiftScheduleDictEarlier(rawSchedules.SEONYUDO_WEEKDAY, 1),
-      SEONYUDO_WEEKEND: this.shiftScheduleDictEarlier(rawSchedules.SEONYUDO_WEEKEND, 1)
     };
   }
 
@@ -1078,81 +1043,6 @@ class TransitManager {
     return results;
   }
 
-  /**
-   * "HH:MM:SS" 또는 "HH:MM" 형식의 시간 문자열에서 특정 분(minutes)만큼 앞당기는 유틸 함수
-   */
-  shiftTimeEarlier(timeStr, minutesToShift = 1) {
-    if (!timeStr || typeof timeStr !== 'string') return timeStr;
-
-    const parts = timeStr.trim().split(':');
-    if (parts.length < 2) return timeStr;
-
-    let hours = parseInt(parts[0], 10);
-    let minutes = parseInt(parts[1], 10);
-    const seconds = parts.length > 2 ? parts[2] : null;
-
-    if (isNaN(hours) || isNaN(minutes)) return timeStr;
-
-    let totalMinutes = hours * 60 + minutes - minutesToShift;
-    if (totalMinutes < 0) totalMinutes += 24 * 60;
-
-    const newH = String(Math.floor(totalMinutes / 60) % 24).padStart(2, '0');
-    const newM = String(totalMinutes % 60).padStart(2, '0');
-
-    return seconds !== null ? `${newH}:${newM}:${seconds}` : `${newH}:${newM}`;
-  }
-
-  /**
-   * API로 받아온 9호선 열차 목록 데이터의 시간을 일괄 1분씩 당기는 함수
-   * @param {Array<Object>} timetableList - 지하철 시간표 목록
-   * @returns {Array<Object>} - 1분 앞당겨진 시간표 목록
-   */
-  adjustSubwaySchedule(timetableList) {
-    if (!Array.isArray(timetableList)) return [];
-
-    return timetableList.map((train) => {
-      // API 필드명에 맞춰 보정 (예: arrtime, deptime, ARRIVETIME 등)
-      const adjusted = { ...train };
-
-      // 도착 시간 필드가 있는 경우 1분 차감
-      if (adjusted.arrtime) {
-        adjusted.arrtime = this.shiftTimeEarlier(adjusted.arrtime, 1);
-      }
-      if (adjusted.ARRIVETIME) {
-        adjusted.ARRIVETIME = this.shiftTimeEarlier(adjusted.ARRIVETIME, 1);
-      }
-
-      // 출발 시간 필드가 있는 경우 1분 차감
-      if (adjusted.deptime) {
-        adjusted.deptime = this.shiftTimeEarlier(adjusted.deptime, 1);
-      }
-      if (adjusted.LEFTTIME) {
-        adjusted.LEFTTIME = this.shiftTimeEarlier(adjusted.LEFTTIME, 1);
-      }
-      if (adjusted.departureTime) {
-        adjusted.departureTime = this.shiftTimeEarlier(adjusted.departureTime, 1);
-      }
-
-      // 실시간 '도착 예정 잔여 초(barvlDt)' 데이터가 오는 경우 (단위: 초)
-      if (adjusted.barvlDt !== undefined && !isNaN(Number(adjusted.barvlDt))) {
-        const remainingSec = Number(adjusted.barvlDt);
-        // 1분(60초) 차감하되 0초 미만이면 0(도착 진입)으로 고정
-        adjusted.barvlDt = String(Math.max(0, remainingSec - 60));
-      }
-
-      // 잔여 초 및 목표 시각도 1분(60초) 차감 보정
-      if (adjusted.sec !== undefined && !isNaN(Number(adjusted.sec))) {
-        adjusted.sec = Math.max(0, Number(adjusted.sec) - 60);
-        adjusted.remainSeconds = adjusted.sec;
-        adjusted.remainMinutes = Math.floor(adjusted.sec / 60);
-      }
-      if (adjusted.targetTime !== undefined && !isNaN(Number(adjusted.targetTime))) {
-        adjusted.targetTime = adjusted.targetTime - 60000;
-      }
-
-      return adjusted;
-    });
-  }
 
   renderResult(busDataMap, subwayRawList = null) {
     this.lastBusDataMap = busDataMap;
@@ -1649,7 +1539,7 @@ class TransitManager {
       contentHtml = `
         <div style="margin-bottom:10px; padding:8px 10px; background:#eff6ff; border-radius:8px; border:1px solid #bfdbfe; font-size:11.5px; color:#1e40af;">
           <strong>${title}</strong><br>
-          <span style="font-size:11px; color:#3b82f6;">운행 구분: ${isHoliday ? '🌴 주말·공휴일 시간표' : '🗓️ 평일 시간표'} (1분 앞당김 정밀 보정판)</span>
+          <span style="font-size:11px; color:#3b82f6;">운행 구분: ${isHoliday ? '🌴 주말·공휴일 시간표' : '🗓️ 평일 시간표'} (공식 정시 시간표)</span>
         </div>
         <div style="display:flex; flex-direction:column; gap:6px;">
           ${hours.map(h => {
