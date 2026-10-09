@@ -101,7 +101,10 @@ class TransitManager {
     this.subwayApiKey = '476a79484b6a6f6e3833504f4f6d4e';
     this.subwayCache = {};
     this.isLiveSubway = false;
-    this.subwaySourceMode = localStorage.getItem('subway_source_mode') || 'realtime'; // 'realtime' | 'timetable'
+    this.subwaySourceMode = 'realtime'; // 디폴트는 항상 실시간 우선 반영 (필요 시 수동 전환)
+    try {
+      localStorage.removeItem('subway_source_mode');
+    } catch (e) {}
     this.activeTimetableTab = 'seonyudo';
 
     this.initElements();
@@ -264,9 +267,6 @@ class TransitManager {
 
   setSubwaySourceMode(mode) {
     this.subwaySourceMode = mode;
-    try {
-      localStorage.setItem('subway_source_mode', mode);
-    } catch (e) {}
 
     // 누르는 즉각 0.001초 만에 버튼 색상 전환 및 반짝임 효과 (재터치 시에도 즉각 반응)
     const btnReal = document.getElementById('btnSubwayRealtimeWidget');

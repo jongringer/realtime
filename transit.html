@@ -932,15 +932,15 @@
     const REFRESH_INTERVAL = 25;
     let refreshCountdown = 25;
     let isFetching = false;
-    let subwaySourceMode = localStorage.getItem('subway_source_mode') || 'realtime'; // 'realtime' | 'timetable'
+    let subwaySourceMode = 'realtime'; // 디폴트는 항상 실시간 우선 반영 (필요 시 수동 전환)
+    try {
+      localStorage.removeItem('subway_source_mode');
+    } catch (e) {}
     let lastBusResults = null;
     let lastSubwayRaw = null;
 
     function setSubwaySourceMode(mode) {
       subwaySourceMode = mode;
-      try {
-        localStorage.setItem('subway_source_mode', mode);
-      } catch (e) {}
 
       // 누르는 즉각 0.001초 만에 버튼 색상 전환 및 반짝임 애니메이션 발동 (재터치 시에도 즉각 반응)
       const btnReal = document.getElementById('btnSubwayRealtime');
