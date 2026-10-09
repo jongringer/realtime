@@ -852,6 +852,20 @@
     .est-value-updated {
       animation: estValuePulse 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
+
+    /* 🟢 실시간 타게 될 버스/지하철 번호 형광 녹색 강조 스타일 */
+    .neon-green-num {
+      color: #00c853 !important;
+      font-weight: 900 !important;
+      text-shadow: 0 0 6px rgba(0, 200, 83, 0.45);
+      letter-spacing: -0.3px;
+    }
+    body:not([data-theme="apple-light"]) .neon-green-num,
+    [data-theme="obsidian"] .neon-green-num,
+    [data-theme="midnight"] .neon-green-num {
+      color: #00e676 !important;
+      text-shadow: 0 0 8px rgba(0, 230, 118, 0.65);
+    }
   </style>
 </head>
 <body>
@@ -2345,10 +2359,13 @@
       const totalMins = est.totalMinutes;
       const arrDate = est.t_final;
 
-      const busPlateStr = est.chosenBus?.plainNo ? ` (${est.chosenBus.plainNo.slice(-4)})` : '';
-      const busLabelBadge = `<b style="color:#0369a1;">${est.chosenBus.routeNum}</b> (${est.chosenBus.label}${busPlateStr})`;
+      const busPlateNum = est.chosenBus?.plainNo ? (est.chosenBus.plainNo.length > 4 ? est.chosenBus.plainNo.slice(-4) : est.chosenBus.plainNo) : '';
+      const busPlateStr = busPlateNum ? ` <span class="neon-green-num">(${busPlateNum})</span>` : '';
+      const busLabelBadge = `<b style="color:#0369a1;">${est.chosenBus.routeNum}</b> (${est.chosenBus.label})${busPlateStr}`;
+
       const subModeTag = isTimetableMode ? '[🗓️시간표]' : '[⚡실시간]';
-      const trainLabelBadge = `<b style="color:#1d4ed8;">9호선 일반 (${est.chosenTrain.clockStr} 탑승 ${subModeTag})</b>`;
+      const trainNoStr = (!isTimetableMode && est.chosenTrain?.trainNo) ? ` <span class="neon-green-num">(${est.chosenTrain.trainNo})</span>` : '';
+      const trainLabelBadge = `<b style="color:#1d4ed8;">9호선 일반 (${est.chosenTrain.clockStr} 탑승 ${subModeTag})</b>${trainNoStr}`;
 
       const stepsHtml = isCommute ? `
         <div class="est-timeline-step">
@@ -2361,7 +2378,7 @@
           <div class="est-step-content">
             <div>
               <div class="est-step-name">6단지 버스정류장 ➔ ${busLabelBadge}</div>
-              <div class="est-step-detail">🚌 버스 승차 (대기 약 ${est.busWaitMin}분 / 3분 이동)</div>
+              <div class="est-step-detail">🚌 버스 승차${busPlateStr} (대기 약 ${est.busWaitMin}분 / 3분 이동)</div>
             </div>
             <span class="est-step-clock">${fmtTime(est.t_bus_board)} 탑승</span>
           </div>
@@ -2372,7 +2389,7 @@
           <div class="est-step-content">
             <div>
               <div class="est-step-name">선유도역 승강장 ➔ ${trainLabelBadge}</div>
-              <div class="est-step-detail">🚇 9호선 일반 (대기 약 ${est.subWaitMin}분 / 두 정거장 4분 이동)</div>
+              <div class="est-step-detail">🚇 9호선 일반${trainNoStr} (대기 약 ${est.subWaitMin}분 / 두 정거장 4분 이동)</div>
             </div>
             <span class="est-step-clock">${fmtTime(est.t_sub_board)} 탑승</span>
           </div>
@@ -2396,7 +2413,7 @@
           <div class="est-step-content">
             <div>
               <div class="est-step-name">국회의사당역 ➔ ${trainLabelBadge}</div>
-              <div class="est-step-detail">🚇 9호선 일반 탑승 (대기 약 ${est.subWaitMin}분 / 두 정거장 4분 이동)</div>
+              <div class="est-step-detail">🚇 9호선 일반 탑승${trainNoStr} (대기 약 ${est.subWaitMin}분 / 두 정거장 4분 이동)</div>
             </div>
             <span class="est-step-clock">${fmtTime(est.t_sub_board)} 탑승</span>
           </div>
@@ -2407,7 +2424,7 @@
           <div class="est-step-content">
             <div>
               <div class="est-step-name">선유도역1번출구 ➔ ${busLabelBadge}</div>
-              <div class="est-step-detail">🚌 버스 승차 (대기 약 ${est.busWaitMin}분 / 3분 이동)</div>
+              <div class="est-step-detail">🚌 버스 승차${busPlateStr} (대기 약 ${est.busWaitMin}분 / 3분 이동)</div>
             </div>
             <span class="est-step-clock">${fmtTime(est.t_bus_board)} 탑승</span>
           </div>

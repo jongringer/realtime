@@ -4780,6 +4780,24 @@ body.dark-mode .est-breakdown-bar {
   color: #94a3b8 !important;
 }
 
+/* 🟢 실시간 타게 될 버스 차량번호 / 지하철 열차번호 형광 녹색 강조 스타일 */
+.neon-green-num {
+  color: #00c853 !important;
+  font-weight: 900 !important;
+  text-shadow: 0 0 6px rgba(0, 200, 83, 0.45);
+  letter-spacing: -0.3px;
+  display: inline-block;
+}
+
+[data-theme="obsidian"] .neon-green-num,
+[data-theme="midnight"] .neon-green-num,
+[data-theme="noble-gold"] .neon-green-num,
+body.dark-theme .neon-green-num,
+body.dark-mode .neon-green-num {
+  color: #00e676 !important;
+  text-shadow: 0 0 8px rgba(0, 230, 118, 0.7);
+}
+
 /* 실시간 대중교통 시간표 버튼 및 열차 번호 뱃지 */
 .btn-timetable-toggle {
   background: #fef3c7;
