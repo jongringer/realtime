@@ -1703,46 +1703,68 @@ class TransitManager {
    * 3대 버스(양천01, 603, 6620) 중 특정 도보 도착시각 이후 가장 빨리 탈 수 있는 최적 버스 선정
    */
   findFastestBusForCommute(routes, busDataMap, reachTimeMs, now, nowMs) {
-    let candidates = [];
+    const routeBestList = [];
+
     routes.forEach(r => {
       const item = busDataMap ? busDataMap[r.routeNum] : null;
       const { next, next2, next3 } = this.parseSeoulBusArrival(r, item, now, nowMs);
-      const list = [
-        { bus: next, label: '다음' },
-        { bus: next2, label: '다다음' },
-        { bus: next3, label: '다다다음' }
-      ];
+      const headway = this.getRouteHeadwaySec ? this.getRouteHeadwaySec(r.routeNum, now) : 360;
 
-      list.forEach(({ bus, label }) => {
-        if (bus && bus.targetTime && !bus.isWait && !bus.isEnd) {
-          if (bus.targetTime >= reachTimeMs) {
-            candidates.push({
-              routeNum: r.routeNum,
-              badgeClass: r.badgeClass,
-              label,
-              targetTime: bus.targetTime,
-              plainNo: bus.plainNo || ''
-            });
-          }
+      // 노선의 실시간/시간표 버스 목록 수집
+      const busList = [];
+      if (next && next.targetTime && !next.isWait && !next.isEnd) {
+        busList.push({ targetTime: next.targetTime, label: '다음', plainNo: next.plainNo || '' });
+      }
+      if (next2 && next2.targetTime && !next2.isWait && !next2.isEnd) {
+        busList.push({ targetTime: next2.targetTime, label: '다다음', plainNo: next2.plainNo || '' });
+      }
+      if (next3 && next3.targetTime) {
+        busList.push({ targetTime: next3.targetTime, label: '다다다음', plainNo: '' });
+      }
+
+      // 1. reachTimeMs 이후에 오는 버스가 이미 목록에 있다면 그 중 가장 이른 버스 찾기
+      let candidate = busList.find(b => b.targetTime >= reachTimeMs);
+
+      // 2. 만약 목록의 버스들이 모두 reachTimeMs 전에 지나가 버렸다면,
+      // 마지막 버스 시간 기준으로 headway(배차간격)를 더해 reachTimeMs 이후 첫 버스 시각 투영
+      if (!candidate) {
+        let baseTimeMs = (busList.length > 0)
+          ? busList[busList.length - 1].targetTime
+          : nowMs;
+        
+        let count = 0;
+        while (baseTimeMs < reachTimeMs && count < 20) {
+          baseTimeMs += headway * 1000;
+          count++;
         }
+
+        candidate = {
+          targetTime: baseTimeMs,
+          label: count > 1 ? `차기 ${count}회차` : '차기 배차',
+          plainNo: ''
+        };
+      }
+
+      routeBestList.push({
+        routeNum: r.routeNum,
+        badgeClass: r.badgeClass,
+        label: candidate.label,
+        targetTime: candidate.targetTime,
+        plainNo: candidate.plainNo || '',
+        waitMin: Math.max(0, Math.round((candidate.targetTime - reachTimeMs) / 60000))
       });
     });
 
-    if (candidates.length > 0) {
-      candidates.sort((a, b) => a.targetTime - b.targetTime);
-      return candidates[0];
-    }
+    // 3개 노선(양천01, 603, 6620) 중 탑승 시각(targetTime)이 가장 빠른 버스 선택!
+    // 탑승 시각이 동일한 경우 배차간격이 가장 짧은 양천01 우선
+    routeBestList.sort((a, b) => {
+      if (a.targetTime !== b.targetTime) return a.targetTime - b.targetTime;
+      if (a.routeNum === '양천01') return -1;
+      if (b.routeNum === '양천01') return 1;
+      return 0;
+    });
 
-    // 후보가 모두 이미 지나갔거나 없는 경우, 양천01의 최단 배차로 가상 배정
-    const headway = this.getRouteHeadwaySec ? this.getRouteHeadwaySec('양천01', now) : 360;
-    const fallbackTarget = reachTimeMs + Math.round(headway * 0.5) * 1000;
-    return {
-      routeNum: '양천01',
-      badgeClass: 'badge-seoul-town',
-      label: '차기 배차',
-      targetTime: fallbackTarget,
-      plainNo: ''
-    };
+    return routeBestList[0];
   }
 
   /**

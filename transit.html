@@ -932,8 +932,8 @@
         }
       }
 
-      // 전체 화면 로딩 스피너 없이 즉시 지하철 도착시각 재계산 및 렌더링
-      renderCards(false);
+      // 전체 화면 로딩 스피너 및 네트워크 대기 없이 즉시 0ms 만에 지하철 도착시각 재계산 및 렌더링
+      renderCards(false, false);
     }
     window.setSubwaySourceMode = setSubwaySourceMode;
 
@@ -1655,7 +1655,7 @@
       });
     }
 
-    async function renderCards(showLoading = true) {
+    async function renderCards(showLoading = true, fetchNetwork = true) {
       const container = document.getElementById('cardsContainer');
       const tabC = document.getElementById('tabCommute');
       const tabO = document.getElementById('tabOffwork');
@@ -1677,27 +1677,37 @@
       const startTime = Date.now();
       const config = BUS_CONFIGS[currentMode];
 
-      const isCommute = (currentMode === 'commute');
       const subwayTargetStation = isCommute ? '선유도' : '국회의사당';
       const subwayUpdn = isCommute ? '상행' : '하행';
 
-      // 서울시 버스 3개 노선 및 9호선 지하철 동시 병렬 호출
-      const busPromises = config.routes.map(r =>
-        fetchSeoulBusArrival(r.busRouteId, r.stId, r.ord).catch(() => null)
-      );
-      const subwayPromise = fetchSeoulSubwayArrival(subwayTargetStation).catch(() => null);
+      let busResults = lastBusResults;
+      let subwayRaw = lastSubwayRaw;
 
-      const [busResults, subwayRaw] = await Promise.all([
-        Promise.all(busPromises),
-        subwayPromise
-      ]);
+      // 네트워크 호출이 필요한 경우이거나 아직 캐시 데이터가 없는 경우에만 네트워크 호출
+      if (fetchNetwork || !busResults || !subwayRaw) {
+        const busPromises = config.routes.map(r =>
+          fetchSeoulBusArrival(r.busRouteId, r.stId, r.ord).catch(() => null)
+        );
+        const subwayPromise = fetchSeoulSubwayArrival(subwayTargetStation).catch(() => null);
 
-      if (busResults) lastBusResults = busResults;
-      if (subwayRaw) lastSubwayRaw = subwayRaw;
+        const [newBusResults, newSubwayRaw] = await Promise.all([
+          Promise.all(busPromises),
+          subwayPromise
+        ]);
+
+        if (newBusResults) {
+          busResults = newBusResults;
+          lastBusResults = newBusResults;
+        }
+        if (newSubwayRaw) {
+          subwayRaw = newSubwayRaw;
+          lastSubwayRaw = newSubwayRaw;
+        }
+      }
 
       const busDataMap = {};
       config.routes.forEach((r, idx) => {
-        busDataMap[r.routeNum] = busResults[idx];
+        busDataMap[r.routeNum] = busResults ? busResults[idx] : null;
       });
 
       const elapsed = Date.now() - startTime;
@@ -2038,96 +2048,155 @@
      * 3대 버스(양천01, 603, 6620) 중 특정 도착시각 이후 가장 빨리 탈 수 있는 최적 버스 선정
      */
     function findFastestBus(routes, busDataMap, reachTimeMs, now, nowMs) {
-      let candidates = [];
+      const routeBestList = [];
+
       routes.forEach(r => {
         const item = busDataMap ? busDataMap[r.routeNum] : null;
         const { next, next2, next3 } = parseSeoulBus(r, item, now, nowMs);
-        const list = [
-          { bus: next, label: '다음' },
-          { bus: next2, label: '다다음' },
-          { bus: next3, label: '다다다음' }
-        ];
+        const headway = getRouteHeadwaySec(r.routeNum, now);
 
-        list.forEach(({ bus, label }) => {
-          if (bus && bus.targetTime && !bus.isWait && !bus.isEnd) {
-            if (bus.targetTime >= reachTimeMs) {
-              candidates.push({
-                routeNum: r.routeNum,
-                badgeClass: r.badgeClass,
-                label,
-                targetTime: bus.targetTime,
-                plainNo: bus.plainNo || ''
-              });
-            }
+        // 노선의 실시간/시간표 버스 목록 수집
+        const busList = [];
+        if (next && next.targetTime && !next.isWait && !next.isEnd) {
+          busList.push({ targetTime: next.targetTime, label: '다음', plainNo: next.plainNo || '' });
+        }
+        if (next2 && next2.targetTime && !next2.isWait && !next2.isEnd) {
+          busList.push({ targetTime: next2.targetTime, label: '다다음', plainNo: next2.plainNo || '' });
+        }
+        if (next3 && next3.targetTime) {
+          busList.push({ targetTime: next3.targetTime, label: '다다다음', plainNo: '' });
+        }
+
+        // 1. reachTimeMs 이후에 오는 버스가 이미 목록에 있다면 그 중 가장 이른 버스 찾기
+        let candidate = busList.find(b => b.targetTime >= reachTimeMs);
+
+        // 2. 만약 목록의 버스들이 모두 reachTimeMs 전에 지나가 버렸다면,
+        // 마지막 버스 시간 기준으로 headway(배차간격)를 더해 reachTimeMs 이후 첫 버스 시각 투영
+        if (!candidate) {
+          let baseTimeMs = (busList.length > 0)
+            ? busList[busList.length - 1].targetTime
+            : nowMs;
+          
+          let count = 0;
+          while (baseTimeMs < reachTimeMs && count < 20) {
+            baseTimeMs += headway * 1000;
+            count++;
           }
+
+          candidate = {
+            targetTime: baseTimeMs,
+            label: count > 1 ? `차기 ${count}회차` : '차기 배차',
+            plainNo: ''
+          };
+        }
+
+        routeBestList.push({
+          routeNum: r.routeNum,
+          badgeClass: r.badgeClass,
+          label: candidate.label,
+          targetTime: candidate.targetTime,
+          plainNo: candidate.plainNo || '',
+          waitMin: Math.max(0, Math.round((candidate.targetTime - reachTimeMs) / 60000))
         });
       });
 
-      if (candidates.length > 0) {
-        candidates.sort((a, b) => a.targetTime - b.targetTime);
-        return candidates[0];
-      }
+      // 3개 노선(양천01, 603, 6620) 중 탑승 시각(targetTime)이 가장 빠른 버스 선택!
+      // 탑승 시각이 동일한 경우 배차간격이 가장 짧은 양천01 우선
+      routeBestList.sort((a, b) => {
+        if (a.targetTime !== b.targetTime) return a.targetTime - b.targetTime;
+        if (a.routeNum === '양천01') return -1;
+        if (b.routeNum === '양천01') return 1;
+        return 0;
+      });
 
-      // 후보가 모두 이미 지나갔거나 없는 경우, 양천01의 최단 배차로 가상 배정
-      const headway = getRouteHeadwaySec('양천01', now);
-      const fallbackTarget = reachTimeMs + Math.round(headway * 0.5) * 1000;
-      return {
-        routeNum: '양천01',
-        badgeClass: 'badge-seoul-town',
-        label: '차기 배차',
-        targetTime: fallbackTarget,
-        plainNo: ''
-      };
+      return routeBestList[0];
     }
 
     /**
      * 특정 도보 도착시각 이후 가장 빨리 탈 수 있는 지하철(실시간 or 역사시간표) 선정
      */
     function findFastestSubway(reachTimeMs, isCommute, isTimetableMode, t1, t2) {
-      // 1. 실시간 모드일 때 실시간 열차 중 탑승 가능한 열차 확인
-      if (!isTimetableMode) {
-        const liveList = [];
-        if (t1 && t1.targetTime && t1.targetTime >= reachTimeMs) liveList.push(t1);
-        if (t2 && t2.targetTime && t2.targetTime >= reachTimeMs) liveList.push(t2);
-        if (liveList.length > 0) {
-          liveList.sort((a, b) => a.targetTime - b.targetTime);
-          const sel = liveList[0];
-          return {
-            clockStr: sel.clockStr,
-            trainNo: sel.trainNo || '',
-            targetTime: sel.targetTime,
-            isLive: true
-          };
-        }
-      }
-
-      // 2. 시간표 모드이거나 실시간 열차가 이미 지나간 경우: 역사 공식 시간표에서 검색
       const reachDate = new Date(reachTimeMs);
       const trains = (typeof getPrioritizedTrains === 'function')
         ? getPrioritizedTrains(reachDate, isCommute, 8)
         : [];
 
-      if (trains && trains.length > 0) {
-        for (const tr of trains) {
-          if (tr.targetTime >= reachTimeMs) {
-            return {
-              clockStr: tr.departureTime,
-              trainNo: '',
-              targetTime: tr.targetTime,
-              isLive: false
-            };
-          }
+      const ttTrain = (trains && trains.length > 0)
+        ? trains.find(tr => tr.targetTime >= reachTimeMs) || trains[0]
+        : null;
+
+      // [1] 시간표 모드인 경우: 공식 역사 고정 시간표 정시 열차를 정확히 선택
+      if (isTimetableMode) {
+        if (ttTrain) {
+          return {
+            clockStr: ttTrain.departureTime,
+            trainNo: '',
+            targetTime: ttTrain.targetTime,
+            isLive: false,
+            modeTag: '정시 시간표'
+          };
         }
       }
 
-      // 3. Fallback
+      // [2] 실시간 모드인 경우:
+      // (A) 실시간 열차(t1, t2) 중 reachTimeMs 이후 탑승 가능한 열차가 있다면 즉시 선택
+      const liveList = [];
+      if (t1 && t1.targetTime && t1.targetTime >= reachTimeMs) liveList.push(t1);
+      if (t2 && t2.targetTime && t2.targetTime >= reachTimeMs) liveList.push(t2);
+
+      if (liveList.length > 0) {
+        liveList.sort((a, b) => a.targetTime - b.targetTime);
+        const sel = liveList[0];
+        return {
+          clockStr: sel.clockStr,
+          trainNo: sel.trainNo || '',
+          targetTime: sel.targetTime,
+          isLive: true,
+          modeTag: '실시간'
+        };
+      }
+
+      // (B) 실시간 t1, t2가 이미 reachTimeMs 이전에 통과한 경우:
+      // 실시간 열차가 시간표 대비 몇 분 지연(or 조기 도착) 운행 중인지 편차를 도출하여 역사 시간표에 연동!
+      let liveDelayMs = 0;
+      if (t1 && t1.targetTime) {
+        const nowMs = Date.now();
+        const t1RemainSec = Math.max(0, Math.round((t1.targetTime - nowMs) / 1000));
+        const schedFirst = (typeof getPrioritizedTrains === 'function') ? getPrioritizedTrains(new Date(nowMs), isCommute, 1)?.[0] : null;
+        if (schedFirst && schedFirst.targetTime) {
+          const schedSec = Math.max(0, Math.round((schedFirst.targetTime - nowMs) / 1000));
+          const diffSec = t1RemainSec - schedSec;
+          // 실시간 지연 오차 (-2분 ~ +4분 클램프)
+          liveDelayMs = Math.max(-120000, Math.min(240000, diffSec * 1000));
+        }
+      }
+
+      if (ttTrain) {
+        let adjTargetTime = ttTrain.targetTime + liveDelayMs;
+        if (adjTargetTime < reachTimeMs) {
+          const nextTt = trains.find(tr => tr.targetTime > ttTrain.targetTime);
+          if (nextTt) adjTargetTime = nextTt.targetTime + liveDelayMs;
+        }
+        const adjDate = new Date(adjTargetTime);
+        const adjClock = `${String(adjDate.getHours()).padStart(2, '0')}:${String(adjDate.getMinutes()).padStart(2, '0')}`;
+        return {
+          clockStr: adjClock,
+          trainNo: (t1 && t1.trainNo) ? t1.trainNo : '',
+          targetTime: adjTargetTime,
+          isLive: true,
+          modeTag: '실시간'
+        };
+      }
+
+      // Fallback
       const fbMs = reachTimeMs + 4 * 60000;
       const d = new Date(fbMs);
       return {
         clockStr: `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`,
         trainNo: '',
         targetTime: fbMs,
-        isLive: false
+        isLive: false,
+        modeTag: '예상'
       };
     }
 
@@ -2241,7 +2310,8 @@
 
       const busPlateStr = est.chosenBus?.plainNo ? ` (${est.chosenBus.plainNo.slice(-4)})` : '';
       const busLabelBadge = `<b style="color:#0369a1;">${est.chosenBus.routeNum}</b> (${est.chosenBus.label}${busPlateStr})`;
-      const trainLabelBadge = `<b style="color:#1d4ed8;">9호선 일반 (${est.chosenTrain.clockStr} 탑승)</b>`;
+      const subModeTag = isTimetableMode ? '[🗓️시간표]' : '[⚡실시간]';
+      const trainLabelBadge = `<b style="color:#1d4ed8;">9호선 일반 (${est.chosenTrain.clockStr} 탑승 ${subModeTag})</b>`;
 
       const stepsHtml = isCommute ? `
         <div class="est-timeline-step">
@@ -2323,7 +2393,7 @@
             <div class="est-dest-title">
               <span class="est-dest-icon">${isCommute ? '🏢' : '🏠'}</span>
               <div class="est-dest-text">
-                <div class="est-dep-time">지금(${fmtTime(now)}) 출발 기준</div>
+                <div class="est-dep-time">지금(${fmtTime(now)}) 출발 기준 · ${isTimetableMode ? '🗓️ 지하철 시간표' : '⚡ 지하철 실시간'}</div>
                 <div class="est-dest-label"><span class="est-total-min">${totalMins}분</span> 소요 예상</div>
               </div>
             </div>
@@ -2338,12 +2408,12 @@
       const detailHtml = `
         <div class="est-summary-card est-detail-timeline-card">
           <div class="est-detail-title-bar">
-            <span>🧭 <b>${isCommute ? '출근' : '퇴근'} 이동 경로 및 최적 연계 시각표</b></span>
+            <span>🧭 <b>${isCommute ? '출근' : '퇴근'} 이동 경로 및 최적 연계 시각표 (${isTimetableMode ? '🗓️ 시간표 모드' : '⚡ 실시간 모드'})</b></span>
             <span class="est-detail-badge">가장 빠른 연계 배정</span>
           </div>
           <div class="est-timeline-flow">${stepsHtml}</div>
           <div class="est-breakdown-bar">
-            <span>💡 총 소요시간: 🚶 도보 20분 + 🚏 대기 ${est.busWaitMin + est.subWaitMin}분 + 🚍 승차 9분 = <b>총 ${totalMins}분 소요</b> (${isTimetableMode ? '시간표 기준' : '실시간 기준'})</span>
+            <span>💡 총 소요시간: 🚶 도보 20분 + 🚏 대기 ${est.busWaitMin + est.subWaitMin}분 + 🚍 승차 9분 = <b>총 ${totalMins}분 소요</b> (${isTimetableMode ? '🗓️ 9호선 공식 시간표 기준' : '⚡ 9호선 서울시 실시간 기준'})</span>
           </div>
         </div>
       `;
