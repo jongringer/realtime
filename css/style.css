@@ -2876,14 +2876,14 @@ body[data-theme="noble-gold"] .subway-9-card .next-transit-sub {
 }
 
 .subway-9-card .next-time-big {
-  color: #92530a !important;
-  font-weight: 800;
+  color: #0f172a !important;
+  font-weight: 900;
 }
 
 body[data-theme="obsidian"] .subway-9-card .next-time-big,
 body[data-theme="noble-gold"] .subway-9-card .next-time-big {
-  color: #92530a !important;
-  font-weight: 800;
+  color: #0f172a !important;
+  font-weight: 900;
 }
 
 .subway-9-card .next2-transit-box {
@@ -3768,8 +3768,8 @@ body[data-theme="noble-gold"] .subway-9-card .next2-tag-blue,
 body[data-theme="obsidian"] .subway-9-card .next-time-big,
 body[data-theme="noble-gold"] .subway-9-card .next-time-big,
 .subway-9-card .next-time-big {
-  color: #92530a !important;
-  font-weight: 800 !important;
+  color: #0f172a !important;
+  font-weight: 900 !important;
 }
 
 /* 9호선 출발 시각 및 다다음 시각: 낮모드는 딥 스카이블루/네이비, 밤모드는 눈에 확 띄는 밝은 시안/블루 */
@@ -3810,33 +3810,29 @@ body:not([data-theme="apple-light"]) .subway-9-card .next2-transit-box .transit-
   font-weight: 900 !important;
 }
 
-/* 9호선 카드 내부 시간 표시: 낮모드는 분 레드(#dc2626)/초 다크(#0f172a), 밤모드는 분 코랄레드(#f87171)/초 선명한 화이트(#ffffff) */
+/* 9호선 카드 내부 시간 표시: 낮모드 & 밤모드 모두 다음열차/다다음열차 분은 다다음처럼 진한 빨간색(#dc2626), 초는 검은색(#0f172a) */
 body[data-theme="apple-light"] .subway-9-card .transit-time-min,
-.subway-9-card .transit-time-min {
-  color: #dc2626 !important;
-}
-
-body[data-theme="apple-light"] .subway-9-card .transit-time-sec,
-.subway-9-card .transit-time-sec {
-  color: #0f172a !important;
-}
-
 body[data-theme="obsidian"] .subway-9-card .transit-time-min,
 body[data-theme="noble-gold"] .subway-9-card .transit-time-min,
 body[data-theme="midnight"] .subway-9-card .transit-time-min,
 body.dark-theme .subway-9-card .transit-time-min,
 body.dark-mode .subway-9-card .transit-time-min,
-body:not([data-theme="apple-light"]) .subway-9-card .transit-time-min {
-  color: #f87171 !important; /* 밤모드 분: 선명한 코랄 레드 */
+body:not([data-theme="apple-light"]) .subway-9-card .transit-time-min,
+.subway-9-card .transit-time-min {
+  color: #dc2626 !important; /* 다다음처럼 아주 진하고 굵은 빨간색 */
+  font-weight: 900 !important;
 }
 
+body[data-theme="apple-light"] .subway-9-card .transit-time-sec,
 body[data-theme="obsidian"] .subway-9-card .transit-time-sec,
 body[data-theme="noble-gold"] .subway-9-card .transit-time-sec,
 body[data-theme="midnight"] .subway-9-card .transit-time-sec,
 body.dark-theme .subway-9-card .transit-time-sec,
 body.dark-mode .subway-9-card .transit-time-sec,
-body:not([data-theme="apple-light"]) .subway-9-card .transit-time-sec {
-  color: #ffffff !important; /* 밤모드 초: 선명한 순백색 */
+body:not([data-theme="apple-light"]) .subway-9-card .transit-time-sec,
+.subway-9-card .transit-time-sec {
+  color: #0f172a !important; /* 몇초도 나오게 선명한 검은색 */
+  font-weight: 900 !important;
 }
 
 body[data-theme="obsidian"] .subway-9-card .transit-time-arrive,

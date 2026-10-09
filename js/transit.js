@@ -33,8 +33,8 @@ class TransitManager {
             stId: '114000052',
             ord: '17',
             badgeClass: 'badge-seoul-town',
-            typeText: '마을버스 (배차 6~7분)',
-            headway: 390
+            typeText: '마을버스 (평일 5~8분 / 주말·공휴일 8~12분)',
+            headway: 360
           },
           {
             routeNum: '603',
@@ -70,8 +70,8 @@ class TransitManager {
             stId: '118000125',
             ord: '20',
             badgeClass: 'badge-seoul-town',
-            typeText: '마을버스 (배차 6~7분)',
-            headway: 390
+            typeText: '마을버스 (평일 5~8분 / 주말·공휴일 8~12분)',
+            headway: 360
           },
           {
             routeNum: '603',
@@ -697,7 +697,24 @@ class TransitManager {
       }
     }
 
-    return { next, next2 };
+    // 양천01의 경우 사용자 요청에 따라 다다다음(next3)까지 계산 투영 (평일 5~8분 / 주말 8~12분 배차)
+    let next3 = null;
+    if (routeConfig.routeNum === '양천01') {
+      const baseTargetMs = (next2 && next2.targetTime) ? next2.targetTime : (next.targetTime ? next.targetTime + headway * 1000 : nowMs + headway * 2000);
+      const next3TargetMs = baseTargetMs + headway * 1000;
+      const next3Sec = Math.max(1, Math.round((next3TargetMs - nowMs) / 1000));
+      const d3 = new Date(next3TargetMs);
+      const clock3 = `${String(d3.getHours()).padStart(2, '0')}:${String(d3.getMinutes()).padStart(2, '0')}`;
+      next3 = {
+        sec: next3Sec,
+        targetTime: next3TargetMs,
+        clockStr: clock3,
+        arrmsg: '다다다음 순번',
+        stopText: '차기 배차'
+      };
+    }
+
+    return { next, next2, next3 };
   }
 
   /**
@@ -798,6 +815,36 @@ class TransitManager {
   isWeekendOrHoliday(date) {
     const day = date.getDay();
     return day === 0 || day === 6 || this.isKoreanHoliday(date);
+  }
+
+  /**
+   * 노선별 실 배차간격(초) 계산
+   * - 양천01: 평일 약 5~8분 (출퇴근 혼잡 6분 내외, 평시 7분) / 주말 및 공휴일 약 8~12분 (평균 10분)
+   * - 603: 평일 약 10~12분 / 주말 13~15분
+   * - 6620: 평일 약 12~15분 / 주말 15~18분
+   */
+  getRouteHeadwaySec(routeNum, now) {
+    const isHoliday = this.isWeekendOrHoliday(now);
+    const hour = now.getHours();
+    const min = now.getMinutes();
+    const currentMinOfDay = hour * 60 + min;
+
+    if (routeNum === '양천01') {
+      if (isHoliday) {
+        // 주말 및 공휴일: 약 8~12분 (평균 10분 = 600초)
+        return 10 * 60;
+      } else {
+        // 평일: 약 5~8분 (출퇴근 혼잡도에 따라 6~10분 내외, 출퇴근 약 6분, 낮시간 7분)
+        const isRushHour = (currentMinOfDay >= 7 * 60 && currentMinOfDay <= 9 * 60 + 30) ||
+                           (currentMinOfDay >= 17 * 60 + 30 && currentMinOfDay <= 20 * 60);
+        return isRushHour ? 6 * 60 : 7 * 60;
+      }
+    } else if (routeNum === '603') {
+      return isHoliday ? 13 * 60 : 11 * 60;
+    } else if (routeNum === '6620') {
+      return isHoliday ? 16 * 60 : 13 * 60;
+    }
+    return 10 * 60;
   }
 
   /**
@@ -1199,6 +1246,31 @@ class TransitManager {
         `;
       }
 
+      let next3Html = '';
+      if (r.routeNum === '양천01') {
+        const headwaySec = this.getRouteHeadwaySec('양천01', now);
+        let baseTargetMs = null;
+        if (next2 && next2.targetTime) {
+          baseTargetMs = next2.targetTime;
+        } else if (next && next.targetTime) {
+          baseTargetMs = next.targetTime + headwaySec * 1000;
+        } else {
+          baseTargetMs = nowMs + headwaySec * 1000;
+        }
+        const next3TargetMs = baseTargetMs + headwaySec * 1000;
+        const next3Sec = Math.max(0, Math.round((next3TargetMs - nowMs) / 1000));
+        const next3ArrTime = new Date(next3TargetMs);
+        const next3Clock = `${String(next3ArrTime.getHours()).padStart(2, '0')}:${String(next3ArrTime.getMinutes()).padStart(2, '0')}`;
+        next3Html = `
+          <div class="next2-transit-box next3-transit-box" style="margin-top:4px; opacity:0.95;">
+            <span class="next2-tag-blue" style="color:#475569;">
+              <span>🟣 다다다음 (<b class="transit-clock-time" style="font-size:14px; font-weight:800; color:#6366f1;">${next3Clock}</b> · 정규배차)</span>
+            </span>
+            <span class="live-countdown next2-countdown" data-target-time="${next3TargetMs}">${this.formatSec(next3Sec)}</span>
+          </div>
+        `;
+      }
+
       return `
         <div class="bit-route-item">
           <div class="bit-route-top">
@@ -1210,6 +1282,7 @@ class TransitManager {
           </div>
           ${nextHtml}
           ${next2Html}
+          ${next3Html}
         </div>
       `;
     }).join('');
@@ -1627,6 +1700,52 @@ class TransitManager {
   }
 
   /**
+   * 3대 버스(양천01, 603, 6620) 중 특정 도보 도착시각 이후 가장 빨리 탈 수 있는 최적 버스 선정
+   */
+  findFastestBusForCommute(routes, busDataMap, reachTimeMs, now, nowMs) {
+    let candidates = [];
+    routes.forEach(r => {
+      const item = busDataMap ? busDataMap[r.routeNum] : null;
+      const { next, next2, next3 } = this.parseSeoulBusArrival(r, item, now, nowMs);
+      const list = [
+        { bus: next, label: '다음' },
+        { bus: next2, label: '다다음' },
+        { bus: next3, label: '다다다음' }
+      ];
+
+      list.forEach(({ bus, label }) => {
+        if (bus && bus.targetTime && !bus.isWait && !bus.isEnd) {
+          if (bus.targetTime >= reachTimeMs) {
+            candidates.push({
+              routeNum: r.routeNum,
+              badgeClass: r.badgeClass,
+              label,
+              targetTime: bus.targetTime,
+              plainNo: bus.plainNo || ''
+            });
+          }
+        }
+      });
+    });
+
+    if (candidates.length > 0) {
+      candidates.sort((a, b) => a.targetTime - b.targetTime);
+      return candidates[0];
+    }
+
+    // 후보가 모두 이미 지나갔거나 없는 경우, 양천01의 최단 배차로 가상 배정
+    const headway = this.getRouteHeadwaySec ? this.getRouteHeadwaySec('양천01', now) : 360;
+    const fallbackTarget = reachTimeMs + Math.round(headway * 0.5) * 1000;
+    return {
+      routeNum: '양천01',
+      badgeClass: 'badge-seoul-town',
+      label: '차기 배차',
+      targetTime: fallbackTarget,
+      plainNo: ''
+    };
+  }
+
+  /**
    * 실시간 도보/버스/지하철 연계 출퇴근 예상 소요시간 및 도착예정시각 계산 엔진
    */
   calculateCommuteEstimation(busDataMap, liveSubwayTrain = null) {
@@ -1646,35 +1765,11 @@ class TransitManager {
       // -------------------------------------------------------------
       const t0 = new Date(nowMs);
       const t_reach_bus = new Date(nowMs + WALK_HOME_BUS * 60 * 1000);
-
       const config = this.busConfigs.commute;
-      let candidates = [];
 
-      config.routes.forEach(r => {
-        const busItem = busDataMap ? busDataMap[r.routeNum] : null;
-        const { next, next2 } = this.parseSeoulBusArrival(r, busItem, now, nowMs);
-        [next, next2].forEach(b => {
-          if (b && b.targetTime && !b.isWait && !b.isEnd) {
-            if (b.targetTime >= t_reach_bus.getTime()) {
-              candidates.push({ routeNum: r.routeNum, targetTime: b.targetTime, busObj: b });
-            }
-          }
-        });
-      });
-
-      candidates.sort((a, b) => a.targetTime - b.targetTime);
-
-      let chosenBus = null;
-      let busBoardTimeMs = null;
-      if (candidates.length > 0) {
-        chosenBus = candidates[0];
-        busBoardTimeMs = candidates[0].targetTime;
-      } else {
-        chosenBus = { routeNum: '양천01', busObj: null };
-        busBoardTimeMs = t_reach_bus.getTime() + 3 * 60 * 1000;
-      }
-
-      const t_bus_board = new Date(busBoardTimeMs);
+      // 3대 버스(양천01 다다다음 포함) 중 6단지 도착 후 가장 빠른 버스 선택
+      const chosenBus = this.findFastestBusForCommute(config.routes, busDataMap, t_reach_bus.getTime(), now, nowMs);
+      const t_bus_board = new Date(chosenBus.targetTime);
       const busWaitMin = Math.max(0, Math.round((t_bus_board.getTime() - t_reach_bus.getTime()) / 60000));
 
       const t_reach_seonyu_bus = new Date(t_bus_board.getTime() + RIDE_BUS_MIN * 60 * 1000);
@@ -1735,15 +1830,21 @@ class TransitManager {
       const t0 = new Date(nowMs);
       const t_reach_national_sub = new Date(nowMs + WALK_SUBWAY_OFFICE * 60 * 1000);
 
-      const subwayTrains = this.getPrioritizedTrains(t_reach_national_sub, false, 10);
       let chosenTrain = null;
       let subBoardTimeMs = null;
-      if (subwayTrains && subwayTrains.length > 0) {
-        for (const tr of subwayTrains) {
-          if (tr.targetTime >= t_reach_national_sub.getTime()) {
-            chosenTrain = tr;
-            subBoardTimeMs = tr.targetTime;
-            break;
+
+      if (liveSubwayTrain && liveSubwayTrain.targetTime && liveSubwayTrain.targetTime >= t_reach_national_sub.getTime()) {
+        chosenTrain = { departureTime: liveSubwayTrain.clockStr, trainNo: liveSubwayTrain.trainNo, targetTime: liveSubwayTrain.targetTime };
+        subBoardTimeMs = liveSubwayTrain.targetTime;
+      } else {
+        const subwayTrains = this.getPrioritizedTrains(t_reach_national_sub, false, 10);
+        if (subwayTrains && subwayTrains.length > 0) {
+          for (const tr of subwayTrains) {
+            if (tr.targetTime >= t_reach_national_sub.getTime()) {
+              chosenTrain = tr;
+              subBoardTimeMs = tr.targetTime;
+              break;
+            }
           }
         }
       }
@@ -1759,32 +1860,10 @@ class TransitManager {
       const t_reach_seonyu_bus = new Date(t_reach_seonyu_sub.getTime() + WALK_BUS_SUBWAY * 60 * 1000);
 
       const config = this.busConfigs.offwork;
-      let candidates = [];
-      config.routes.forEach(r => {
-        const busItem = busDataMap ? busDataMap[r.routeNum] : null;
-        const { next, next2 } = this.parseSeoulBusArrival(r, busItem, now, nowMs);
-        [next, next2].forEach(b => {
-          if (b && b.targetTime && !b.isWait && !b.isEnd) {
-            if (b.targetTime >= t_reach_seonyu_bus.getTime()) {
-              candidates.push({ routeNum: r.routeNum, targetTime: b.targetTime, busObj: b });
-            }
-          }
-        });
-      });
 
-      candidates.sort((a, b) => a.targetTime - b.targetTime);
-
-      let chosenBus = null;
-      let busBoardTimeMs = null;
-      if (candidates.length > 0) {
-        chosenBus = candidates[0];
-        busBoardTimeMs = candidates[0].targetTime;
-      } else {
-        chosenBus = { routeNum: '양천01', busObj: null };
-        busBoardTimeMs = t_reach_seonyu_bus.getTime() + 3 * 60 * 1000;
-      }
-
-      const t_bus_board = new Date(busBoardTimeMs);
+      // 3대 버스(양천01 다다다음 포함) 중 선유도역 도착 후 가장 빠른 버스 선택
+      const chosenBus = this.findFastestBusForCommute(config.routes, busDataMap, t_reach_seonyu_bus.getTime(), now, nowMs);
+      const t_bus_board = new Date(chosenBus.targetTime);
       const busWaitMin = Math.max(0, Math.round((t_bus_board.getTime() - t_reach_seonyu_bus.getTime()) / 60000));
 
       const t_reach_bus = new Date(t_bus_board.getTime() + RIDE_BUS_MIN * 60 * 1000);

@@ -212,8 +212,16 @@
       font-weight: 700;
     }
     .subway-9-card .next-time-big {
-      color: #92530a !important;
-      font-weight: 800;
+      color: #0f172a !important;
+      font-weight: 900;
+    }
+    .subway-9-card .transit-time-min {
+      color: #dc2626 !important;
+      font-weight: 900 !important;
+    }
+    .subway-9-card .transit-time-sec {
+      color: #0f172a !important;
+      font-weight: 900 !important;
     }
     .subway-9-card .next2-transit-box {
       background: #ffffff !important;
@@ -803,13 +811,13 @@
     body:not([data-theme="apple-light"]) .subway-clock-time-next2 {
       color: #60a5fa !important;
     }
-    body:not([data-theme="apple-light"]) .next-transit-box {
-      background: rgba(30, 41, 59, 0.7);
-      border-color: #334155;
+    body:not([data-theme="apple-light"]) .subway-9-card .transit-time-min {
+      color: #dc2626 !important;
+      font-weight: 900 !important;
     }
-    body:not([data-theme="apple-light"]) .next2-transit-box {
-      background: rgba(15, 23, 42, 0.6);
-      border-color: #1e293b;
+    body:not([data-theme="apple-light"]) .subway-9-card .transit-time-sec {
+      color: #0f172a !important;
+      font-weight: 900 !important;
     }
     body:not([data-theme="apple-light"]) .transit-arr-label {
       color: #cbd5e1 !important;
@@ -929,6 +937,21 @@
     }
     window.setSubwaySourceMode = setSubwaySourceMode;
 
+    function getRouteHeadwaySec(routeNum, now) {
+      const isHoliday = (typeof isWeekendOrHoliday === 'function') ? isWeekendOrHoliday(now) : false;
+      if (routeNum === '양천01') {
+        if (isHoliday) return 600; // 주말·공휴일 10분 (약 8~12분)
+        const h = now.getHours();
+        const m = now.getMinutes();
+        const hm = h * 60 + m;
+        const isRush = (hm >= 7 * 60 && hm <= 9 * 60 + 30) || (hm >= 17 * 60 + 30 && hm <= 20 * 60);
+        return isRush ? 360 : 450; // 평일 출퇴근 혼잡 6분(5~8분), 평시 7.5분
+      }
+      if (routeNum === '603') return isHoliday ? 780 : 660; // 13분 / 11분
+      if (routeNum === '6620') return isHoliday ? 960 : 780; // 16분 / 13분
+      return 600;
+    }
+
     const BUS_CONFIGS = {
       commute: {
         arsId: '15-154',
@@ -936,7 +959,7 @@
         stationName: '이대목동병원·목동6단지앞',
         destNote: '선유도역·당산역 방면',
         routes: [
-          { routeNum: '양천01', busRouteId: '114900001', stId: '114000052', ord: '17', badgeClass: 'badge-seoul-town', typeText: '마을버스 (배차 6~7분)', headway: 390 },
+          { routeNum: '양천01', busRouteId: '114900001', stId: '114000052', ord: '17', badgeClass: 'badge-seoul-town', typeText: '마을버스 (평일 5~8분 / 주말·공휴일 8~12분)', headway: 360 },
           { routeNum: '603',   busRouteId: '100100088', stId: '114000052', ord: '22', badgeClass: 'badge-seoul-blue', typeText: '간선버스 (배차 10~12분)', headway: 660 },
           { routeNum: '6620',  busRouteId: '100100300', stId: '114000052', ord: '28', badgeClass: 'badge-seoul-green', typeText: '지선버스 (당산역 방면)', headway: 720 }
         ]
@@ -947,7 +970,7 @@
         stationName: '선유도역1번출구·한신아파트',
         destNote: '목동아파트 단지 방면 환승',
         routes: [
-          { routeNum: '양천01', busRouteId: '114900001', stId: '118000125', ord: '20', badgeClass: 'badge-seoul-town', typeText: '마을버스 (배차 6~7분)', headway: 390 },
+          { routeNum: '양천01', busRouteId: '114900001', stId: '118000125', ord: '20', badgeClass: 'badge-seoul-town', typeText: '마을버스 (평일 5~8분 / 주말·공휴일 8~12분)', headway: 360 },
           { routeNum: '603',   busRouteId: '100100088', stId: '118000125', ord: '62', badgeClass: 'badge-seoul-blue', typeText: '간선버스 (배차 10~12분)', headway: 660 },
           { routeNum: '6620',  busRouteId: '100100300', stId: '118000125', ord: '34', badgeClass: 'badge-seoul-green', typeText: '지선버스 (차고지 방면)', headway: 720 }
         ]
@@ -1078,10 +1101,12 @@
     }
 
     function parseSeoulBus(routeConfig, busItem, now, nowMs) {
-      const headway = routeConfig.headway;
+      const dynamicHeadway = getRouteHeadwaySec(routeConfig.routeNum, now);
+      const headway = dynamicHeadway || routeConfig.headway || 420;
       const targetOrd = parseInt(routeConfig.ord, 10);
       let next = null;
       let next2 = null;
+      let next3 = null;
 
       if (busItem) {
         const traTime1 = parseInt(busItem.traTime1 || '0', 10);
@@ -1178,6 +1203,22 @@
         };
       }
 
+      // 양천01의 경우 사용자 요청에 따라 다다다음(next3)까지 계산 투영 (평일 5~8분 / 주말 8~12분 배차)
+      if (routeConfig.routeNum === '양천01') {
+        const baseTargetMs = (next2 && next2.targetTime) ? next2.targetTime : (next.targetTime ? next.targetTime + headway * 1000 : nowMs + headway * 2000);
+        const next3TargetMs = baseTargetMs + headway * 1000;
+        const next3Sec = Math.max(1, Math.round((next3TargetMs - nowMs) / 1000));
+        const d3 = new Date(next3TargetMs);
+        const clock3 = `${String(d3.getHours()).padStart(2, '0')}:${String(d3.getMinutes()).padStart(2, '0')}`;
+        next3 = {
+          sec: next3Sec,
+          targetTime: next3TargetMs,
+          clockStr: clock3,
+          arrmsg: '다다다음 순번',
+          stopText: '차기 배차'
+        };
+      }
+
       // 사용자 요청: 출퇴근 시간에 버스 시간표에 연동되던 것을 중지하고 버스 번호로 실시간 도착정보를 최우선 수신
       // 실시간 데이터가 없는 경우(심야 등)에만 시간표 보조 활용
       if (next && next.isEstimate) {
@@ -1225,7 +1266,7 @@
         }
       }
 
-      return { next, next2 };
+      return { next, next2, next3 };
     }
 
     /**
@@ -1757,6 +1798,19 @@
           `;
         }
 
+        let next3Html = '';
+        if (next3 && r.routeNum === '양천01') {
+          const next3TimeHtml = `<span class="live-cd" data-time="${next3.targetTime}" style="font-weight:800; color:#7c3aed; font-size:12px;">${formatSec(next3.sec)}</span>`;
+          next3Html = `
+            <div class="next3-transit-box" style="padding:6px 10px; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; justify-content:space-between; align-items:center; background:rgba(124, 58, 237, 0.05); border-radius:6px; margin-top:3px; border:1px dashed rgba(124, 58, 237, 0.25);">
+              <span class="next3-tag-purple" style="font-size:12px; white-space:nowrap; color:#6d28d9; font-weight:750;">
+                <span>🟣 다다다음 (<b class="transit-clock-time" style="font-size:15px; font-weight:900; color:#7c3aed;">${next3.clockStr}</b> · 배차운행)</span>
+              </span>
+              ${next3TimeHtml}
+            </div>
+          `;
+        }
+
         return `
           <div class="bit-route-item" style="padding:8px 10px;">
             <div class="bit-route-top" style="margin-bottom:4px;">
@@ -1768,6 +1822,7 @@
             </div>
             ${nextHtml}
             ${next2Html}
+            ${next3Html}
           </div>
         `;
       }).join('');
@@ -1857,7 +1912,7 @@
           const t2Plate = t2.trainNo ? `<span class="next2-train-plate" style="font-size:11px; color:#1e40af; font-weight:700; margin-left:4px;">(${formatPlateSmall(t2.trainNo)})</span>` : '';
           const t2TimeHtml = (t2.isArrivingSoon || t2.sec <= 30)
             ? `<span style="color:#dc2626; font-weight:800; font-size:12px;">⚡ 곧 도착</span>`
-            : `<span class="live-cd" data-time="${t2.targetTime}" style="font-weight:800; color:#1e40af; font-size:12px;">${formatSec(t2.sec)}</span>`;
+            : `<span class="live-cd" data-time="${t2.targetTime}" style="font-weight:800; font-size:12px;">${formatSec(t2.sec)}</span>`;
           t2Html = `
             <div class="next2-transit-box" style="padding:6px 10px; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; justify-content:space-between; align-items:center;">
               <span class="next2-tag-blue" style="font-size:12px; white-space:nowrap;">
@@ -1976,32 +2031,129 @@
         container.innerHTML = subHtml + busHtml;
       }
 
-      renderEstimationBox(isCommute);
+      renderEstimationBox(isCommute, busDataMap, t1, t2, isTimetableMode);
     }
 
-    function renderEstimationBox(isCommute) {
+    /**
+     * 3대 버스(양천01, 603, 6620) 중 특정 도착시각 이후 가장 빨리 탈 수 있는 최적 버스 선정
+     */
+    function findFastestBus(routes, busDataMap, reachTimeMs, now, nowMs) {
+      let candidates = [];
+      routes.forEach(r => {
+        const item = busDataMap ? busDataMap[r.routeNum] : null;
+        const { next, next2, next3 } = parseSeoulBus(r, item, now, nowMs);
+        const list = [
+          { bus: next, label: '다음' },
+          { bus: next2, label: '다다음' },
+          { bus: next3, label: '다다다음' }
+        ];
+
+        list.forEach(({ bus, label }) => {
+          if (bus && bus.targetTime && !bus.isWait && !bus.isEnd) {
+            if (bus.targetTime >= reachTimeMs) {
+              candidates.push({
+                routeNum: r.routeNum,
+                badgeClass: r.badgeClass,
+                label,
+                targetTime: bus.targetTime,
+                plainNo: bus.plainNo || ''
+              });
+            }
+          }
+        });
+      });
+
+      if (candidates.length > 0) {
+        candidates.sort((a, b) => a.targetTime - b.targetTime);
+        return candidates[0];
+      }
+
+      // 후보가 모두 이미 지나갔거나 없는 경우, 양천01의 최단 배차로 가상 배정
+      const headway = getRouteHeadwaySec('양천01', now);
+      const fallbackTarget = reachTimeMs + Math.round(headway * 0.5) * 1000;
+      return {
+        routeNum: '양천01',
+        badgeClass: 'badge-seoul-town',
+        label: '차기 배차',
+        targetTime: fallbackTarget,
+        plainNo: ''
+      };
+    }
+
+    /**
+     * 특정 도보 도착시각 이후 가장 빨리 탈 수 있는 지하철(실시간 or 역사시간표) 선정
+     */
+    function findFastestSubway(reachTimeMs, isCommute, isTimetableMode, t1, t2) {
+      // 1. 실시간 모드일 때 실시간 열차 중 탑승 가능한 열차 확인
+      if (!isTimetableMode) {
+        const liveList = [];
+        if (t1 && t1.targetTime && t1.targetTime >= reachTimeMs) liveList.push(t1);
+        if (t2 && t2.targetTime && t2.targetTime >= reachTimeMs) liveList.push(t2);
+        if (liveList.length > 0) {
+          liveList.sort((a, b) => a.targetTime - b.targetTime);
+          const sel = liveList[0];
+          return {
+            clockStr: sel.clockStr,
+            trainNo: sel.trainNo || '',
+            targetTime: sel.targetTime,
+            isLive: true
+          };
+        }
+      }
+
+      // 2. 시간표 모드이거나 실시간 열차가 이미 지나간 경우: 역사 공식 시간표에서 검색
+      const reachDate = new Date(reachTimeMs);
+      const trains = (typeof getPrioritizedTrains === 'function')
+        ? getPrioritizedTrains(reachDate, isCommute, 8)
+        : [];
+
+      if (trains && trains.length > 0) {
+        for (const tr of trains) {
+          if (tr.targetTime >= reachTimeMs) {
+            return {
+              clockStr: tr.departureTime,
+              trainNo: '',
+              targetTime: tr.targetTime,
+              isLive: false
+            };
+          }
+        }
+      }
+
+      // 3. Fallback
+      const fbMs = reachTimeMs + 4 * 60000;
+      const d = new Date(fbMs);
+      return {
+        clockStr: `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`,
+        trainNo: '',
+        targetTime: fbMs,
+        isLive: false
+      };
+    }
+
+    function renderEstimationBox(isCommute, busDataMap = null, t1 = null, t2 = null, isTimetableMode = false) {
       const box = document.getElementById('commuteEstimationSummaryBox');
       if (!box) return;
 
       const now = new Date();
       const nowMs = now.getTime();
-      const WALK_HOME_BUS = 8;
-      const WALK_BUS_SUBWAY = 3;
-      const WALK_SUBWAY_OFFICE = 9;
-      const RIDE_BUS = 5;
-      const RIDE_SUBWAY = 4;
-      const WAIT_EST = 5;
+      const config = BUS_CONFIGS[isCommute ? 'commute' : 'offwork'];
 
-      const totalMins = WALK_HOME_BUS + WALK_BUS_SUBWAY + WALK_SUBWAY_OFFICE + RIDE_BUS + RIDE_SUBWAY + WAIT_EST;
-      const arrDate = new Date(nowMs + totalMins * 60 * 1000);
+      const WALK_HOME_BUS = 8;     // 집 ↔ 6단지 버스정류장 (8분)
+      const WALK_BUS_SUBWAY = 3;   // 선유도역 버스정류장 ↔ 선유도역 승차장 (3분)
+      const WALK_SUBWAY_OFFICE = 9;// 국회의사당역 ↔ 회사 (9분)
+      const RIDE_BUS = 5;          // 버스 이동 (5분)
+      const RIDE_SUBWAY = 4;       // 지하철 이동 (4분)
 
       const fmtTime = (d) => {
+        if (!d) return '--:--';
         const h = String(d.getHours()).padStart(2, '0');
         const m = String(d.getMinutes()).padStart(2, '0');
         return `${h}:${m}`;
       };
 
       const fmtClockFull = (d) => {
+        if (!d) return '--:--';
         const h = d.getHours();
         const m = d.getMinutes();
         const ampm = h >= 12 ? '오후' : '오전';
@@ -2010,23 +2162,115 @@
         return `${ampm} ${h12}시 ${mStr}분`;
       };
 
-      const destName = isCommute ? '회사' : '집';
+      let est = null;
+
+      if (isCommute) {
+        // [출근] 집 ➔ 6단지 정류장 ➔ 선유도역 ➔ 국회의사당역 ➔ 회사
+        const t0 = now;
+        const t_reach_bus = new Date(nowMs + WALK_HOME_BUS * 60000);
+        const chosenBus = findFastestBus(config.routes, busDataMap, t_reach_bus.getTime(), now, nowMs);
+        const t_bus_board = new Date(chosenBus.targetTime);
+        const busWaitMin = Math.max(0, Math.round((t_bus_board.getTime() - t_reach_bus.getTime()) / 60000));
+
+        const t_reach_seonyu_bus = new Date(t_bus_board.getTime() + RIDE_BUS * 60000);
+        const t_reach_seonyu_sub = new Date(t_reach_seonyu_bus.getTime() + WALK_BUS_SUBWAY * 60000);
+
+        const chosenTrain = findFastestSubway(t_reach_seonyu_sub.getTime(), true, isTimetableMode, t1, t2);
+        const t_sub_board = new Date(chosenTrain.targetTime);
+        const subWaitMin = Math.max(0, Math.round((t_sub_board.getTime() - t_reach_seonyu_sub.getTime()) / 60000));
+
+        const t_reach_national_sub = new Date(t_sub_board.getTime() + RIDE_SUBWAY * 60000);
+        const t_final = new Date(t_reach_national_sub.getTime() + WALK_SUBWAY_OFFICE * 60000);
+        const totalMinutes = Math.max(1, Math.round((t_final.getTime() - nowMs) / 60000));
+
+        est = {
+          mode: 'commute',
+          startTime: t0,
+          t_reach_bus,
+          chosenBus,
+          t_bus_board,
+          busWaitMin,
+          t_reach_seonyu_bus,
+          t_reach_seonyu_sub,
+          chosenTrain,
+          t_sub_board,
+          subWaitMin,
+          t_reach_national_sub,
+          t_final,
+          totalMinutes
+        };
+      } else {
+        // [퇴근] 회사 ➔ 국회의사당역 ➔ 선유도역 ➔ 6단지 정류장 ➔ 집
+        const t0 = now;
+        const t_reach_national_sub = new Date(nowMs + WALK_SUBWAY_OFFICE * 60000);
+        const chosenTrain = findFastestSubway(t_reach_national_sub.getTime(), false, isTimetableMode, t1, t2);
+        const t_sub_board = new Date(chosenTrain.targetTime);
+        const subWaitMin = Math.max(0, Math.round((t_sub_board.getTime() - t_reach_national_sub.getTime()) / 60000));
+
+        const t_reach_seonyu_sub = new Date(t_sub_board.getTime() + RIDE_SUBWAY * 60000);
+        const t_reach_seonyu_bus = new Date(t_reach_seonyu_sub.getTime() + WALK_BUS_SUBWAY * 60000);
+
+        const chosenBus = findFastestBus(config.routes, busDataMap, t_reach_seonyu_bus.getTime(), now, nowMs);
+        const t_bus_board = new Date(chosenBus.targetTime);
+        const busWaitMin = Math.max(0, Math.round((t_bus_board.getTime() - t_reach_seonyu_bus.getTime()) / 60000));
+
+        const t_reach_bus = new Date(t_bus_board.getTime() + RIDE_BUS * 60000);
+        const t_final = new Date(t_reach_bus.getTime() + WALK_HOME_BUS * 60000);
+        const totalMinutes = Math.max(1, Math.round((t_final.getTime() - nowMs) / 60000));
+
+        est = {
+          mode: 'offwork',
+          startTime: t0,
+          t_reach_national_sub,
+          chosenTrain,
+          t_sub_board,
+          subWaitMin,
+          t_reach_seonyu_sub,
+          t_reach_seonyu_bus,
+          chosenBus,
+          t_bus_board,
+          busWaitMin,
+          t_reach_bus,
+          t_final,
+          totalMinutes
+        };
+      }
+
+      const totalMins = est.totalMinutes;
+      const arrDate = est.t_final;
+
+      const busPlateStr = est.chosenBus?.plainNo ? ` (${est.chosenBus.plainNo.slice(-4)})` : '';
+      const busLabelBadge = `<b style="color:#0369a1;">${est.chosenBus.routeNum}</b> (${est.chosenBus.label}${busPlateStr})`;
+      const trainLabelBadge = `<b style="color:#1d4ed8;">9호선 일반 (${est.chosenTrain.clockStr} 탑승)</b>`;
+
       const stepsHtml = isCommute ? `
         <div class="est-timeline-step">
           <div class="est-step-node start">🏠</div>
-          <div class="est-step-content"><span class="est-step-name">집 출발</span><span class="est-step-clock">${fmtTime(now)}</span></div>
+          <div class="est-step-content"><span class="est-step-name">집 출발</span><span class="est-step-clock">${fmtTime(est.startTime)}</span></div>
         </div>
-        <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 도보 8분 (6단지 정류장)</span></div>
+        <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 도보 8분 (6단지 정류장 도착: ${fmtTime(est.t_reach_bus)})</span></div>
         <div class="est-timeline-step">
           <div class="est-step-node">🚌</div>
-          <div class="est-step-content"><div><div class="est-step-name">6단지 버스정류장</div><div class="est-step-detail">🚌 버스 승차 (5분 이동)</div></div><span class="est-step-clock">${fmtTime(new Date(nowMs + 8*60000))}</span></div>
+          <div class="est-step-content">
+            <div>
+              <div class="est-step-name">6단지 버스정류장 ➔ ${busLabelBadge}</div>
+              <div class="est-step-detail">🚌 승차 (대기 약 ${est.busWaitMin}분 / 5분 이동)</div>
+            </div>
+            <span class="est-step-clock">${fmtTime(est.t_bus_board)} 탑승</span>
+          </div>
         </div>
-        <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 도보 3분 환승</span></div>
+        <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 도보 3분 환승 (선유도역 도착: ${fmtTime(est.t_reach_seonyu_sub)})</span></div>
         <div class="est-timeline-step">
           <div class="est-step-node">🚇</div>
-          <div class="est-step-content"><div><div class="est-step-name">선유도역 9호선 승차장</div><div class="est-step-detail">🚇 9호선 탑승 (4분 이동)</div></div><span class="est-step-clock">${fmtTime(new Date(nowMs + 16*60000))}</span></div>
+          <div class="est-step-content">
+            <div>
+              <div class="est-step-name">선유도역 승강장 ➔ ${trainLabelBadge}</div>
+              <div class="est-step-detail">🚇 9호선 일반 (대기 약 ${est.subWaitMin}분 / 4분 이동)</div>
+            </div>
+            <span class="est-step-clock">${fmtTime(est.t_sub_board)} 탑승</span>
+          </div>
         </div>
-        <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 도보 9분 (회사)</span></div>
+        <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 도보 9분 (국회의사당역 하차 ${fmtTime(est.t_reach_national_sub)} ➔ 회사)</span></div>
         <div class="est-timeline-step">
           <div class="est-step-node end">🎯</div>
           <div class="est-step-content est-final-step">
@@ -2037,19 +2281,31 @@
       ` : `
         <div class="est-timeline-step">
           <div class="est-step-node start">🏢</div>
-          <div class="est-step-content"><span class="est-step-name">회사 출발</span><span class="est-step-clock">${fmtTime(now)}</span></div>
+          <div class="est-step-content"><span class="est-step-name">회사 출발</span><span class="est-step-clock">${fmtTime(est.startTime)}</span></div>
         </div>
-        <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 도보 9분 (국회의사당역)</span></div>
+        <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 도보 9분 (국회의사당역 도착: ${fmtTime(est.t_reach_national_sub)})</span></div>
         <div class="est-timeline-step">
           <div class="est-step-node">🚇</div>
-          <div class="est-step-content"><div><div class="est-step-name">국회의사당역 9호선</div><div class="est-step-detail">🚇 9호선 탑승 (4분 이동)</div></div><span class="est-step-clock">${fmtTime(new Date(nowMs + 9*60000))}</span></div>
+          <div class="est-step-content">
+            <div>
+              <div class="est-step-name">국회의사당역 ➔ ${trainLabelBadge}</div>
+              <div class="est-step-detail">🚇 9호선 일반 (대기 약 ${est.subWaitMin}분 / 4분 이동)</div>
+            </div>
+            <span class="est-step-clock">${fmtTime(est.t_sub_board)} 탑승</span>
+          </div>
         </div>
-        <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 도보 3분 환승</span></div>
+        <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 도보 3분 환승 (선유도역 버스정류장 도착: ${fmtTime(est.t_reach_seonyu_bus)})</span></div>
         <div class="est-timeline-step">
           <div class="est-step-node">🚌</div>
-          <div class="est-step-content"><div><div class="est-step-name">선유도역 버스정류장</div><div class="est-step-detail">🚌 버스 승차 (5분 이동)</div></div><span class="est-step-clock">${fmtTime(new Date(nowMs + 16*60000))}</span></div>
+          <div class="est-step-content">
+            <div>
+              <div class="est-step-name">선유도역1번출구 ➔ ${busLabelBadge}</div>
+              <div class="est-step-detail">🚌 버스 승차 (대기 약 ${est.busWaitMin}분 / 5분 이동)</div>
+            </div>
+            <span class="est-step-clock">${fmtTime(est.t_bus_board)} 탑승</span>
+          </div>
         </div>
-        <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 도보 8분 (집)</span></div>
+        <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 도보 8분 (6단지 하차 ${fmtTime(est.t_reach_bus)} ➔ 집)</span></div>
         <div class="est-timeline-step">
           <div class="est-step-node end">🎯</div>
           <div class="est-step-content est-final-step">
@@ -2082,12 +2338,12 @@
       const detailHtml = `
         <div class="est-summary-card est-detail-timeline-card">
           <div class="est-detail-title-bar">
-            <span>🧭 <b>${isCommute ? '출근' : '퇴근'} 이동 경로 및 순차 시각표</b></span>
-            <span class="est-detail-badge">도보·환승 연계</span>
+            <span>🧭 <b>${isCommute ? '출근' : '퇴근'} 이동 경로 및 최적 연계 시각표</b></span>
+            <span class="est-detail-badge">가장 빠른 연계 배정</span>
           </div>
           <div class="est-timeline-flow">${stepsHtml}</div>
           <div class="est-breakdown-bar">
-            <span>💡 총 소요시간 구성: 🚶 도보 20분 + 🚏 대기 ${WAIT_EST}분 + 🚍 승차 9분 = <b>총 ${totalMins}분 소요</b></span>
+            <span>💡 총 소요시간: 🚶 도보 20분 + 🚏 대기 ${est.busWaitMin + est.subWaitMin}분 + 🚍 승차 9분 = <b>총 ${totalMins}분 소요</b> (${isTimetableMode ? '시간표 기준' : '실시간 기준'})</span>
           </div>
         </div>
       `;
