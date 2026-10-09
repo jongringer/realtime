@@ -683,21 +683,39 @@ class TransitManager {
 
     if (filtered.length === 0) return null;
 
-    // barvlDt (도착 예정 초) 오름차순 정렬
+    // barvlDt (도착 예정 초) 오름차순 정렬 (보정 후 초 기준)
     filtered.sort((a, b) => {
-      const secA = parseInt(a.barvlDt || '0', 10);
-      const secB = parseInt(b.barvlDt || '0', 10);
+      const secA = Math.max(0, parseInt(a.barvlDt || '0', 10) - 60);
+      const secB = Math.max(0, parseInt(b.barvlDt || '0', 10) - 60);
       return secA - secB;
     });
 
     const formatTrain = (item) => {
-      let sec = parseInt(item.barvlDt || '0', 10);
+      // 1. 남은 시간 1분(60초) 앞당김 보정 로직 (서버 API 갱신 지연 보정)
+      const rawSeconds = parseInt(item.barvlDt || '0', 10);
+      // 60초를 차감하여 보정 (음수 방지를 위해 최소값 0 설정)
+      const compensatedSeconds = Math.max(0, rawSeconds - 60);
+
       const trainNo = (item.btrainNo || '').trim();
       const dest = item.bstatnNm || (updnLine === '상행' ? '중앙보훈병원' : '개화');
       const curLoc = item.arvlMsg3 ? `[${item.arvlMsg3}]` : '';
       const statusMsg = (item.arvlMsg2 || '').trim();
-      const isArrivingSoon = statusMsg.includes('도착') || statusMsg.includes('진입') || (sec > 0 && sec <= 35);
 
+      // 2. 60초 이하로 남았거나 상태코드가 진입(0)/도착(1)이거나 메시지에 진입/도착 포함 시 즉시 '곧 도착' 처리
+      const isArrivingSoon = (compensatedSeconds === 0) ||
+        (item.arvlCd === '0' || item.arvlCd === '1') ||
+        statusMsg.includes('도착') || statusMsg.includes('진입');
+
+      let displayEta = "";
+      if (isArrivingSoon) {
+        displayEta = "⚡ 곧 도착";
+      } else {
+        const min = Math.floor(compensatedSeconds / 60);
+        const secRem = compensatedSeconds % 60;
+        displayEta = min === 0 ? `${secRem}초 후` : `${min}분 ${secRem}초 후`;
+      }
+
+      let sec = compensatedSeconds;
       if (isArrivingSoon && sec <= 0) sec = 25;
       else if (sec <= 0) sec = 45;
 
@@ -707,7 +725,9 @@ class TransitManager {
 
       return {
         sec: sec,
-        rawSec: sec,
+        rawSec: rawSeconds,
+        compensatedSec: compensatedSeconds,
+        displayEta: displayEta,
         trainNo: trainNo,
         destName: dest,
         curLocation: curLoc,
@@ -1250,14 +1270,15 @@ class TransitManager {
       if (t2) {
         const t2VehicleTag = t2.trainNo ? `<span class="next2-train-plate" style="font-size:11px; color:#1e40af; font-weight:700; margin-left:4px;">(${this.formatPlateSmall(t2.trainNo)})</span>` : '';
         const t2LocStr = t2.curLocation ? `${t2.curLocation} · ` : '';
+        const t2TimeHtml = (t2.isArrivingSoon || t2.sec <= 30)
+          ? `<span style="color:#dc2626; font-weight:800; font-size:12px;">⚡ 곧 도착</span>`
+          : `<span class="live-countdown next2-countdown" data-target-time="${t2.targetTime}">${this.formatSec(t2.sec)}</span>`;
         t2Html = `
           <div class="next2-transit-box">
             <span class="next2-tag-blue">
               <span>🔵 다다음 (<b class="transit-clock-time">${t2.clockStr}</b> · ${t2LocStr}${t2.destName}행):${t2VehicleTag}</span>
             </span>
-            <span class="live-countdown next2-countdown" data-target-time="${t2.targetTime}">
-              ${this.formatSec(t2.sec)}
-            </span>
+            ${t2TimeHtml}
           </div>
         `;
       }
@@ -1268,6 +1289,10 @@ class TransitManager {
 
       const subLoc = t1.curLocation ? `${t1.curLocation} ${t1.statusMsg}` : (t1.isLive ? t1.statusMsg : (isCommute ? '선유도역 탑승' : '국회의사당역 탑승') + ' · 고정시간표');
 
+      const t1TimeHtml = (t1.isArrivingSoon || t1.sec <= 30)
+        ? `<span style="color:#dc2626; font-weight:900; font-size:13.5px;">⚡ 곧 도착</span>`
+        : `<span class="next-time-big live-countdown" data-target-time="${t1.targetTime}">${this.formatSec(t1.sec)}</span>`;
+
       subwayTrainsHtml = `
         <div class="next-transit-box">
           <div class="next-transit-header">
@@ -1276,9 +1301,7 @@ class TransitManager {
               <span>다음 열차</span>
               ${trainBadge}
             </span>
-            <span class="next-time-big live-countdown" data-target-time="${t1.targetTime}">
-              ${this.formatSec(t1.sec)}
-            </span>
+            ${t1TimeHtml}
           </div>
           <div class="next-transit-sub">
             <span class="transit-sub-pos">위치: <b>${subLoc}</b></span>
