@@ -1248,7 +1248,7 @@ class TransitManager {
     if (t1) {
       let t2Html = '';
       if (t2) {
-        const t2VehicleTag = t2.trainNo ? `<span style="font-size:10.5px; color:#475569; font-weight:600; margin-left:4px;">(${this.formatPlateSmall(t2.trainNo)})</span>` : '';
+        const t2VehicleTag = t2.trainNo ? `<span class="next2-train-plate" style="font-size:11px; color:#1e40af; font-weight:700; margin-left:4px;">(${this.formatPlateSmall(t2.trainNo)})</span>` : '';
         const t2LocStr = t2.curLocation ? `${t2.curLocation} · ` : '';
         t2Html = `
           <div class="next2-transit-box">
@@ -1263,7 +1263,7 @@ class TransitManager {
       }
 
       const trainBadge = t1.trainNo
-        ? `<span class="badge-bus-plate badge-train-plate" style="display:inline-flex; align-items:center; background:#eff6ff; color:#1e40af; font-size:11px; padding:2px 7px; border-radius:5px; font-weight:700; margin-left:6px; border:1px solid #bfdbfe;">${this.formatPlateWithBigDigits(t1.trainNo, '🚇')}</span>`
+        ? `<span class="badge-bus-plate badge-train-plate" style="display:inline-flex; align-items:center; background:#dbeafe; color:#1e3a8a; font-size:11px; padding:2px 7px; border-radius:5px; font-weight:800; margin-left:6px; border:1.5px solid #93c5fd;">${this.formatPlateWithBigDigits(t1.trainNo, '🚇')}</span>`
         : `<span class="badge-low-bus" style="background:#fef3c7; color:#b45309; border-color:#fde68a;">역고정(공식)</span>`;
 
       const subLoc = t1.curLocation ? `${t1.curLocation} ${t1.statusMsg}` : (t1.isLive ? t1.statusMsg : (isCommute ? '선유도역 탑승' : '국회의사당역 탑승') + ' · 고정시간표');

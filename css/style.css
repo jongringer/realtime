@@ -4776,10 +4776,17 @@ body.dark-mode .est-breakdown-bar {
   letter-spacing: -0.2px;
 }
 
-.badge-train-plate {
-  background: #eff6ff !important;
-  color: #1e40af !important;
-  border-color: #bfdbfe !important;
+.badge-train-plate,
+body[data-theme="obsidian"] .badge-train-plate,
+body[data-theme="noble-gold"] .badge-train-plate,
+body[data-theme="midnight"] .badge-train-plate,
+body.dark-theme .badge-train-plate,
+body.dark-mode .badge-train-plate,
+body:not([data-theme="apple-light"]) .badge-train-plate {
+  background: #dbeafe !important;
+  color: #1e3a8a !important;
+  border: 1.5px solid #93c5fd !important;
+  font-weight: 800 !important;
 }
 
 [data-theme="obsidian"] .btn-timetable-toggle,
@@ -4791,22 +4798,25 @@ body.dark-mode .btn-timetable-toggle {
   border-color: rgba(245, 158, 11, 0.4) !important;
 }
 
-[data-theme="obsidian"] .badge-bus-plate,
-[data-theme="midnight"] .badge-bus-plate,
-body.dark-theme .badge-bus-plate,
-body.dark-mode .badge-bus-plate {
-  background: rgba(255, 255, 255, 0.1) !important;
-  color: #e2e8f0 !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
+body[data-theme="obsidian"] .badge-bus-plate:not(.badge-train-plate),
+body[data-theme="noble-gold"] .badge-bus-plate:not(.badge-train-plate),
+body[data-theme="midnight"] .badge-bus-plate:not(.badge-train-plate),
+body.dark-theme .badge-bus-plate:not(.badge-train-plate),
+body.dark-mode .badge-bus-plate:not(.badge-train-plate),
+body:not([data-theme="apple-light"]) .badge-bus-plate:not(.badge-train-plate) {
+  background: rgba(255, 255, 255, 0.16) !important;
+  color: #ffffff !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
 }
 
-[data-theme="obsidian"] .badge-train-plate,
-[data-theme="midnight"] .badge-train-plate,
-body.dark-theme .badge-train-plate,
-body.dark-mode .badge-train-plate {
-  background: rgba(59, 130, 246, 0.2) !important;
-  color: #93c5fd !important;
-  border-color: rgba(59, 130, 246, 0.4) !important;
+body[data-theme="obsidian"] .badge-bus-plate:not(.badge-train-plate) .plate-digit-highlight,
+body[data-theme="noble-gold"] .badge-bus-plate:not(.badge-train-plate) .plate-digit-highlight,
+body[data-theme="midnight"] .badge-bus-plate:not(.badge-train-plate) .plate-digit-highlight,
+body.dark-theme .badge-bus-plate:not(.badge-train-plate) .plate-digit-highlight,
+body.dark-mode .badge-bus-plate:not(.badge-train-plate) .plate-digit-highlight,
+body:not([data-theme="apple-light"]) .badge-bus-plate:not(.badge-train-plate) .plate-digit-highlight {
+  color: #ffffff !important;
+  font-weight: 900 !important;
 }
 
 .plate-digit-highlight {
@@ -4818,12 +4828,27 @@ body.dark-mode .badge-train-plate {
   vertical-align: baseline !important;
 }
 
-[data-theme="obsidian"] .plate-digit-highlight,
-[data-theme="midnight"] .plate-digit-highlight,
-body.dark-theme .plate-digit-highlight,
-body.dark-mode .plate-digit-highlight {
-  color: #93c5fd !important;
+/* 🚇 열차번호 강조: 밤모드(흰색 카드 배경)에서도 아주 진하고 또렷한 딥 네이비 */
+.badge-train-plate .plate-digit-highlight,
+body[data-theme="obsidian"] .badge-train-plate .plate-digit-highlight,
+body[data-theme="noble-gold"] .badge-train-plate .plate-digit-highlight,
+body[data-theme="midnight"] .badge-train-plate .plate-digit-highlight,
+body.dark-theme .badge-train-plate .plate-digit-highlight,
+body.dark-mode .badge-train-plate .plate-digit-highlight,
+body:not([data-theme="apple-light"]) .badge-train-plate .plate-digit-highlight {
+  color: #172554 !important;
+  font-size: 14.5px !important;
+  font-weight: 900 !important;
 }
+
+.next2-train-plate,
+body[data-theme="obsidian"] .next2-train-plate,
+body[data-theme="noble-gold"] .next2-train-plate,
+body:not([data-theme="apple-light"]) .next2-train-plate {
+  color: #1e40af !important;
+  font-weight: 800 !important;
+}
+
 
 
 
