@@ -1330,6 +1330,21 @@ class ShiftApp {
 
     this.elTodayDateText.textContent = `${m}월 ${d}일 (${dayOfWeek})`;
 
+    // 공휴일·일요일은 빨간색, 토요일은 파란색 반영
+    const holidayInfo = (typeof getKoreanHolidayInfo === 'function') ? getKoreanHolidayInfo(dateObj) : { isHoliday: false };
+    const isHoliday = holidayInfo && holidayInfo.isHoliday;
+    const dayIndex = dateObj.getDay();
+    const isSunday = (dayIndex === 0);
+    const isSaturday = (dayIndex === 6);
+
+    this.elTodayDateText.classList.remove('is-holiday', 'is-sunday', 'is-saturday');
+    if (isHoliday || isSunday) {
+      this.elTodayDateText.classList.add('is-holiday');
+      if (isSunday) this.elTodayDateText.classList.add('is-sunday');
+    } else if (isSaturday) {
+      this.elTodayDateText.classList.add('is-saturday');
+    }
+
     if (this.elTodayTimeText) {
       this.elTodayTimeText.textContent = '';
       this.elTodayTimeText.style.display = 'none';

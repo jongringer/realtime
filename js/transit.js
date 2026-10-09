@@ -101,6 +101,7 @@ class TransitManager {
     this.subwayApiKey = '476a79484b6a6f6e3833504f4f6d4e';
     this.subwayCache = {};
     this.isLiveSubway = false;
+    this.subwaySourceMode = localStorage.getItem('subway_source_mode') || 'realtime'; // 'realtime' | 'timetable'
     this.activeTimetableTab = 'seonyudo';
 
     this.initElements();
@@ -261,11 +262,25 @@ class TransitManager {
     }
   }
 
+  setSubwaySourceMode(mode) {
+    if (this.subwaySourceMode === mode) return;
+    this.subwaySourceMode = mode;
+    try {
+      localStorage.setItem('subway_source_mode', mode);
+    } catch (e) {}
+    this.renderTransitBoard();
+  }
+
   updateRefreshStatus() {
     if (!this.lastUpdated) return;
     const timeStr = this.lastLoadedTimeStr || new Date().toLocaleTimeString('ko-KR');
     const busStatusText = this.isLiveBus ? '버스 실시간(차량번호 연동)' : '버스 정규배차';
-    const subwayStatusText = this.isLiveSubway ? '9호선 실시간(열차번호 연동)' : '9호선 역사시간표';
+    let subwayStatusText = '';
+    if (this.subwaySourceMode === 'timetable') {
+      subwayStatusText = '9호선 공식시간표 계산';
+    } else {
+      subwayStatusText = this.isLiveSubway ? '9호선 실시간(열차번호 연동)' : '9호선 실시간 대기';
+    }
     this.lastUpdated.innerHTML = `전광판 갱신: ${timeStr} <span style="color:#059669; font-weight:700;">(${busStatusText} · ${subwayStatusText})</span> <span style="margin-left:6px; color:#2563eb; font-weight:700;">🔄 ${this.REFRESH_INTERVAL}초 자동 갱신 (${this.refreshCountdown}초 전)</span>`;
   }
 
@@ -1220,18 +1235,23 @@ class TransitManager {
     const isHolidayToday = this.isWeekendOrHoliday(now);
     const dayTypeLabel = isHolidayToday ? '🌴 주말·공휴일 시간표' : '🗓️ 평일 시간표';
 
-    // 실시간 서울시 지하철 API 일반열차 파싱 시도
-    const realtimeSubway = this.parseRealtimeSubwayArrival(subwayTargetStation, subwayUpdn, subwayRawList, now, nowMs);
+    const isTimetableMode = (this.subwaySourceMode === 'timetable');
     let isLiveTrain = false;
     let t1 = null;
     let t2 = null;
 
-    if (realtimeSubway && realtimeSubway.nextTrain) {
-      isLiveTrain = true;
-      t1 = realtimeSubway.nextTrain;
-      t2 = realtimeSubway.next2Train;
-    } else {
-      // 실시간 데이터 부재 시(심야/장애 등) 역사 고정 시간표로 fallback
+    if (!isTimetableMode) {
+      // [1] 서울시 실시간 지하철 모드: 공공 API 실시간 일반열차 파싱 시도 (열차번호/실시간 위치)
+      const realtimeSubway = this.parseRealtimeSubwayArrival(subwayTargetStation, subwayUpdn, subwayRawList, now, nowMs);
+      if (realtimeSubway && realtimeSubway.nextTrain) {
+        isLiveTrain = true;
+        t1 = realtimeSubway.nextTrain;
+        t2 = realtimeSubway.next2Train;
+      }
+    }
+
+    // [2] 시간표 모드이거나 실시간 데이터 부재 시: 역사 고정 시간표로 도착시간 계산
+    if (!t1) {
       const prioritizedTrains = this.getPrioritizedTrains(now, isCommute, 2);
       if (prioritizedTrains && prioritizedTrains.length > 0) {
         const pt1 = prioritizedTrains[0];
@@ -1242,7 +1262,7 @@ class TransitManager {
           rawSec: pt1.sec,
           destName: pt1.endStationName,
           curLocation: '',
-          statusMsg: '역고정 공식 시간표',
+          statusMsg: isTimetableMode ? '공식 시간표 정시 운행' : '역고정 공식 시간표 (실시간 대기)',
           clockStr: pt1.departureTime,
           targetTime: pt1.targetTime,
           isLive: false,
@@ -1255,14 +1275,17 @@ class TransitManager {
             rawSec: pt2.sec,
             destName: pt2.endStationName,
             curLocation: '',
-            statusMsg: '역고정 공식 시간표',
+            statusMsg: isTimetableMode ? '공식 시간표 정시 운행' : '역고정 공식 시간표 (실시간 대기)',
             clockStr: pt2.departureTime,
             targetTime: pt2.targetTime,
-            isLive: false
+            isLive: false,
+            isArrivingSoon: pt2.sec <= 30
           };
         }
       }
     }
+
+    this.isLiveSubway = isLiveTrain;
 
     let subwayTrainsHtml = '';
     if (t1) {
@@ -1285,13 +1308,19 @@ class TransitManager {
 
       const trainBadge = t1.trainNo
         ? `<span class="badge-bus-plate badge-train-plate" style="display:inline-flex; align-items:center; background:#dbeafe; color:#1e3a8a; font-size:11px; padding:2px 7px; border-radius:5px; font-weight:800; margin-left:6px; border:1.5px solid #93c5fd;">${this.formatPlateWithBigDigits(t1.trainNo, '🚇')}</span>`
-        : `<span class="badge-low-bus" style="background:#fef3c7; color:#b45309; border-color:#fde68a;">역고정(공식)</span>`;
+        : `<span class="badge-low-bus" style="background:#fef3c7; color:#b45309; border-color:#fde68a;">${isTimetableMode ? '🗓️ 정시시간표' : '역고정(공식)'}</span>`;
 
-      const subLoc = t1.curLocation ? `${t1.curLocation} ${t1.statusMsg}` : (t1.isLive ? t1.statusMsg : (isCommute ? '선유도역 탑승' : '국회의사당역 탑승') + ' · 고정시간표');
+      const subLoc = t1.curLocation
+        ? `${t1.curLocation} ${t1.statusMsg}`
+        : (isTimetableMode
+            ? (isCommute ? '선유도역 탑승' : '국회의사당역 탑승') + ' · 9호선 공식 시간표 기준'
+            : (t1.isLive ? t1.statusMsg : (isCommute ? '선유도역 탑승' : '국회의사당역 탑승') + ' · 고정시간표'));
 
       const t1TimeHtml = (t1.isArrivingSoon || t1.sec <= 30)
         ? `<span style="color:#dc2626; font-weight:900; font-size:13.5px;">⚡ 곧 도착</span>`
         : `<span class="next-time-big live-countdown" data-target-time="${t1.targetTime}">${this.formatSec(t1.sec)}</span>`;
+
+      const arrivalLabel = isTimetableMode ? '시간표 도착:' : '도착 예정:';
 
       subwayTrainsHtml = `
         <div class="next-transit-box">
@@ -1305,7 +1334,7 @@ class TransitManager {
           </div>
           <div class="next-transit-sub">
             <span class="transit-sub-pos">위치: <b>${subLoc}</b></span>
-            <span class="transit-sub-time"><span class="transit-arr-label">도착 예정:</span> <b class="transit-clock-time" style="color:#0369a1; font-weight:900;">${t1.clockStr}</b> <span class="transit-dest-sub">(${t1.destName}행)</span></span>
+            <span class="transit-sub-time"><span class="transit-arr-label">${arrivalLabel}</span> <b class="transit-clock-time" style="color:#0369a1; font-weight:900;">${t1.clockStr}</b> <span class="transit-dest-sub">(${t1.destName}행)</span></span>
           </div>
         </div>
         ${t2Html}
@@ -1318,6 +1347,10 @@ class TransitManager {
       `;
     }
 
+    const infoTipText = isTimetableMode
+      ? '💡 <b>[시간표 모드]</b> 9호선 공식 역사 시간표 기준으로 도착시각 및 남은 시간을 계산합니다. 실시간 열차번호를 보시려면 상단 [⚡ 서울시 실시간]을 누르세요.'
+      : '💡 <b>[실시간 모드]</b> 서울시 공식 지하철 공공API로 열차번호 및 실시간 위치를 연동합니다. 시간표 시각으로 계산하시려면 상단 [🗓️ 시간표]를 누르세요.';
+
     subwayHtml = `
       <div class="bit-board-card subway-9-card">
         <div class="bit-header-row">
@@ -1325,12 +1358,26 @@ class TransitManager {
             <span class="badge-seoul-subway">9호선</span>
             <strong class="bit-station-name">${subwayStationName}</strong>
           </div>
-          <div style="display:flex; align-items:center; gap:5px;">
-            <span class="bit-status-live" style="${isLiveTrain ? 'background:#ecfdf5; color:#047857; border-color:#a7f3d0;' : 'background:#fef3c7; color:#92400e; border-color:#fde68a;'}">
-              <span class="bit-status-dot" style="${isLiveTrain ? 'background:#10b981;' : 'background:#f59e0b;'}"></span>
-              ${isLiveTrain ? '서울시 지하철실시간' : '역사시간표 정밀연동'}
-            </span>
-            <button type="button" class="btn-timetable-toggle" onclick="window.transitManager && window.transitManager.openTimetableModal('subway')" title="9호선 공식 시간표 조회" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a; font-size:11px; font-weight:700; padding:2px 7px; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; gap:3px;">🗓️ 시간표</button>
+          <div class="subway-source-toggle-group">
+            <button type="button" 
+                    class="subway-mode-btn ${!isTimetableMode ? 'active-realtime' : ''}" 
+                    onclick="window.transitManager && window.transitManager.setSubwaySourceMode('realtime')" 
+                    title="서울시 지하철 실시간 도착정보 및 열차번호 연동">
+              <span class="bit-status-dot" style="${!isTimetableMode && isLiveTrain ? 'background:#10b981;' : 'background:#94a3b8;'}"></span>
+              <span>${!isTimetableMode && isLiveTrain ? '서울시 실시간' : '실시간'}</span>
+            </button>
+            <button type="button" 
+                    class="subway-mode-btn ${isTimetableMode ? 'active-timetable' : ''}" 
+                    onclick="window.transitManager && window.transitManager.setSubwaySourceMode('timetable')" 
+                    title="9호선 공식 역사 시간표 기준 도착시간으로 계산">
+              <span>🗓️ 시간표</span>
+            </button>
+            <button type="button" 
+                    class="btn-timetable-popup" 
+                    onclick="window.transitManager && window.transitManager.openTimetableModal('subway')" 
+                    title="9호선 전체 운행 시간표 조회">
+              <span>📋 전체</span>
+            </button>
           </div>
         </div>
 
@@ -1344,7 +1391,7 @@ class TransitManager {
         </div>
 
         <div class="bit-footer-info" style="margin-top:8px;">
-          <span>💡 9호선 일반열차 실시간 위치/열차번호(공공API)를 카운트다운하며, [🗓️ 시간표] 버튼으로 공식 시간표를 조회할 수 있습니다.</span>
+          <span>${infoTipText}</span>
         </div>
       </div>
     `;
