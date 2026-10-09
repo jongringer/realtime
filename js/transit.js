@@ -278,6 +278,31 @@ class TransitManager {
     return `<span class="transit-time-min">${m}분</span> <span class="transit-time-sec">${sStr}초 후</span>`;
   }
 
+  /**
+   * 버스/열차 차량번호 끝 4자리 숫자를 시인성 있게 강조 포맷팅하는 헬퍼
+   */
+  formatPlateWithBigDigits(plate, icon = '🚌') {
+    if (!plate) return '';
+    const str = String(plate).trim();
+    const m = str.match(/^(.*?)(\d{4})$/);
+    if (m) {
+      const prefix = m[1] ? `${m[1]} ` : '';
+      return `${icon} ${prefix}<strong class="plate-digit-highlight" style="font-size:14.5px; font-weight:900; letter-spacing:0.5px; margin-left:1px;">${m[2]}</strong>`;
+    }
+    return `${icon} ${str}`;
+  }
+
+  formatPlateSmall(plate) {
+    if (!plate) return '';
+    const str = String(plate).trim();
+    const m = str.match(/^(.*?)(\d{4})$/);
+    if (m) {
+      const prefix = m[1] ? `${m[1]} ` : '';
+      return `${prefix}<strong style="font-size:12px; font-weight:800;">${m[2]}</strong>`;
+    }
+    return str;
+  }
+
   // --- 서울시 버스도착정보 직결 공공 API 호출 함수 ---
   async fetchBusArrival(busRouteId, stId, ord) {
     const cacheKey = `${busRouteId}_${stId}_${ord}`;
@@ -1066,7 +1091,9 @@ class TransitManager {
         nextArrClock = `${String(nextArrTime.getHours()).padStart(2, '0')}:${String(nextArrTime.getMinutes()).padStart(2, '0')}`;
       }
 
-      const vehicleBadge1 = next.plainNo ? `<span class="badge-bus-plate" style="display:inline-flex; align-items:center; background:#f1f5f9; color:#334155; font-size:11px; padding:1px 6px; border-radius:4px; font-weight:700; margin-left:6px; border:1px solid #cbd5e1;">🚌 ${next.plainNo}</span>` : '';
+      const vehicleBadge1 = next.plainNo
+        ? `<span class="badge-bus-plate" style="display:inline-flex; align-items:center; background:#f1f5f9; color:#334155; font-size:11px; padding:2px 7px; border-radius:5px; font-weight:700; margin-left:6px; border:1px solid #cbd5e1;">${this.formatPlateWithBigDigits(next.plainNo, '🚌')}</span>`
+        : '';
 
       const nextHtml = `
         <div class="next-transit-box">
@@ -1107,7 +1134,7 @@ class TransitManager {
           next2SubText = `<b class="transit-clock-time">${next2Clock}</b>${priorityTag}${next2.stopText ? ` · ${next2.stopText}` : ''}`;
         }
 
-        const vehicleBadge2 = next2.plainNo ? `<span style="font-size:10.5px; color:#475569; font-weight:600; margin-left:4px;">(${next2.plainNo})</span>` : '';
+        const vehicleBadge2 = next2.plainNo ? `<span style="font-size:10.5px; color:#475569; font-weight:600; margin-left:4px;">(${this.formatPlateSmall(next2.plainNo)})</span>` : '';
 
         next2Html = `
           <div class="next2-transit-box">
@@ -1221,7 +1248,7 @@ class TransitManager {
     if (t1) {
       let t2Html = '';
       if (t2) {
-        const t2VehicleTag = t2.trainNo ? `<span style="font-size:10.5px; color:#475569; font-weight:600; margin-left:4px;">(${t2.trainNo})</span>` : '';
+        const t2VehicleTag = t2.trainNo ? `<span style="font-size:10.5px; color:#475569; font-weight:600; margin-left:4px;">(${this.formatPlateSmall(t2.trainNo)})</span>` : '';
         const t2LocStr = t2.curLocation ? `${t2.curLocation} · ` : '';
         t2Html = `
           <div class="next2-transit-box">
@@ -1236,7 +1263,7 @@ class TransitManager {
       }
 
       const trainBadge = t1.trainNo
-        ? `<span class="badge-bus-plate badge-train-plate" style="display:inline-flex; align-items:center; background:#eff6ff; color:#1e40af; font-size:11px; padding:1px 6px; border-radius:4px; font-weight:700; margin-left:6px; border:1px solid #bfdbfe;">🚇 ${t1.trainNo}</span>`
+        ? `<span class="badge-bus-plate badge-train-plate" style="display:inline-flex; align-items:center; background:#eff6ff; color:#1e40af; font-size:11px; padding:2px 7px; border-radius:5px; font-weight:700; margin-left:6px; border:1px solid #bfdbfe;">${this.formatPlateWithBigDigits(t1.trainNo, '🚇')}</span>`
         : `<span class="badge-low-bus" style="background:#fef3c7; color:#b45309; border-color:#fde68a;">역고정(공식)</span>`;
 
       const subLoc = t1.curLocation ? `${t1.curLocation} ${t1.statusMsg}` : (t1.isLive ? t1.statusMsg : (isCommute ? '선유도역 탑승' : '국회의사당역 탑승') + ' · 고정시간표');

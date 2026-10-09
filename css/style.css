@@ -4809,5 +4809,22 @@ body.dark-mode .badge-train-plate {
   border-color: rgba(59, 130, 246, 0.4) !important;
 }
 
+.plate-digit-highlight {
+  font-size: 14.5px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.5px !important;
+  margin-left: 1px !important;
+  display: inline-block !important;
+  vertical-align: baseline !important;
+}
+
+[data-theme="obsidian"] .plate-digit-highlight,
+[data-theme="midnight"] .plate-digit-highlight,
+body.dark-theme .plate-digit-highlight,
+body.dark-mode .plate-digit-highlight {
+  color: #93c5fd !important;
+}
+
+
 
 
