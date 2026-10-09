@@ -174,14 +174,22 @@ class TransitManager {
   }
 
   initModeFromShift() {
-    // 시간대별 자동 출/퇴근 모드 초기화
-    // - 05:00 ~ 13:00 : 출근 모드 (이대목동병원 ➔ 선유도역 방면)
-    // - 13:00 ~ 04:59 : 퇴근 모드 (선유도역1번출구 ➔ 목동단지 방면)
-    const hour = new Date().getHours();
-    if (hour >= 5 && hour < 13) {
+    // 사용자 맞춤형 근무표 기반 출/퇴근 모드 자동 초기화
+    // - 일근: 전날부터 09시까지 출근모드, 13시부터 퇴근모드
+    // - 야근: 당일 07시부터 출근모드
+    // - 조근: 당일 05시부터 퇴근모드
+    try {
+      const overrides = (typeof shiftStorage !== 'undefined') ? shiftStorage.getOverrides() : {};
+      const baseSettings = (typeof shiftStorage !== 'undefined') ? shiftStorage.getBaseSettings() : {};
+      if (typeof getCommuteModeForDateTime === 'function') {
+        this.currentMode = getCommuteModeForDateTime(new Date(), overrides, baseSettings);
+      } else {
+        const hour = new Date().getHours();
+        this.currentMode = (hour >= 7 && hour < 13) ? 'commute' : 'offwork';
+      }
+    } catch (e) {
+      console.warn('initModeFromShift 오류 발생, 기본값 적용:', e);
       this.currentMode = 'commute';
-    } else {
-      this.currentMode = 'offwork';
     }
     this.updateModeUI();
   }

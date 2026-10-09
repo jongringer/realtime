@@ -1,12 +1,13 @@
 {
   "name": "shift-alarm-app",
-  "version": "1.2.14",
+  "version": "1.2.15",
   "description": "4조 3교대 스마트 근무표 및 알람 앱",
   "main": "index.html",
   "scripts": {
     "build": "node build.js",
     "deploy": "node deploy.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node test-engine.js && node test-ocr.js"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.2",

@@ -161,6 +161,87 @@ function getShiftInfoForDate(dateStr, overrides = {}, baseSettings = {}) {
   };
 }
 
+/**
+ * 근무표 일정 및 현재 시각에 따라 최적의 출퇴근 기본 모드 결정 ('commute' | 'offwork')
+ *
+ * [사용자 정의 기준]
+ * - 일근 : 전날부터 09시까지 출근모드, 13시부터 퇴근모드
+ * - 야근 : 당일 07시부터 출근모드
+ * - 조근 : 당일 05시부터 퇴근모드
+ *
+ * @param {Date} [currentDate=new Date()] - 대상 일시
+ * @param {Object} [overrides={}] - 스토리지 오버라이드 데이터
+ * @param {Object} [baseSettings={}] - 기준일 설정
+ * @returns {'commute' | 'offwork'}
+ */
+function getCommuteModeForDateTime(currentDate = new Date(), overrides = {}, baseSettings = {}) {
+  const d = new Date(currentDate);
+  const hour = d.getHours();
+  const minute = d.getMinutes();
+  const currentMinutes = hour * 60 + minute;
+
+  const todayStr = formatDateString(d);
+
+  const nextDate = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
+  const nextStr = formatDateString(nextDate);
+
+  const getCategory = (dateStr) => {
+    const info = getShiftInfoForDate(dateStr, overrides, baseSettings);
+    const type = (info && (info.shiftType || info.baseShift)) || '';
+    if (type.includes('일근')) return '일근';
+    if (type.includes('야근')) return '야근';
+    if (type.includes('조근')) return '조근';
+    return '비번';
+  };
+
+  const todayCat = getCategory(todayStr);
+  const nextCat = getCategory(nextStr);
+
+  // 1. 오늘이 일근인 경우
+  // 일근: 전날부터 09시까지 출근모드, 13시부터 퇴근모드
+  if (todayCat === '일근') {
+    if (currentMinutes < 13 * 60) {
+      return 'commute';
+    } else {
+      if (nextCat === '일근' && currentMinutes >= 21 * 60) {
+        return 'commute';
+      }
+      return 'offwork';
+    }
+  }
+
+  // 2. 오늘이 야근인 경우
+  // 야근: 당일 07시부터 출근모드
+  if (todayCat === '야근') {
+    if (currentMinutes >= 7 * 60) {
+      return 'commute';
+    } else {
+      return 'offwork';
+    }
+  }
+
+  // 3. 오늘이 조근인 경우
+  // 조근: 당일 05시부터 퇴근모드
+  if (todayCat === '조근') {
+    if (currentMinutes < 5 * 60) {
+      return 'commute';
+    } else {
+      if (nextCat === '일근' && currentMinutes >= 21 * 60) {
+        return 'commute';
+      }
+      return 'offwork';
+    }
+  }
+
+  // 4. 오늘이 비번 (또는 기타 휴무)인 경우
+  // "일근 : 전날부터 09시까지 출근모드" 규칙에 따라 다음날이 일근이면 전날(비번일)은 출근모드 기본
+  if (nextCat === '일근') {
+    return 'commute';
+  }
+
+  return 'offwork';
+}
+
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     SHIFT_PATTERN,
@@ -171,6 +252,7 @@ if (typeof module !== 'undefined' && module.exports) {
     formatDateString,
     calculateBaseShift,
     getNextShiftFromPrevious,
-    getShiftInfoForDate
+    getShiftInfoForDate,
+    getCommuteModeForDateTime
   };
 }

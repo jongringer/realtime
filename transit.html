@@ -570,8 +570,8 @@
     </div>
   </main>
 
-  <div id="toast">링크가 클립보드에 복사되었습니다! 💬</div>
-
+  <script src="js/shift-engine.js?v=202610_m"></script>
+  <script src="js/storage.js?v=202610_m"></script>
   <script src="js/timetable-15154.js?v=20260929_tt"></script>
   <script>
     const SEOUL_BUS_KEY = 'df332cd23ac6df535a295747d46e0328dd0fd3faed11cec584c87a0ca1e7a759';
@@ -1558,9 +1558,29 @@
       handleAppResume();
     });
 
-    // 시간대별 자동 출/퇴근 모드 초기화 (05~13시 출근, 그 외 퇴근)
-    const initHour = new Date().getHours();
-    currentMode = (initHour >= 5 && initHour < 13) ? 'commute' : 'offwork';
+    // 사용자 맞춤형 근무표 기반 출/퇴근 모드 자동 초기화
+    // - 일근: 전날부터 09시까지 출근모드, 13시부터 퇴근모드
+    // - 야근: 당일 07시부터 출근모드
+    // - 조근: 당일 05시부터 퇴근모드
+    try {
+      const overrides = (typeof shiftStorage !== 'undefined') ? shiftStorage.getOverrides() : {};
+      const baseSettings = (typeof shiftStorage !== 'undefined') ? shiftStorage.getBaseSettings() : {};
+      if (typeof getCommuteModeForDateTime === 'function') {
+        currentMode = getCommuteModeForDateTime(new Date(), overrides, baseSettings);
+      } else {
+        const initHour = new Date().getHours();
+        currentMode = (initHour >= 7 && initHour < 13) ? 'commute' : 'offwork';
+      }
+    } catch (e) {
+      console.warn('모드 초기화 실패, 기본 출근모드 적용:', e);
+      currentMode = 'commute';
+    }
+    const tabCommuteEl = document.getElementById('tabCommute');
+    const tabOffworkEl = document.getElementById('tabOffwork');
+    if (tabCommuteEl && tabOffworkEl) {
+      tabCommuteEl.className = `tab-btn ${currentMode === 'commute' ? 'active' : ''}`;
+      tabOffworkEl.className = `tab-btn ${currentMode === 'offwork' ? 'active' : ''}`;
+    }
     renderCards();
   </script>
 </body>
