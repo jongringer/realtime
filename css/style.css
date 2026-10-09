@@ -2262,73 +2262,130 @@ body[data-theme="obsidian"] .transit-status-banner {
 
 .transit-tab-wrap {
   display: flex;
-  background: #e2e8f0;
-  padding: 5px;
+  background: var(--transit-tab-bg, #f5efe6);
+  border: 1.5px solid var(--transit-tab-border, #eadfce);
+  padding: 6px;
   margin-bottom: 12px;
   border-radius: 9999px;
-  gap: 5px;
+  gap: 8px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+body[data-theme="apple-light"] .transit-tab-wrap {
+  background: #faf6f0;
+  border: 1.5px solid #eadfce;
+  box-shadow: inset 0 1px 3px rgba(180, 155, 125, 0.15);
+}
+
+body[data-theme="obsidian"] .transit-tab-wrap,
+body:not([data-theme="apple-light"]) .transit-tab-wrap {
+  background: #0e1624 !important;
+  border: 1.5px solid #22324a !important;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5) !important;
 }
 
 .transit-tab-btn {
   flex: 1;
-  padding: 10px 14px;
-  border: none;
+  padding: 10px 18px;
+  border: 3px solid transparent;
   border-radius: 9999px;
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: #475569;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-muted, #64748b);
   background: transparent;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   text-align: center;
+  position: relative;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* 출근 버튼 활성화: 선명한 파란색 타원 */
+/* 출근 버튼 활성화: 블루 3D 베벨 표면 + 회전 라이트(빛) 레일 애니메이션 */
 #tabCommute.transit-tab-btn.active,
 .transit-tab-btn#tabCommute.active {
-  background: linear-gradient(135deg, #1d4ed8, #2563eb) !important;
-  color: #ffffff !important;
-  border: none !important;
+  background:
+    linear-gradient(145deg, #2563eb 0%, #1d4ed8 50%, #1e40af 100%) padding-box,
+    conic-gradient(
+      from var(--border-angle),
+      transparent 0%,
+      transparent 40%,
+      rgba(59, 130, 246, 0.4) 60%,
+      #3b82f6 75%,
+      #bfdbfe 88%,
+      #ffffff 94%,
+      #bfdbfe 97%,
+      rgba(59, 130, 246, 0.4) 100%
+    ) border-box !important;
+  border: 3px solid transparent !important;
   border-radius: 9999px !important;
-  box-shadow: 0 4px 14px rgba(29, 78, 216, 0.4) !important;
-  font-weight: 800;
+  animation: borderRotate 2.5s linear infinite;
+  box-shadow:
+    inset 0 2px 2px rgba(255, 255, 255, 0.6),
+    inset 0 -2px 3px rgba(15, 23, 42, 0.4),
+    0 6px 18px rgba(37, 99, 235, 0.45) !important;
+  color: #ffffff !important;
 }
 
-/* 퇴근 버튼 활성화: 짙은 빨간색 타원 */
+/* 퇴근 버튼 활성화: 레드 3D 베벨 표면 + 회전 라이트(빛) 레일 애니메이션 */
 #tabOffwork.transit-tab-btn.active,
 .transit-tab-btn#tabOffwork.active {
-  background: linear-gradient(135deg, #881337, #991b1b) !important;
-  color: #ffffff !important;
-  border: none !important;
+  background:
+    linear-gradient(145deg, #dc2626 0%, #b91c1c 50%, #881337 100%) padding-box,
+    conic-gradient(
+      from var(--border-angle),
+      transparent 0%,
+      transparent 40%,
+      rgba(239, 68, 68, 0.4) 60%,
+      #ef4444 75%,
+      #fecaca 88%,
+      #ffffff 94%,
+      #fecaca 97%,
+      rgba(239, 68, 68, 0.4) 100%
+    ) border-box !important;
+  border: 3px solid transparent !important;
   border-radius: 9999px !important;
-  box-shadow: 0 4px 14px rgba(153, 27, 27, 0.45) !important;
-  font-weight: 800;
+  animation: borderRotate 2.5s linear infinite;
+  box-shadow:
+    inset 0 2px 2px rgba(255, 255, 255, 0.6),
+    inset 0 -2px 3px rgba(15, 23, 42, 0.4),
+    0 6px 18px rgba(220, 38, 38, 0.45) !important;
+  color: #ffffff !important;
 }
 
 .transit-tab-btn:hover:not(.active) {
-  background: rgba(255, 255, 255, 0.6);
-  color: #0f172a;
+  background: rgba(255, 255, 255, 0.35);
+  color: var(--text-main);
+  transform: translateY(-1px);
 }
 
+/* 출근 / 퇴근 큼직한 글씨체 및 넉넉한 자간 간격 */
 .highlight-shift-word {
+  font-family: var(--font-family);
   font-weight: 900 !important;
-  font-size: 1.05rem !important;
-  letter-spacing: -0.5px;
+  font-size: 21px !important;
+  letter-spacing: 3px !important; /* 자간 간격 시원하게 띄움 */
   display: inline-block;
+  line-height: 1.15;
+  white-space: nowrap !important;
+  text-indent: 3px; /* 자간 띄움 후 시각적 중앙 정렬 균형 */
 }
 
 .highlight-shift-word.commute-text {
-  color: #1d4ed8;
+  color: #2563eb;
 }
 
 .highlight-shift-word.offwork-text {
-  color: #991b1b;
+  color: #dc2626;
 }
 
 .transit-tab-btn.active .highlight-shift-word.commute-text,
 .transit-tab-btn.active .highlight-shift-word.offwork-text {
   color: #ffffff !important;
   text-decoration: none;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 .badge-shift-bold {
@@ -4228,12 +4285,17 @@ body[data-theme="noble-gold"] #editScheduleTimeBadge {
   border-bottom: 1px solid #e2e8f0;
   margin-bottom: 14px;
   gap: 10px;
+  flex-wrap: nowrap !important;
+  width: 100%;
 }
 
 .est-dest-title {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .est-dest-icon {
@@ -4254,24 +4316,30 @@ body[data-theme="noble-gold"] #editScheduleTimeBadge {
 
 .est-total-min {
   color: #0284c7;
-  font-size: 18.5px;
-  font-weight: 900;
+  font-size: 20px !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
 }
 
 .est-dep-time {
   font-size: 11.5px;
   color: #64748b;
   margin-top: 2px;
+  white-space: nowrap;
 }
 
-/* 📍 도착예정시각 박스 (시간 글자 앞쪽과 일치하도록 text-align: left, 도착 시각 빨간색 강조) */
+/* 📍 도착예정시각 박스 (가로 너비 여유 확보, 소요시간 글자 크기와 동일한 20px로 확대, 두 줄 꺾임 절대 방지) */
 .est-arr-box {
   background: #fef2f2;
   border: 1.5px solid #fecaca;
-  padding: 8px 12px;
+  padding: 8px 14px;
   border-radius: 12px;
-  text-align: left; /* 앞쪽(왼쪽) 정렬 */
-  flex-shrink: 0;
+  text-align: left;
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+  min-width: 108px;
+  box-sizing: border-box;
 }
 
 .est-arr-sub {
@@ -4280,14 +4348,18 @@ body[data-theme="noble-gold"] #editScheduleTimeBadge {
   color: #991b1b;
   font-weight: 800;
   margin-bottom: 2px;
+  white-space: nowrap;
 }
 
 .est-arr-time {
   display: block;
-  font-size: 16px;
-  font-weight: 900;
-  color: #dc2626 !important; /* 🔥 도착시각 빨간색 강조 */
+  font-size: 20px !important; /* 🔥 몇분 소요예상(.est-total-min: 20px)과 완벽 동일 크기 */
+  font-weight: 900 !important;
+  color: #dc2626 !important; /* 도착시각 빨간색 강조 */
   margin-top: 1px;
+  line-height: 1.15;
+  white-space: nowrap !important;
+  letter-spacing: -0.3px;
 }
 
 /* Timeline Flow Graphics (Light Mode) */
@@ -4470,6 +4542,9 @@ body.dark-mode .est-dest-label {
 body.dark-theme .est-total-min,
 body.dark-mode .est-total-min {
   color: #38bdf8 !important;
+  font-size: 20px !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.3px;
 }
 
 [data-theme="obsidian"] .est-dep-time,
@@ -4488,6 +4563,10 @@ body.dark-mode .est-arr-box {
   background: rgba(220, 38, 38, 0.2) !important;
   border-color: rgba(248, 113, 113, 0.4) !important;
   text-align: left !important;
+  padding: 8px 14px !important;
+  min-width: 108px !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
 }
 
 [data-theme="obsidian"] .est-arr-sub,
@@ -4496,6 +4575,7 @@ body.dark-mode .est-arr-box {
 body.dark-theme .est-arr-sub,
 body.dark-mode .est-arr-sub {
   color: #fca5a5 !important;
+  white-space: nowrap !important;
 }
 
 [data-theme="obsidian"] .est-arr-time,
@@ -4504,6 +4584,11 @@ body.dark-mode .est-arr-sub {
 body.dark-theme .est-arr-time,
 body.dark-mode .est-arr-time {
   color: #f87171 !important; /* 🔥 밤모드에서도 빨간색 강조! */
+  font-size: 20px !important;
+  font-weight: 900 !important;
+  line-height: 1.15;
+  white-space: nowrap !important;
+  letter-spacing: -0.3px;
 }
 
 [data-theme="obsidian"] .est-step-node,
