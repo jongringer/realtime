@@ -324,15 +324,15 @@
     }
     .bit-status-live {
       font-size: 9px !important;
-      color: #000000 !important;
+      color: #064e3b !important;
       font-weight: 800 !important;
-      background: #f8fafc;
-      border: 1px solid #cbd5e1;
-      padding: 1.5px 5px !important;
-      border-radius: 4px;
+      background: #ecfdf5 !important;       /* 낮모드·밤모드 실크 옅은 녹색 바탕배경 */
+      border: 1px solid #a7f3d0 !important;
+      padding: 2px 6px !important;
+      border-radius: 5px;
       display: inline-flex !important;
       align-items: center;
-      gap: 3px;
+      gap: 4px;
       letter-spacing: -0.2px;
       white-space: nowrap !important;
       word-break: keep-all !important;
@@ -340,15 +340,18 @@
       line-height: 1.1;
     }
     .bit-status-dot {
-      width: 6px;
-      height: 6px;
-      background-color: #10b981;
+      width: 9px;
+      height: 9px;
+      background-color: #ef4444;            /* 시인성 극대화: 빨간색 점멸 */
       border-radius: 50%;
+      box-shadow: 0 0 5px rgba(239, 68, 68, 0.65);
       animation: pulseDot 1.5s infinite;
+      flex-shrink: 0;
+      display: inline-block;
     }
     @keyframes pulseDot {
       0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(1.3); }
+      50% { opacity: 0.15; transform: scale(1.35); }
     }
     .bit-desc-row {
       font-size: 11.5px;
@@ -732,13 +735,13 @@
     .subway-mode-btn.sparkle-active-amber {
       animation: clickSparkle 0.4s ease-out;
     }
-    /* 실시간 활성화: 낮모드 진한 에메랄드 + 순백 굵은 텍스트 */
+    /* 실시간 활성화: 낮모드 & 밤모드 모두 실크 옅은 녹색 바탕배경 */
     .subway-mode-btn.active-realtime {
-      background: #059669 !important;
-      color: #ffffff !important;
-      border-color: #047857 !important;
+      background: #ecfdf5 !important;       /* 실크 옅은 녹색 바탕배경 */
+      color: #064e3b !important;
+      border-color: #a7f3d0 !important;
       font-weight: 900 !important;
-      box-shadow: 0 2px 8px rgba(5, 150, 105, 0.4) !important;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25) !important;
     }
     /* 시간표 활성화: 낮모드 딥 앰버 + 순백 굵은 텍스트 */
     .subway-mode-btn.active-timetable {
@@ -785,11 +788,16 @@
       font-weight: 800 !important;
     }
     body:not([data-theme="apple-light"]) .subway-mode-btn.active-realtime {
-      background: #10b981 !important;
-      color: #022c22 !important;
-      border: 1.5px solid #34d399 !important;
+      background: #ecfdf5 !important;       /* 밤모드에서도 실크 옅은 녹색 유지 */
+      color: #064e3b !important;
+      border: 1.5px solid #a7f3d0 !important;
       font-weight: 900 !important;
-      box-shadow: 0 0 14px rgba(16, 185, 129, 0.45) !important;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.3) !important;
+    }
+    body:not([data-theme="apple-light"]) .bit-status-live {
+      background: #ecfdf5 !important;       /* 밤모드에서도 실크 옅은 녹색 유지 */
+      border: 1px solid #a7f3d0 !important;
+      color: #064e3b !important;
     }
     body:not([data-theme="apple-light"]) .subway-mode-btn.active-timetable {
       background: #fbbf24 !important;
@@ -1933,7 +1941,7 @@
                       class="subway-mode-btn ${!isTimetableMode ? 'active-realtime' : ''}" 
                       onclick="setSubwaySourceMode('realtime')" 
                       title="서울시 지하철 실시간 도착정보 및 열차번호 연동">
-                <span class="bit-status-dot" style="${!isTimetableMode && isLiveSub ? 'background:#ffffff;' : 'background:#94a3b8;'}"></span>
+                <span class="bit-status-dot" style="${!isTimetableMode && isLiveSub ? 'background:#ef4444;' : 'background:#94a3b8; animation:none;'}"></span>
                 <span>${!isTimetableMode && isLiveSub ? '서울시 실시간' : '실시간'}</span>
               </button>
               <button type="button" 

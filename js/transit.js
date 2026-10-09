@@ -1377,7 +1377,7 @@ class TransitManager {
                     class="subway-mode-btn ${!isTimetableMode ? 'active-realtime' : ''}" 
                     onclick="window.transitManager && window.transitManager.setSubwaySourceMode('realtime')" 
                     title="서울시 지하철 실시간 도착정보 및 열차번호 연동">
-              <span class="bit-status-dot" style="${!isTimetableMode && isLiveTrain ? 'background:#ffffff;' : 'background:#94a3b8;'}"></span>
+              <span class="bit-status-dot" style="${!isTimetableMode && isLiveTrain ? 'background:#ef4444;' : 'background:#94a3b8; animation:none;'}"></span>
               <span>${!isTimetableMode && isLiveTrain ? '서울시 실시간' : '실시간'}</span>
             </button>
             <button type="button" 

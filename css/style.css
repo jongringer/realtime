@@ -2478,15 +2478,15 @@ body:not([data-theme="apple-light"]) .transit-tab-wrap {
 
 .bit-status-live {
   font-size: 9px !important;
-  color: #000000 !important;                /* 사용자 요청: 오디세이실시간 글씨 검은색 */
+  color: #064e3b !important;
   font-weight: 800 !important;
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
-  padding: 1.5px 5px !important;
-  border-radius: 4px;
+  background: #ecfdf5 !important;           /* 낮모드·밤모드 실크 옅은 녹색 바탕배경 */
+  border: 1px solid #a7f3d0 !important;
+  padding: 2px 6px !important;
+  border-radius: 5px;
   display: inline-flex !important;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   letter-spacing: -0.2px;
   white-space: nowrap !important;          /* 절대 두 줄로 줄바꿈 방지 */
   word-break: keep-all !important;
@@ -2495,16 +2495,19 @@ body:not([data-theme="apple-light"]) .transit-tab-wrap {
 }
 
 .bit-status-dot {
-  width: 6px;
-  height: 6px;
-  background-color: #10b981;
+  width: 9px;
+  height: 9px;
+  background-color: #ef4444;                /* 시인성 극대화: 빨간색 점멸 */
   border-radius: 50%;
+  box-shadow: 0 0 5px rgba(239, 68, 68, 0.65);
   animation: pulseLiveDot 1.5s infinite ease-in-out;
+  flex-shrink: 0;
+  display: inline-block;
 }
 
 @keyframes pulseLiveDot {
   0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.4); opacity: 0.4; }
+  50% { transform: scale(1.35); opacity: 0.15; }
 }
 
 .bit-desc-row {
@@ -3665,10 +3668,14 @@ body[data-theme="noble-gold"] .transit-update-time {
 }
 
 body[data-theme="obsidian"] .bit-status-live,
-body[data-theme="noble-gold"] .bit-status-live {
-  background: rgba(15, 23, 42, 0.8) !important;
-  border-color: rgba(51, 65, 85, 0.7) !important;
-  color: #cbd5e1 !important;
+body[data-theme="midnight"] .bit-status-live,
+body[data-theme="noble-gold"] .bit-status-live,
+body.dark-theme .bit-status-live,
+body.dark-mode .bit-status-live,
+body:not([data-theme="apple-light"]) .bit-status-live {
+  background: #ecfdf5 !important;           /* 밤모드에서도 실크 옅은 녹색 유지 */
+  border-color: #a7f3d0 !important;
+  color: #064e3b !important;
 }
 
 body[data-theme="obsidian"] .next-transit-sub,
@@ -4969,13 +4976,13 @@ body:not([data-theme="apple-light"]) .next2-train-plate {
   animation: clickSparkle 0.4s ease-out;
 }
 
-/* 실시간 활성화: 낮모드 & 밤모드 모두 글씨가 아주 진하고 선명한 고대비 */
+/* 실시간 활성화: 낮모드 & 밤모드 모두 실크 옅은 녹색 바탕배경 */
 .subway-mode-btn.active-realtime {
-  background: #059669 !important;
-  color: #ffffff !important;
-  border-color: #047857 !important;
+  background: #ecfdf5 !important;           /* 실크 옅은 녹색 바탕배경 */
+  color: #064e3b !important;
+  border-color: #a7f3d0 !important;
   font-weight: 900 !important;
-  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.35) !important;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25) !important;
 }
 
 /* 시간표 활성화: 낮모드 & 밤모드 모두 글씨가 아주 진하고 선명한 고대비 */
@@ -5035,11 +5042,11 @@ body[data-theme="midnight"] .subway-mode-btn.active-realtime,
 body.dark-theme .subway-mode-btn.active-realtime,
 body.dark-mode .subway-mode-btn.active-realtime,
 body:not([data-theme="apple-light"]) .subway-mode-btn.active-realtime {
-  background: #10b981 !important;
-  color: #022c22 !important;
-  border: 1.5px solid #34d399 !important;
+  background: #ecfdf5 !important;           /* 밤모드에서도 실크 옅은 녹색 유지 */
+  color: #064e3b !important;
+  border: 1.5px solid #a7f3d0 !important;
   font-weight: 900 !important;
-  box-shadow: 0 0 14px rgba(16, 185, 129, 0.45) !important;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.3) !important;
 }
 
 /* 밤모드 누르는 시간표 버튼 글씨 대단히 진하고 굵은 제트 블랙(#09090b) + 고대비 골드 앰버(#fbbf24) */
