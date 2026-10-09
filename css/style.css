@@ -4738,5 +4738,76 @@ body.dark-mode .est-breakdown-bar {
   color: #94a3b8 !important;
 }
 
+/* 실시간 대중교통 시간표 버튼 및 열차 번호 뱃지 */
+.btn-timetable-toggle {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2.5px 7px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+.btn-timetable-toggle:hover {
+  background: #fde68a;
+  transform: translateY(-1px);
+}
+.btn-timetable-toggle:active {
+  transform: translateY(0);
+}
+
+.badge-bus-plate {
+  display: inline-flex;
+  align-items: center;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  margin-left: 6px;
+  border: 1px solid #cbd5e1;
+  letter-spacing: -0.2px;
+}
+
+.badge-train-plate {
+  background: #eff6ff !important;
+  color: #1e40af !important;
+  border-color: #bfdbfe !important;
+}
+
+[data-theme="obsidian"] .btn-timetable-toggle,
+[data-theme="midnight"] .btn-timetable-toggle,
+body.dark-theme .btn-timetable-toggle,
+body.dark-mode .btn-timetable-toggle {
+  background: rgba(245, 158, 11, 0.18) !important;
+  color: #fde68a !important;
+  border-color: rgba(245, 158, 11, 0.4) !important;
+}
+
+[data-theme="obsidian"] .badge-bus-plate,
+[data-theme="midnight"] .badge-bus-plate,
+body.dark-theme .badge-bus-plate,
+body.dark-mode .badge-bus-plate {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+[data-theme="obsidian"] .badge-train-plate,
+[data-theme="midnight"] .badge-train-plate,
+body.dark-theme .badge-train-plate,
+body.dark-mode .badge-train-plate {
+  background: rgba(59, 130, 246, 0.2) !important;
+  color: #93c5fd !important;
+  border-color: rgba(59, 130, 246, 0.4) !important;
+}
+
 
 

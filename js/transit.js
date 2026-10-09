@@ -98,6 +98,10 @@ class TransitManager {
 
     // 캐시 저장소
     this.busCache = {};
+    this.subwayApiKey = '476a79484b6a6f6e3833504f4f6d4e';
+    this.subwayCache = {};
+    this.isLiveSubway = false;
+    this.activeTimetableTab = 'seonyudo';
 
     this.initElements();
     this.initEvents();
@@ -260,8 +264,9 @@ class TransitManager {
   updateRefreshStatus() {
     if (!this.lastUpdated) return;
     const timeStr = this.lastLoadedTimeStr || new Date().toLocaleTimeString('ko-KR');
-    const busStatusText = this.isLiveBus ? '서울시 실시간 버스' : '서울시 정규배차';
-    this.lastUpdated.innerHTML = `전광판 갱신: ${timeStr} <span style="color:#059669; font-weight:700;">(${busStatusText} · 9호선 역사시간표 우선)</span> <span style="margin-left:6px; color:#2563eb; font-weight:700;">🔄 ${this.REFRESH_INTERVAL}초 자동 갱신 (${this.refreshCountdown}초 전)</span>`;
+    const busStatusText = this.isLiveBus ? '버스 실시간(차량번호 연동)' : '버스 정규배차';
+    const subwayStatusText = this.isLiveSubway ? '9호선 실시간(열차번호 연동)' : '9호선 역사시간표';
+    this.lastUpdated.innerHTML = `전광판 갱신: ${timeStr} <span style="color:#059669; font-weight:700;">(${busStatusText} · ${subwayStatusText})</span> <span style="margin-left:6px; color:#2563eb; font-weight:700;">🔄 ${this.REFRESH_INTERVAL}초 자동 갱신 (${this.refreshCountdown}초 전)</span>`;
   }
 
   formatSec(sec) {
@@ -334,6 +339,62 @@ class TransitManager {
     return this.busCache[cacheKey] || null;
   }
 
+  // --- 서울시 지하철 실시간 도착정보 직결 공공 API 호출 함수 ---
+  async fetchSubwayArrival(stationName) {
+    const cacheKey = stationName;
+    const directUrl = `http://swopenAPI.seoul.go.kr/api/subway/${this.subwayApiKey}/json/realtimeStationArrival/0/10/${encodeURIComponent(stationName)}`;
+
+    // 1차: 직접 HTTP 통신
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const res = await fetch(directUrl, {
+        cache: 'no-store',
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.realtimeArrivalList) {
+          this.subwayCache[cacheKey] = data.realtimeArrivalList;
+          return data.realtimeArrivalList;
+        }
+      }
+    } catch (e) {
+      // 프록시 fallback
+    }
+
+    // 2차: CORS 프록시 fallback
+    const proxyList = [
+      url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+      url => `https://corsproxy.io/?${encodeURIComponent(url)}`
+    ];
+
+    for (const makeProxy of proxyList) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
+        const proxyUrl = makeProxy(directUrl);
+        const res = await fetch(proxyUrl, {
+          cache: 'no-store',
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.realtimeArrivalList) {
+            this.subwayCache[cacheKey] = data.realtimeArrivalList;
+            return data.realtimeArrivalList;
+          }
+        }
+      } catch (err) {}
+    }
+
+    return this.subwayCache[cacheKey] || null;
+  }
+
   async loadAllData(showLoading = true) {
     if (!this.cardsContainer) return;
     if (this.isFetching) return;
@@ -344,7 +405,7 @@ class TransitManager {
         <div class="transit-loading-box">
           <div style="font-size:26px; margin-bottom:8px; display:inline-block; animation:spin 1s infinite linear;">🔄</div>
           <div style="font-size:14.5px; font-weight:800; color:#0284c7;">실시간 대중교통 최신 정보 수신 중...</div>
-          <p style="font-size:11.5px; color:#64748b; margin-top:4px;">서울시 버스(TOPIS) 및 9호선 역사 고정 시간표를 실시간 갱신하고 있습니다.</p>
+          <p style="font-size:11.5px; color:#64748b; margin-top:4px;">서울시 버스(TOPIS) 차량번호 및 9호선 실시간 열차번호를 수신하고 있습니다.</p>
         </div>
       `;
       if (this.lastUpdated) {
@@ -354,15 +415,20 @@ class TransitManager {
 
     const startTime = Date.now();
     const config = this.busConfigs[this.currentMode];
+    const isCommute = (this.currentMode === 'commute');
+    const subwayStationName = isCommute ? '선유도' : '국회의사당';
 
     try {
-      // 3개 대상 노선 병렬 호출 (양천01, 603, 6620)
+      // 버스(양천01, 603, 6620) 및 지하철(9호선) 동시 병렬 호출
       const busPromises = config.routes.map(r =>
-        this.fetchBusArrival(r.busRouteId, r.stId, r.ord)
-          .catch(() => null)
+        this.fetchBusArrival(r.busRouteId, r.stId, r.ord).catch(() => null)
       );
+      const subwayPromise = this.fetchSubwayArrival(subwayStationName).catch(() => null);
 
-      const busResults = await Promise.all(busPromises);
+      const [busResults, subwayResults] = await Promise.all([
+        Promise.all(busPromises),
+        subwayPromise
+      ]);
 
       const busDataMap = {};
       config.routes.forEach((r, idx) => {
@@ -375,10 +441,12 @@ class TransitManager {
         await new Promise(r => setTimeout(r, 250 - elapsed));
       }
 
-      this.renderResult(busDataMap);
-
       this.lastLoadedTimeStr = new Date().toLocaleTimeString('ko-KR');
       this.isLiveBus = busResults.some(item => item && (parseInt(item.traTime1, 10) > 0 || item.arrmsg1));
+      this.isLiveSubway = Array.isArray(subwayResults) && subwayResults.length > 0;
+
+      this.renderResult(busDataMap, subwayResults);
+
       this.refreshCountdown = this.REFRESH_INTERVAL;
       this.updateRefreshStatus();
 
@@ -521,54 +589,115 @@ class TransitManager {
       };
     }
 
-    // 15154 정류소(이대목동병원) 6620 / 603번 버스 최우선 운행 시간표 데이터 확인
-    const prioritySchedule = (typeof getPriorityBusSchedule === 'function')
-      ? getPriorityBusSchedule(routeConfig.routeNum, (routeConfig.stId === '114000052' || routeConfig.arsId === '15-154') ? '15154' : '', now)
-      : null;
+    // 사용자 요청: 출퇴근 시간에 버스 시간표에 연동되던 것을 중지하고 버스 번호로 실시간 도착정보를 최우선 수신
+    // 실시간 버스 정보가 유효한 경우(!next.isEstimate), 시간표로 덮어쓰지 않고 실시간 정보를 100% 우선 적용합니다.
+    // 실시간 데이터가 없는 경우(심야, 미운행 등 next.isEstimate인 상태)에만 시간표를 보조로 활용합니다.
+    if (next && next.isEstimate) {
+      const prioritySchedule = (typeof getPriorityBusSchedule === 'function')
+        ? getPriorityBusSchedule(routeConfig.routeNum, (routeConfig.stId === '114000052' || routeConfig.arsId === '15-154') ? '15154' : '', now)
+        : null;
 
-    if (prioritySchedule && prioritySchedule.next) {
-      const pNext = prioritySchedule.next;
-      const pNext2 = prioritySchedule.next2;
+      if (prioritySchedule && prioritySchedule.next) {
+        const pNext = prioritySchedule.next;
+        const pNext2 = prioritySchedule.next2;
 
-      // 9호선 역사 고정시간표와 100% 동일하게, 시간표 예정 시각 기준으로 실시간 카운팅
-      const isImminent = pNext.diffSec <= 35;
-      const livePlate1 = (busItem && busItem.plainNo1) ? busItem.plainNo1 : '';
+        const isImminent = pNext.diffSec <= 35;
+        const livePlate1 = (busItem && busItem.plainNo1) ? busItem.plainNo1 : '';
 
-      next = {
-        sec: pNext.diffSec,
-        rawSec: pNext.diffSec,
-        arrmsg: `${pNext.time} 정시운행`,
-        stopText: isImminent ? '정류소 진입 중' : `정시 시간표 (${prioritySchedule.periodName})`,
-        plainNo: livePlate1,
-        isArrivingSoon: isImminent,
-        isWait: false,
-        isEnd: false,
-        targetTime: pNext.targetTime,
-        isEstimate: false,
-        isPriority: true,
-        priorityTime: pNext.time,
-        periodName: prioritySchedule.periodName
-      };
-
-      if (pNext2) {
-        const livePlate2 = (busItem && busItem.plainNo2) ? busItem.plainNo2 : '';
-        next2 = {
-          sec: pNext2.diffSec,
-          rawSec: pNext2.diffSec,
-          arrmsg: `${pNext2.time} 정시운행`,
-          stopText: `차기 순번 (${pNext2.time})`,
-          plainNo: livePlate2,
+        next = {
+          sec: pNext.diffSec,
+          rawSec: pNext.diffSec,
+          arrmsg: `${pNext.time} 정시운행`,
+          stopText: isImminent ? '정류소 진입 중' : `정시 시간표 (${prioritySchedule.periodName})`,
+          plainNo: livePlate1,
+          isArrivingSoon: isImminent,
           isWait: false,
           isEnd: false,
-          targetTime: pNext2.targetTime,
+          targetTime: pNext.targetTime,
           isEstimate: false,
           isPriority: true,
-          priorityTime: pNext2.time
+          priorityTime: pNext.time,
+          periodName: prioritySchedule.periodName
         };
+
+        if (pNext2) {
+          const livePlate2 = (busItem && busItem.plainNo2) ? busItem.plainNo2 : '';
+          next2 = {
+            sec: pNext2.diffSec,
+            rawSec: pNext2.diffSec,
+            arrmsg: `${pNext2.time} 정시운행`,
+            stopText: `차기 순번 (${pNext2.time})`,
+            plainNo: livePlate2,
+            isWait: false,
+            isEnd: false,
+            targetTime: pNext2.targetTime,
+            isEstimate: false,
+            isPriority: true,
+            priorityTime: pNext2.time
+          };
+        }
       }
     }
 
     return { next, next2 };
+  }
+
+  /**
+   * 실시간 서울시 지하철(9호선 일반열차) 데이터 파싱 및 UI 변환 엔진
+   */
+  parseRealtimeSubwayArrival(stationName, updnLine, rawList, now, nowMs) {
+    if (!rawList || !Array.isArray(rawList)) return null;
+
+    // 9호선(subwayId 1009) & 일반열차 & 해당 방향(상행/하행) 필터링
+    const filtered = rawList.filter(item => {
+      if (item.subwayId !== '1009') return false;
+      const isNormal = (item.btrainSttus === '일반' || !item.btrainSttus || item.btrainSttus === '0');
+      const isDir = (item.updnLine === updnLine);
+      return isNormal && isDir;
+    });
+
+    if (filtered.length === 0) return null;
+
+    // barvlDt (도착 예정 초) 오름차순 정렬
+    filtered.sort((a, b) => {
+      const secA = parseInt(a.barvlDt || '0', 10);
+      const secB = parseInt(b.barvlDt || '0', 10);
+      return secA - secB;
+    });
+
+    const formatTrain = (item) => {
+      let sec = parseInt(item.barvlDt || '0', 10);
+      const trainNo = (item.btrainNo || '').trim();
+      const dest = item.bstatnNm || (updnLine === '상행' ? '중앙보훈병원' : '개화');
+      const curLoc = item.arvlMsg3 ? `[${item.arvlMsg3}]` : '';
+      const statusMsg = (item.arvlMsg2 || '').trim();
+      const isArrivingSoon = statusMsg.includes('도착') || statusMsg.includes('진입') || (sec > 0 && sec <= 35);
+
+      if (isArrivingSoon && sec <= 0) sec = 25;
+      else if (sec <= 0) sec = 45;
+
+      const targetTime = nowMs + sec * 1000;
+      const dt = new Date(targetTime);
+      const clockStr = `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`;
+
+      return {
+        sec: sec,
+        rawSec: sec,
+        trainNo: trainNo,
+        destName: dest,
+        curLocation: curLoc,
+        statusMsg: statusMsg,
+        isArrivingSoon: isArrivingSoon,
+        targetTime: targetTime,
+        clockStr: clockStr,
+        isLive: true
+      };
+    };
+
+    const nextTrain = filtered[0] ? formatTrain(filtered[0]) : null;
+    const next2Train = filtered[1] ? formatTrain(filtered[1]) : null;
+
+    return { nextTrain, next2Train };
   }
 
   // 대한민국 공휴일 판별
@@ -887,7 +1016,7 @@ class TransitManager {
     });
   }
 
-  renderResult(busDataMap) {
+  renderResult(busDataMap, subwayRawList = null) {
     const isCommute = (this.currentMode === 'commute');
     const now = new Date();
     const nowMs = now.getTime();
@@ -897,7 +1026,7 @@ class TransitManager {
     let subwayHtml = '';
 
     // ==========================================
-    // 1. 서울시 공공 버스 도착 전광판 카드
+    // 1. 서울시 공공 버스 도착 전광판 카드 (실시간 버스 번호 100% 최우선)
     // ==========================================
     const routeItems = config.routes.map(r => {
       const busItem = busDataMap[r.routeNum];
@@ -1012,7 +1141,10 @@ class TransitManager {
             <span class="bit-ars-badge">ARS ${config.arsId}</span>
             <strong class="bit-station-name">${config.stationName}</strong>
           </div>
-          <span class="bit-status-live"><span class="bit-status-dot"></span> 서울시 버스실시간</span>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span class="bit-status-live"><span class="bit-status-dot"></span> 서울시 버스실시간</span>
+            <button type="button" class="btn-timetable-toggle" onclick="window.transitManager && window.transitManager.openTimetableModal('bus')" title="공식 버스 시간표 조회" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a; font-size:11px; font-weight:700; padding:2px 7px; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; gap:3px;">🗓️ 시간표</button>
+          </div>
         </div>
 
         <div class="bit-desc-row">
@@ -1025,33 +1157,76 @@ class TransitManager {
         </div>
 
         <div class="bit-footer-info">
-          <span>💡 서울시 버스도착정보 공식 API(TOPIS) 연동으로 실시간 카운트다운됩니다.</span>
+          <span>💡 서울시 버스도착정보 공식 API(TOPIS) 연동으로 실시간 버스 번호 및 초 단위 카운트다운을 제공합니다.</span>
         </div>
       </div>
     `;
 
     // ==========================================
-    // 2. 9호선 지하철 도착 전광판 카드 (역사 고정시간표 100% 반영)
+    // 2. 9호선 지하철 도착 전광판 카드 (실시간 일반열차번호 최우선 연동 + 역사시간표 보조)
     // ==========================================
     const subwayStationName = isCommute ? '선유도역 9호선 [상행]' : '국회의사당역 9호선 [하행]';
     const subwayDir = isCommute ? '당산·중앙보훈병원 방면' : '당산·개화 방면 (선유도역 방향)';
+    const subwayTargetStation = isCommute ? '선유도' : '국회의사당';
+    const subwayUpdn = isCommute ? '상행' : '하행';
 
-    let subwayTrainsHtml = '';
     const isHolidayToday = this.isWeekendOrHoliday(now);
     const dayTypeLabel = isHolidayToday ? '🌴 주말·공휴일 시간표' : '🗓️ 평일 시간표';
 
-    const prioritizedTrains = this.getPrioritizedTrains(now, isCommute, 2);
+    // 실시간 서울시 지하철 API 일반열차 파싱 시도
+    const realtimeSubway = this.parseRealtimeSubwayArrival(subwayTargetStation, subwayUpdn, subwayRawList, now, nowMs);
+    let isLiveTrain = false;
+    let t1 = null;
+    let t2 = null;
 
-    if (prioritizedTrains && prioritizedTrains.length > 0) {
-      const t1 = prioritizedTrains[0];
-      const t2 = prioritizedTrains.length > 1 ? prioritizedTrains[1] : null;
+    if (realtimeSubway && realtimeSubway.nextTrain) {
+      isLiveTrain = true;
+      t1 = realtimeSubway.nextTrain;
+      t2 = realtimeSubway.next2Train;
+    } else {
+      // 실시간 데이터 부재 시(심야/장애 등) 역사 고정 시간표로 fallback
+      const prioritizedTrains = this.getPrioritizedTrains(now, isCommute, 2);
+      if (prioritizedTrains && prioritizedTrains.length > 0) {
+        const pt1 = prioritizedTrains[0];
+        const pt2 = prioritizedTrains.length > 1 ? prioritizedTrains[1] : null;
+        t1 = {
+          trainNo: '',
+          sec: pt1.sec,
+          rawSec: pt1.sec,
+          destName: pt1.endStationName,
+          curLocation: '',
+          statusMsg: '역고정 공식 시간표',
+          clockStr: pt1.departureTime,
+          targetTime: pt1.targetTime,
+          isLive: false,
+          isArrivingSoon: pt1.sec <= 30
+        };
+        if (pt2) {
+          t2 = {
+            trainNo: '',
+            sec: pt2.sec,
+            rawSec: pt2.sec,
+            destName: pt2.endStationName,
+            curLocation: '',
+            statusMsg: '역고정 공식 시간표',
+            clockStr: pt2.departureTime,
+            targetTime: pt2.targetTime,
+            isLive: false
+          };
+        }
+      }
+    }
 
+    let subwayTrainsHtml = '';
+    if (t1) {
       let t2Html = '';
       if (t2) {
+        const t2VehicleTag = t2.trainNo ? `<span style="font-size:10.5px; color:#475569; font-weight:600; margin-left:4px;">(${t2.trainNo})</span>` : '';
+        const t2LocStr = t2.curLocation ? `${t2.curLocation} · ` : '';
         t2Html = `
           <div class="next2-transit-box">
             <span class="next2-tag-blue">
-              <span>🔵 다다음 (<b class="transit-clock-time">${t2.departureTime}</b> · ${t2.endStationName}행):</span>
+              <span>🔵 다다음 (<b class="transit-clock-time">${t2.clockStr}</b> · ${t2LocStr}${t2.destName}행):${t2VehicleTag}</span>
             </span>
             <span class="live-countdown next2-countdown" data-target-time="${t2.targetTime}">
               ${this.formatSec(t2.sec)}
@@ -1060,21 +1235,27 @@ class TransitManager {
         `;
       }
 
+      const trainBadge = t1.trainNo
+        ? `<span class="badge-bus-plate badge-train-plate" style="display:inline-flex; align-items:center; background:#eff6ff; color:#1e40af; font-size:11px; padding:1px 6px; border-radius:4px; font-weight:700; margin-left:6px; border:1px solid #bfdbfe;">🚇 ${t1.trainNo}</span>`
+        : `<span class="badge-low-bus" style="background:#fef3c7; color:#b45309; border-color:#fde68a;">역고정(공식)</span>`;
+
+      const subLoc = t1.curLocation ? `${t1.curLocation} ${t1.statusMsg}` : (t1.isLive ? t1.statusMsg : (isCommute ? '선유도역 탑승' : '국회의사당역 탑승') + ' · 고정시간표');
+
       subwayTrainsHtml = `
         <div class="next-transit-box">
           <div class="next-transit-header">
             <span class="next-tag-red">
               <span>🔴</span>
               <span>다음 열차</span>
-              <span class="badge-low-bus" style="background:#fef3c7; color:#b45309; border-color:#fde68a;">역고정(공식)</span>
+              ${trainBadge}
             </span>
             <span class="next-time-big live-countdown" data-target-time="${t1.targetTime}">
               ${this.formatSec(t1.sec)}
             </span>
           </div>
           <div class="next-transit-sub">
-            <span class="transit-sub-time"><span class="transit-arr-label">출발:</span> <b class="transit-clock-time">${t1.departureTime}</b> <span class="transit-dest-sub">(${t1.endStationName}행)</span></span>
-            <span class="transit-sub-station">${isCommute ? '선유도역 탑승' : '국회의사당역 탑승'} · 고정시간표</span>
+            <span class="transit-sub-pos">위치: <b>${subLoc}</b></span>
+            <span class="transit-sub-time"><span class="transit-arr-label">도착 예정:</span> <b class="transit-clock-time" style="color:#0369a1; font-weight:900;">${t1.clockStr}</b> <span class="transit-dest-sub">(${t1.destName}행)</span></span>
           </div>
         </div>
         ${t2Html}
@@ -1082,7 +1263,7 @@ class TransitManager {
     } else {
       subwayTrainsHtml = `
         <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px; font-size:12.5px; color:#64748b;">
-          9호선 역사 공식 시간표 운행 준비 중
+          9호선 실시간 열차 및 공식 시간표 운행 준비 중
         </div>
       `;
     }
@@ -1095,8 +1276,11 @@ class TransitManager {
             <strong class="bit-station-name">${subwayStationName}</strong>
           </div>
           <div style="display:flex; align-items:center; gap:5px;">
-            <span class="bit-status-live" style="background:#ecfdf5; color:#047857; border-color:#a7f3d0;"><span class="bit-status-dot" style="background:#10b981;"></span> 역사시간표 정밀연동</span>
-            <span class="subway-day-type-badge">${dayTypeLabel}</span>
+            <span class="bit-status-live" style="${isLiveTrain ? 'background:#ecfdf5; color:#047857; border-color:#a7f3d0;' : 'background:#fef3c7; color:#92400e; border-color:#fde68a;'}">
+              <span class="bit-status-dot" style="${isLiveTrain ? 'background:#10b981;' : 'background:#f59e0b;'}"></span>
+              ${isLiveTrain ? '서울시 지하철실시간' : '역사시간표 정밀연동'}
+            </span>
+            <button type="button" class="btn-timetable-toggle" onclick="window.transitManager && window.transitManager.openTimetableModal('subway')" title="9호선 공식 시간표 조회" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a; font-size:11px; font-weight:700; padding:2px 7px; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; gap:3px;">🗓️ 시간표</button>
           </div>
         </div>
 
@@ -1110,7 +1294,7 @@ class TransitManager {
         </div>
 
         <div class="bit-footer-info" style="margin-top:8px;">
-          <span>💡 9호선 일반열차는 역사 공식 고정 시간표를 100% 반영하여 초 단위로 정확히 카운트다운합니다.</span>
+          <span>💡 9호선 일반열차 실시간 위치/열차번호(공공API)를 카운트다운하며, [🗓️ 시간표] 버튼으로 공식 시간표를 조회할 수 있습니다.</span>
         </div>
       </div>
     `;
@@ -1124,13 +1308,196 @@ class TransitManager {
     }
 
     // 도착예정시각 및 총소요시간 그래픽 전광판 카드 렌더링 (출근/퇴근 탭 바로 아래)
-    this.renderCommuteEstimation(busDataMap);
+    this.renderCommuteEstimation(busDataMap, t1);
+  }
+
+  // ==========================================
+  // 3. 시간표 모달 시스템 (9호선 / 버스 공식 시간표 팝업)
+  // ==========================================
+  openTimetableModal(tabType = 'subway') {
+    const isCommute = (this.currentMode === 'commute');
+    if (tabType === 'subway') {
+      this.activeTimetableTab = isCommute ? 'seonyudo' : 'national';
+    } else {
+      this.activeTimetableTab = 'bus603';
+    }
+    this.ensureTimetableModal();
+    this.renderTimetableModal();
+    const modal = document.getElementById('transitTimetableModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      modal.classList.add('active');
+    }
+  }
+
+  closeTimetableModal() {
+    const modal = document.getElementById('transitTimetableModal');
+    if (modal) {
+      modal.style.display = 'none';
+      modal.classList.remove('active');
+    }
+  }
+
+  switchTimetableTab(tabKey) {
+    this.activeTimetableTab = tabKey;
+    this.renderTimetableModal();
+  }
+
+  ensureTimetableModal() {
+    if (document.getElementById('transitTimetableModal')) return;
+
+    const modalHtml = `
+      <div class="modal-overlay" id="transitTimetableModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.65); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); z-index:99999; justify-content:center; align-items:center; padding:16px;">
+        <div class="modal-container" style="background:#ffffff; width:100%; max-width:440px; max-height:88vh; border-radius:18px; box-shadow:0 20px 40px rgba(0,0,0,0.25); display:flex; flex-direction:column; overflow:hidden; border:1px solid #e2e8f0;">
+          <div class="modal-header" style="background:linear-gradient(135deg, #0f172a, #1e293b); color:#ffffff; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:16px;">🗓️</span>
+              <strong style="font-size:15px; font-weight:800;">대중교통 공식 운행 시간표</strong>
+            </div>
+            <button type="button" class="modal-close-btn" onclick="window.transitManager && window.transitManager.closeTimetableModal()" style="background:rgba(255,255,255,0.15); border:none; color:#ffffff; font-size:16px; width:28px; height:28px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
+          </div>
+
+          <div style="display:flex; background:#f1f5f9; border-bottom:1px solid #cbd5e1; padding:4px 6px; gap:4px; overflow-x:auto;" id="ttTabContainer">
+            <!-- 탭 버튼들 -->
+          </div>
+
+          <div class="modal-body" id="ttBodyContainer" style="padding:14px; overflow-y:auto; flex:1; font-size:12.5px; color:#334155;">
+            <!-- 시간표 내용 -->
+          </div>
+
+          <div class="modal-footer" style="padding:10px 14px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:11px; color:#64748b;">💡 현재 시각 시간대는 노란색으로 강조됩니다.</span>
+            <button type="button" class="btn-primary" onclick="window.transitManager && window.transitManager.closeTimetableModal()" style="background:#0284c7; color:#ffffff; border:none; padding:7px 16px; border-radius:8px; font-weight:700; cursor:pointer; font-size:12px;">닫기</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    // 모달 바깥 터치 시 닫기
+    const modalEl = document.getElementById('transitTimetableModal');
+    if (modalEl) {
+      modalEl.addEventListener('click', (e) => {
+        if (e.target === modalEl) this.closeTimetableModal();
+      });
+    }
+  }
+
+  renderTimetableModal() {
+    const tabContainer = document.getElementById('ttTabContainer');
+    const bodyContainer = document.getElementById('ttBodyContainer');
+    if (!tabContainer || !bodyContainer) return;
+
+    const currentTab = this.activeTimetableTab;
+    const now = new Date();
+    const curH = now.getHours();
+    const isHoliday = this.isWeekendOrHoliday(now);
+
+    const tabs = [
+      { key: 'seonyudo', label: '🚇 9호선 선유도' },
+      { key: 'national', label: '🚇 9호선 국회의사당' },
+      { key: 'bus603', label: '🚌 603번 버스' },
+      { key: 'bus6620', label: '🚌 6620번 버스' }
+    ];
+
+    tabContainer.innerHTML = tabs.map(t => {
+      const active = (t.key === currentTab);
+      return `
+        <button type="button" onclick="window.transitManager && window.transitManager.switchTimetableTab('${t.key}')"
+          style="flex:1; white-space:nowrap; padding:6px 8px; border-radius:6px; font-size:11px; font-weight:${active ? '800' : '600'}; border:none; background:${active ? '#0284c7' : 'transparent'}; color:${active ? '#ffffff' : '#475569'}; cursor:pointer; transition:all 0.15s;">
+          ${t.label}
+        </button>
+      `;
+    }).join('');
+
+    // 내용 렌더링
+    let contentHtml = '';
+    const schedules = this.getStationSchedules();
+
+    if (currentTab === 'seonyudo' || currentTab === 'national') {
+      const isSeonyu = (currentTab === 'seonyudo');
+      const title = isSeonyu ? '9호선 선유도역 (상행 당산·중앙보훈병원 방면 일반열차)' : '9호선 국회의사당역 (하행 당산·개화 방면 일반열차)';
+      const sched = isSeonyu
+        ? (isHoliday ? schedules.SEONYUDO_WEEKEND : schedules.SEONYUDO_WEEKDAY)
+        : (isHoliday ? schedules.NATIONAL_ASSEMBLY_WEEKEND : schedules.NATIONAL_ASSEMBLY_WEEKDAY);
+
+      const hours = Object.keys(sched).map(Number).sort((a, b) => a - b);
+
+      contentHtml = `
+        <div style="margin-bottom:10px; padding:8px 10px; background:#eff6ff; border-radius:8px; border:1px solid #bfdbfe; font-size:11.5px; color:#1e40af;">
+          <strong>${title}</strong><br>
+          <span style="font-size:11px; color:#3b82f6;">운행 구분: ${isHoliday ? '🌴 주말·공휴일 시간표' : '🗓️ 평일 시간표'} (1분 앞당김 정밀 보정판)</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          ${hours.map(h => {
+            const mins = sched[h];
+            const isCurHour = (h === curH || (h === 24 && curH === 0));
+            return `
+              <div style="display:flex; align-items:center; padding:5px 8px; border-radius:6px; background:${isCurHour ? '#fef3c7' : '#f8fafc'}; border:1px solid ${isCurHour ? '#fde68a' : '#e2e8f0'};">
+                <span style="width:50px; font-weight:800; color:${isCurHour ? '#b45309' : '#0f172a'}; font-size:12px;">${h === 24 ? '00' : String(h).padStart(2,'0')}시</span>
+                <div style="display:flex; flex-wrap:wrap; gap:4px; flex:1;">
+                  ${mins.map(m => `
+                    <span style="padding:1px 5px; border-radius:4px; background:${isCurHour ? '#ffffff' : '#ffffff'}; border:1px solid ${isCurHour ? '#f59e0b' : '#cbd5e1'}; font-weight:700; font-size:11px; color:#1e293b;">
+                      ${String(m).padStart(2,'0')}분
+                    </span>
+                  `).join('')}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    } else {
+      // 버스 시간표 (603, 6620)
+      const routeNum = (currentTab === 'bus603') ? '603' : '6620';
+      const routeTitle = (currentTab === 'bus603') ? '간선 603번 (이대목동병원 15154)' : '지선 6620번 (이대목동병원 15154)';
+      const ttData = (typeof BUS_TIMETABLE_15154 !== 'undefined') ? BUS_TIMETABLE_15154[routeNum] : null;
+
+      if (ttData) {
+        const dayNames = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+        const dayKey = dayNames[now.getDay()];
+        const dayKo = ['일', '월', '화', '수', '목', '금', '토'][now.getDay()];
+
+        const morningSched = ttData.morning?.schedules?.[dayKey] || [];
+        const afternoonSched = ttData.afternoon?.schedules?.[dayKey] || [];
+
+        contentHtml = `
+          <div style="margin-bottom:10px; padding:8px 10px; background:#f0fdf4; border-radius:8px; border:1px solid #bbf7d0; font-size:11.5px; color:#166534;">
+            <strong>${routeTitle}</strong><br>
+            <span style="font-size:11px; color:#15803d;">기준: 오늘(${dayKo}요일) 정시 기준 운행표</span>
+          </div>
+
+          <div style="margin-bottom:10px;">
+            <div style="font-weight:800; font-size:12px; margin-bottom:4px; color:#0f172a;">🌅 아침 출근 시간대</div>
+            <div style="display:flex; flex-wrap:wrap; gap:4px;">
+              ${morningSched.length > 0 ? morningSched.map(item => `
+                <span style="padding:3px 7px; border-radius:5px; background:#f8fafc; border:1px solid #cbd5e1; font-weight:700; font-size:11.5px;">${item.time}</span>
+              `).join('') : '<span style="color:#94a3b8;">시간표 정보 없음</span>'}
+            </div>
+          </div>
+
+          <div>
+            <div style="font-weight:800; font-size:12px; margin-bottom:4px; color:#0f172a;">🌆 오후/저녁 시간대</div>
+            <div style="display:flex; flex-wrap:wrap; gap:4px;">
+              ${afternoonSched.length > 0 ? afternoonSched.map(item => `
+                <span style="padding:3px 7px; border-radius:5px; background:#f8fafc; border:1px solid #cbd5e1; font-weight:700; font-size:11.5px;">${item.time}</span>
+              `).join('') : '<span style="color:#94a3b8;">시간표 정보 없음</span>'}
+            </div>
+          </div>
+        `;
+      } else {
+        contentHtml = `<div style="padding:16px; text-align:center; color:#94a3b8;">시간표 데이터 준비 중</div>`;
+      }
+    }
+
+    bodyContainer.innerHTML = contentHtml;
   }
 
   /**
    * 실시간 도보/버스/지하철 연계 출퇴근 예상 소요시간 및 도착예정시각 계산 엔진
    */
-  calculateCommuteEstimation(busDataMap) {
+  calculateCommuteEstimation(busDataMap, liveSubwayTrain = null) {
     const isCommute = (this.currentMode === 'commute');
     const now = new Date();
     const nowMs = now.getTime();
@@ -1181,15 +1548,22 @@ class TransitManager {
       const t_reach_seonyu_bus = new Date(t_bus_board.getTime() + RIDE_BUS_MIN * 60 * 1000);
       const t_reach_seonyu_sub = new Date(t_reach_seonyu_bus.getTime() + WALK_BUS_SUBWAY * 60 * 1000);
 
-      const subwayTrains = this.getPrioritizedTrains(t_reach_seonyu_sub, true, 10);
       let chosenTrain = null;
       let subBoardTimeMs = null;
-      if (subwayTrains && subwayTrains.length > 0) {
-        for (const tr of subwayTrains) {
-          if (tr.targetTime >= t_reach_seonyu_sub.getTime()) {
-            chosenTrain = tr;
-            subBoardTimeMs = tr.targetTime;
-            break;
+
+      // 실시간 열차가 있고 탑승 가능 시간대라면 최우선 적용
+      if (liveSubwayTrain && liveSubwayTrain.targetTime && liveSubwayTrain.targetTime >= t_reach_seonyu_sub.getTime()) {
+        chosenTrain = { departureTime: liveSubwayTrain.clockStr, trainNo: liveSubwayTrain.trainNo, targetTime: liveSubwayTrain.targetTime };
+        subBoardTimeMs = liveSubwayTrain.targetTime;
+      } else {
+        const subwayTrains = this.getPrioritizedTrains(t_reach_seonyu_sub, true, 10);
+        if (subwayTrains && subwayTrains.length > 0) {
+          for (const tr of subwayTrains) {
+            if (tr.targetTime >= t_reach_seonyu_sub.getTime()) {
+              chosenTrain = tr;
+              subBoardTimeMs = tr.targetTime;
+              break;
+            }
           }
         }
       }
