@@ -1793,6 +1793,82 @@ class TransitManager {
   }
 
   /**
+   * 특정 도보 도착시각 이후 가장 빨리 탈 수 있는 지하철(실시간 or 역사시간표) 선정
+   */
+  findFastestSubwayForCommute(reachTimeMs, isCommute, isTimetableMode, t1, t2) {
+    const reachDate = new Date(reachTimeMs);
+    const trains = this.getPrioritizedTrains ? this.getPrioritizedTrains(reachDate, isCommute, 12) : [];
+
+    const ttTrain = (trains && trains.length > 0)
+      ? trains.find(tr => tr.targetTime >= reachTimeMs) || trains[0]
+      : null;
+
+    if (isTimetableMode) {
+      if (ttTrain) {
+        return {
+          departureTime: ttTrain.departureTime,
+          trainNo: '',
+          targetTime: ttTrain.targetTime,
+          isLive: false,
+          modeTag: '시간표'
+        };
+      }
+    }
+
+    let liveDelayMs = 0;
+    if (t1 && t1.targetTime) {
+      const nowMs = Date.now();
+      const schedFirst = this.getPrioritizedTrains ? this.getPrioritizedTrains(new Date(nowMs), isCommute, 1)?.[0] : null;
+      if (schedFirst && schedFirst.targetTime) {
+        liveDelayMs = t1.targetTime - schedFirst.targetTime;
+      }
+    }
+
+    const liveList = [];
+    if (t1 && t1.targetTime && t1.targetTime >= reachTimeMs) liveList.push(t1);
+    if (t2 && t2.targetTime && t2.targetTime >= reachTimeMs) liveList.push(t2);
+
+    if (liveList.length > 0) {
+      liveList.sort((a, b) => a.targetTime - b.targetTime);
+      const sel = liveList[0];
+      return {
+        departureTime: sel.clockStr || sel.departureTime,
+        trainNo: sel.trainNo || '',
+        targetTime: sel.targetTime,
+        isLive: true,
+        modeTag: '실시간'
+      };
+    }
+
+    if (ttTrain) {
+      let adjTargetTime = ttTrain.targetTime + liveDelayMs;
+      if (adjTargetTime < reachTimeMs && trains.length > 1) {
+        const nextTt = trains.find(tr => (tr.targetTime + liveDelayMs) >= reachTimeMs) || trains[1];
+        adjTargetTime = nextTt.targetTime + liveDelayMs;
+      }
+      const adjDate = new Date(adjTargetTime);
+      const adjClock = `${String(adjDate.getHours()).padStart(2, '0')}:${String(adjDate.getMinutes()).padStart(2, '0')}`;
+      return {
+        departureTime: adjClock,
+        trainNo: (t1 && t1.trainNo) ? t1.trainNo : '',
+        targetTime: adjTargetTime,
+        isLive: true,
+        modeTag: '실시간'
+      };
+    }
+
+    const fbMs = reachTimeMs + 4 * 60000;
+    const d = new Date(fbMs);
+    return {
+      departureTime: `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`,
+      trainNo: '',
+      targetTime: fbMs,
+      isLive: false,
+      modeTag: '예상'
+    };
+  }
+
+  /**
    * 실시간 도보/버스/지하철 연계 출퇴근 예상 소요시간 및 도착예정시각 계산 엔진
    */
   calculateCommuteEstimation(busDataMap, liveSubwayTrain = null, isTimetableMode = false) {
@@ -1800,67 +1876,43 @@ class TransitManager {
     const now = new Date();
     const nowMs = now.getTime();
 
-    const WALK_HOME_BUS = 8;             // 집 ↔ 6단지 버스정류장 (도보 8분)
-    const WALK_BUS_SUBWAY_COMMUTE = 3;   // 선유도역 버스정류장 ➔ 선유도역 승차장 (도보 3분)
-    const WALK_SEONYU_SUB_TO_BUS = 2.5;  // 선유도역 하차 ➔ 선유도역1번출구 버스정류장 (도보 2.5~3분 이내)
-    const WALK_SUBWAY_OFFICE = 9;        // 국회의사당역 ↔ 회사 (도보 9분)
-    const RIDE_BUS = 5;                  // 버스 이동 (5분)
-    const RIDE_SUBWAY_COMMUTE = 3.5;     // 출근 9호선 승차 (선유도역 ➔ 국회의사당역: 약 3.5분)
-    const RIDE_SUBWAY_OFFWORK = 2.5;     // 퇴근 9호선 승차 (국회의사당역 ➔ 선유도역: 약 2~2.5분 소요)
+    const WALK_OFFICE_SUB = 9;        // 회사 ↔ 국회의사당역 승강장 (도보 9분)
+    const WALK_SUB_BUS_TRANSIT = 3;   // 선유도역 승강장 ↔ 선유도역1번출구 버스정류장 (도보 3분)
+    const WALK_HOME_BUS = 9;          // 목동6단지 버스정류장 ↔ 집 (도보 9분)
+    // 도보 합계: 9 + 3 + 9 = 21분
+
+    const RIDE_SUBWAY = 4;            // 9호선 일반열차 두 정거장(선유도 ↔ 당산 ↔ 국회의사당) 공식 운행 소요시간: 정확히 4분
+    const RIDE_BUS = 3;               // 버스(선유도역1번출구 ↔ 목동6단지앞) 승차 이동: 3분
+    // 승차 합계: 4 + 3 = 7분
 
     if (isCommute) {
-      // -------------------------------------------------------------
-      // [출근] 집 ➔ 6단지 버스정류장 ➔ 선유도역 ➔ 국회의사당역 ➔ 회사
-      // -------------------------------------------------------------
+      // [출근] 집 ➔ 도보 9분 ➔ 6단지 정류장 ➔ 버스 3분 ➔ 선유도역 ➔ 도보 3분 환승 ➔ 지하철 4분 ➔ 국회의사당역 ➔ 도보 9분 ➔ 회사
       const t0 = new Date(nowMs);
       const t_reach_bus = new Date(nowMs + WALK_HOME_BUS * 60 * 1000);
       const config = this.busConfigs.commute;
 
-      // 3대 버스 중 6단지 도착 후 가장 빠른 버스 선택
+      // 6단지 정류장 도착(t_reach_bus) 이후 가장 빠른 버스 (양천01, 603, 6620)
       const chosenBus = this.findFastestBusForCommute(config.routes, busDataMap, t_reach_bus.getTime(), now, nowMs);
       const t_bus_board = new Date(chosenBus.targetTime);
       const busWaitMin = Math.max(0, Math.round((t_bus_board.getTime() - t_reach_bus.getTime()) / 60000));
 
-      const t_reach_seonyu_bus = new Date(t_bus_board.getTime() + RIDE_BUS * 60 * 1000);
-      const t_reach_seonyu_sub = new Date(t_reach_seonyu_bus.getTime() + WALK_BUS_SUBWAY_COMMUTE * 60 * 1000);
+      // 버스 3분 승차 후 선유도역 하차
+      const t_drop_bus = new Date(t_bus_board.getTime() + RIDE_BUS * 60 * 1000);
+      // 선유도역 9호선 승강장 환승 도보 3분
+      const t_reach_sub = new Date(t_drop_bus.getTime() + WALK_SUB_BUS_TRANSIT * 60 * 1000);
 
-      // 지하철 탑승: 사용자가 화면에서 선택한 바로 그 열차(t1)의 시각(3분 차이)을 100% 직결!
-      let chosenTrain = null;
-      let subBoardTimeMs = null;
+      // 선유도역 승강장 도착(t_reach_sub) 이후 탑승 가능한 9호선 열차 (시간표 vs 실시간)
+      const chosenTrain = this.findFastestSubwayForCommute(t_reach_sub.getTime(), true, isTimetableMode, liveSubwayTrain, null);
+      const t_sub_board = new Date(chosenTrain.targetTime);
+      const subWaitMin = Math.max(0, Math.round((t_sub_board.getTime() - t_reach_sub.getTime()) / 60000));
 
-      if (liveSubwayTrain && liveSubwayTrain.targetTime) {
-        chosenTrain = { 
-          departureTime: liveSubwayTrain.clockStr, 
-          trainNo: liveSubwayTrain.trainNo || '', 
-          targetTime: liveSubwayTrain.targetTime,
-          isLive: !isTimetableMode,
-          modeTag: isTimetableMode ? '시간표' : '실시간'
-        };
-        subBoardTimeMs = liveSubwayTrain.targetTime;
-      } else {
-        const subwayTrains = this.getPrioritizedTrains(t_reach_seonyu_sub, true, 10);
-        if (subwayTrains && subwayTrains.length > 0) {
-          for (const tr of subwayTrains) {
-            if (tr.targetTime >= t_reach_seonyu_sub.getTime()) {
-              chosenTrain = tr;
-              subBoardTimeMs = tr.targetTime;
-              break;
-            }
-          }
-        }
-      }
+      // 9호선 두 정거장 4분 승차 후 국회의사당역 하차
+      const t_drop_sub = new Date(t_sub_board.getTime() + RIDE_SUBWAY * 60 * 1000);
+      // 국회의사당역에서 회사까지 도보 9분
+      const t_final = new Date(t_drop_sub.getTime() + WALK_OFFICE_SUB * 60 * 1000);
 
-      if (!subBoardTimeMs) {
-        subBoardTimeMs = t_reach_seonyu_sub.getTime() + 4 * 60 * 1000;
-      }
-
-      const t_sub_board = new Date(subBoardTimeMs);
-      const subWaitMin = Math.max(0, Math.round((t_sub_board.getTime() - t_reach_seonyu_sub.getTime()) / 60000));
-
-      const t_reach_national_sub = new Date(t_sub_board.getTime() + RIDE_SUBWAY_COMMUTE * 60 * 1000);
-      const t_final = new Date(t_reach_national_sub.getTime() + WALK_SUBWAY_OFFICE * 60 * 1000);
-
-      const totalMinutes = Math.max(1, Math.round((t_final.getTime() - nowMs) / 60000));
+      // 총 소요시간: 도보 21분 + 승차 7분 + 버스 대기 + 지하철 대기 (절대 어긋남 없는 수학적 합계)
+      const totalMinutes = 21 + 7 + busWaitMin + subWaitMin;
 
       return {
         mode: 'commute',
@@ -1869,85 +1921,57 @@ class TransitManager {
         chosenBus,
         t_bus_board,
         busWaitMin,
-        t_reach_seonyu_bus,
-        t_reach_seonyu_sub,
+        t_drop_bus,
+        t_reach_sub,
         chosenTrain,
         t_sub_board,
         subWaitMin,
-        t_reach_national_sub,
+        t_drop_sub,
         t_final,
         totalMinutes
       };
     } else {
-      // -------------------------------------------------------------
-      // [퇴근] 회사 ➔ 국회의사당역 ➔ 선유도역 (지하철 2분여) ➔ 버스정류장 (도보 3분 이내) ➔ 3대 버스 중 최속 버스 연계 ➔ 집
-      // -------------------------------------------------------------
+      // [퇴근] 회사 ➔ 도보 9분 ➔ 국회의사당역 ➔ 지하철 4분 ➔ 선유도역 ➔ 도보 3분 환승 ➔ 버스 3분 ➔ 6단지 ➔ 도보 9분 ➔ 집
       const t0 = new Date(nowMs);
-      const t_reach_national_sub = new Date(nowMs + WALK_SUBWAY_OFFICE * 60 * 1000);
+      const t_reach_sub = new Date(nowMs + WALK_OFFICE_SUB * 60 * 1000);
 
-      // 지하철 탑승: 사용자가 화면에서 선택한 바로 그 열차(t1)의 시각(3분 차이)을 100% 직결 연동!
-      let chosenTrain = null;
-      let subBoardTimeMs = null;
+      // 국회의사당역 승강장 도착(t_reach_sub) 이후 탑승 가능한 9호선 열차 (시간표 vs 실시간)
+      const chosenTrain = this.findFastestSubwayForCommute(t_reach_sub.getTime(), false, isTimetableMode, liveSubwayTrain, null);
+      const t_sub_board = new Date(chosenTrain.targetTime);
+      const subWaitMin = Math.max(0, Math.round((t_sub_board.getTime() - t_reach_sub.getTime()) / 60000));
 
-      if (liveSubwayTrain && liveSubwayTrain.targetTime) {
-        chosenTrain = { 
-          departureTime: liveSubwayTrain.clockStr, 
-          trainNo: liveSubwayTrain.trainNo || '', 
-          targetTime: liveSubwayTrain.targetTime,
-          isLive: !isTimetableMode,
-          modeTag: isTimetableMode ? '시간표' : '실시간'
-        };
-        subBoardTimeMs = liveSubwayTrain.targetTime;
-      } else {
-        const subwayTrains = this.getPrioritizedTrains(t_reach_national_sub, false, 10);
-        if (subwayTrains && subwayTrains.length > 0) {
-          for (const tr of subwayTrains) {
-            if (tr.targetTime >= t_reach_national_sub.getTime()) {
-              chosenTrain = tr;
-              subBoardTimeMs = tr.targetTime;
-              break;
-            }
-          }
-        }
-      }
-
-      if (!subBoardTimeMs) {
-        subBoardTimeMs = t_reach_national_sub.getTime() + 4 * 60 * 1000;
-      }
-
-      const t_sub_board = new Date(subBoardTimeMs);
-      const subWaitMin = Math.max(0, Math.round((t_sub_board.getTime() - nowMs) / 60000));
-
-      // 국회의사당역 탑승 ➔ 선유도역 하차 (약 2.5분)
-      const t_reach_seonyu_sub = new Date(t_sub_board.getTime() + RIDE_SUBWAY_OFFWORK * 60 * 1000);
-      // 선유도역 하차 ➔ 선유도역1번출구 버스정류장 도착 (도보 약 2.5분 이내) => 지하철 탑승 후 총 5분 시점
-      const t_reach_seonyu_bus = new Date(t_reach_seonyu_sub.getTime() + WALK_SEONYU_SUB_TO_BUS * 60 * 1000);
+      // 9호선 두 정거장 4분 승차 후 선유도역 하차
+      const t_drop_sub = new Date(t_sub_board.getTime() + RIDE_SUBWAY * 60 * 1000);
+      // 선유도역 1번출구 버스정류장 환승 도보 3분
+      const t_reach_bus = new Date(t_drop_sub.getTime() + WALK_SUB_BUS_TRANSIT * 60 * 1000);
 
       const config = this.busConfigs.offwork;
-
-      // 선유도역 버스정류장 도착 시점(t_reach_seonyu_bus) 이후에 오는 양천01, 603, 6620 중 가장 빨리 오는 버스 배정
-      const chosenBus = this.findFastestBusForCommute(config.routes, busDataMap, t_reach_seonyu_bus.getTime(), now, nowMs);
+      // 선유도역 버스정류장 도착(t_reach_bus) 이후 탈 수 있는 가장 빠른 버스 (양천01, 603, 6620)
+      const chosenBus = this.findFastestBusForCommute(config.routes, busDataMap, t_reach_bus.getTime(), now, nowMs);
       const t_bus_board = new Date(chosenBus.targetTime);
-      const busWaitMin = Math.max(0, Math.round((t_bus_board.getTime() - t_reach_seonyu_bus.getTime()) / 60000));
+      const busWaitMin = Math.max(0, Math.round((t_bus_board.getTime() - t_reach_bus.getTime()) / 60000));
 
-      const t_reach_bus = new Date(t_bus_board.getTime() + RIDE_BUS * 60 * 1000);
-      const t_final = new Date(t_reach_bus.getTime() + WALK_HOME_BUS * 60 * 1000);
+      // 버스 3분 승차 후 목동6단지앞 하차
+      const t_drop_bus = new Date(t_bus_board.getTime() + RIDE_BUS * 60 * 1000);
+      // 목동6단지에서 집까지 도보 9분
+      const t_final = new Date(t_drop_bus.getTime() + WALK_HOME_BUS * 60 * 1000);
 
-      const totalMinutes = Math.max(1, Math.round((t_final.getTime() - nowMs) / 60000));
+      // 총 소요시간: 도보 21분 + 승차 7분 + 지하철 대기 + 버스 대기
+      const totalMinutes = 21 + 7 + busWaitMin + subWaitMin;
 
       return {
         mode: 'offwork',
         startTime: t0,
-        t_reach_national_sub,
+        t_reach_sub,
         chosenTrain,
         t_sub_board,
         subWaitMin,
-        t_reach_seonyu_sub,
-        t_reach_seonyu_bus,
+        t_drop_sub,
+        t_reach_bus,
         chosenBus,
         t_bus_board,
         busWaitMin,
-        t_reach_bus,
+        t_drop_bus,
         t_final,
         totalMinutes
       };
@@ -1983,6 +2007,9 @@ class TransitManager {
       return `${ampm} ${h12}시 ${mStr}분`;
     };
 
+    const busLabel = est.chosenBus?.routeNum || '버스';
+    const subModeTag = isTimetableMode ? '[🗓️시간표]' : '[⚡실시간]';
+
     const stepsHtml = isCommute ? `
       <!-- Step 1: 집 출발 -->
       <div class="est-timeline-step">
@@ -1992,61 +2019,35 @@ class TransitManager {
           <span class="est-step-clock">${fmtTime(est.startTime)}</span>
         </div>
       </div>
-      <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 도보 8분 이동</span></div>
+      <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 도보 9분 이동 (6단지 도착: ${fmtTime(est.t_reach_bus)})</span></div>
 
       <!-- Step 2: 6단지 버스정류장 -->
       <div class="est-timeline-step">
         <div class="est-step-node">🚌</div>
         <div class="est-step-content">
           <div>
-            <div class="est-step-name">6단지 버스정류장</div>
-            <div class="est-step-detail">🚌 ${est.chosenBus?.routeNum || '버스'} (대기 ${est.busWaitMin}분 + 승차 5분)</div>
+            <div class="est-step-name">6단지 버스정류장 ➔ <b>${busLabel}</b></div>
+            <div class="est-step-detail">🚌 버스 승차 (대기 약 ${est.busWaitMin}분 / 3분 이동)</div>
           </div>
-          <span class="est-step-clock">${fmtTime(est.t_reach_bus)}</span>
+          <span class="est-step-clock">${fmtTime(est.t_bus_board)} 탑승</span>
         </div>
       </div>
-      <div class="est-timeline-line"><span class="est-timeline-line-label">🚍 버스 승차 (선유도역 방면)</span></div>
+      <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 선유도역 하차 ${fmtTime(est.t_drop_bus)} ➔ 환승 도보 3분 (승강장 도착: ${fmtTime(est.t_reach_sub)})</span></div>
 
-      <!-- Step 3: 선유도역 환승 -->
-      <div class="est-timeline-step">
-        <div class="est-step-node">🔄</div>
-        <div class="est-step-content">
-          <div>
-            <div class="est-step-name">선유도역 버스정류장 ➔ 승차장</div>
-            <div class="est-step-detail">🚶 환승 도보 3분</div>
-          </div>
-          <span class="est-step-clock">${fmtTime(est.t_reach_seonyu_bus)}</span>
-        </div>
-      </div>
-      <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 도보 3분 환승</span></div>
-
-      <!-- Step 4: 선유도역 9호선 탑승 -->
+      <!-- Step 3: 선유도역 9호선 탑승 -->
       <div class="est-timeline-step">
         <div class="est-step-node">🚇</div>
         <div class="est-step-content">
           <div>
-            <div class="est-step-name">선유도역 9호선 승차장</div>
-            <div class="est-step-detail">🚇 ${est.chosenTrain?.departureTime || fmtTime(est.t_sub_board)} 열차 (대기 ${est.subWaitMin}분 + 승차 4분)</div>
+            <div class="est-step-name">선유도역 승강장 ➔ 9호선 일반 ${subModeTag}</div>
+            <div class="est-step-detail">🚇 9호선 (대기 약 ${est.subWaitMin}분 / 두 정거장 4분 이동)</div>
           </div>
-          <span class="est-step-clock">${fmtTime(est.t_reach_seonyu_sub)}</span>
+          <span class="est-step-clock">${fmtTime(est.t_sub_board)} 탑승</span>
         </div>
       </div>
-      <div class="est-timeline-line"><span class="est-timeline-line-label">🚆 9호선 승차 (국회의사당역 방면)</span></div>
+      <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 국회의사당역 하차 ${fmtTime(est.t_drop_sub)} ➔ 회사 도보 9분 이동</span></div>
 
-      <!-- Step 5: 국회의사당역 하차 -->
-      <div class="est-timeline-step">
-        <div class="est-step-node">🏢</div>
-        <div class="est-step-content">
-          <div>
-            <div class="est-step-name">국회의사당역 ➔ 회사</div>
-            <div class="est-step-detail">🚶 회사까지 도보 9분</div>
-          </div>
-          <span class="est-step-clock">${fmtTime(est.t_reach_national_sub)}</span>
-        </div>
-      </div>
-      <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 도보 9분 이동</span></div>
-
-      <!-- Step 6: 회사 도착 -->
+      <!-- Step 4: 회사 도착 -->
       <div class="est-timeline-step">
         <div class="est-step-node end">🎯</div>
         <div class="est-step-content est-final-step">
@@ -2063,61 +2064,35 @@ class TransitManager {
           <span class="est-step-clock">${fmtTime(est.startTime)}</span>
         </div>
       </div>
-      <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 도보 9분 이동</span></div>
+      <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 도보 9분 이동 (국회의사당역 승강장 도착: ${fmtTime(est.t_reach_sub)})</span></div>
 
       <!-- Step 2: 국회의사당역 탑승 -->
       <div class="est-timeline-step">
         <div class="est-step-node">🚇</div>
         <div class="est-step-content">
           <div>
-            <div class="est-step-name">국회의사당역 9호선 승차장</div>
-            <div class="est-step-detail">🚇 ${est.chosenTrain?.departureTime || fmtTime(est.t_sub_board)} 열차 (대기 약 ${est.subWaitMin}분 / 2분여 이동)</div>
+            <div class="est-step-name">국회의사당역 승강장 ➔ 9호선 일반 ${subModeTag}</div>
+            <div class="est-step-detail">🚇 9호선 탑승 (대기 약 ${est.subWaitMin}분 / 두 정거장 4분 이동)</div>
           </div>
           <span class="est-step-clock">${fmtTime(est.t_sub_board)} 탑승</span>
         </div>
       </div>
-      <div class="est-timeline-line"><span class="est-timeline-line-label">🚆 9호선 승차 ➔ 선유도역 하차 (2분여 소요)</span></div>
+      <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 선유도역 하차 ${fmtTime(est.t_drop_sub)} ➔ 환승 도보 3분 (정류장 도착: ${fmtTime(est.t_reach_bus)})</span></div>
 
-      <!-- Step 3: 선유도역 환승 -->
-      <div class="est-timeline-step">
-        <div class="est-step-node">🔄</div>
-        <div class="est-step-content">
-          <div>
-            <div class="est-step-name">선유도역 승차장 ➔ 1번출구 버스정류장</div>
-            <div class="est-step-detail">🚶 환승 도보 약 2.5분 (3분 이내)</div>
-          </div>
-          <span class="est-step-clock">${fmtTime(est.t_reach_seonyu_sub)} 하차</span>
-        </div>
-      </div>
-      <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 도보 2.5분 환승 (정류장 도착: ${fmtTime(est.t_reach_seonyu_bus)})</span></div>
-
-      <!-- Step 4: 선유도역 버스정류장 탑승 -->
+      <!-- Step 3: 선유도역 버스정류장 탑승 -->
       <div class="est-timeline-step">
         <div class="est-step-node">🚌</div>
         <div class="est-step-content">
           <div>
-            <div class="est-step-name">선유도역 버스정류장 (19210)</div>
-            <div class="est-step-detail">🚌 ${est.chosenBus?.routeNum || '버스'} (대기 ${est.busWaitMin}분 + 승차 5분)</div>
+            <div class="est-step-name">선유도역1번출구 ➔ <b>${busLabel}</b></div>
+            <div class="est-step-detail">🚌 버스 승차 (대기 약 ${est.busWaitMin}분 / 3분 이동)</div>
           </div>
-          <span class="est-step-clock">${fmtTime(est.t_reach_seonyu_bus)}</span>
+          <span class="est-step-clock">${fmtTime(est.t_bus_board)} 탑승</span>
         </div>
       </div>
-      <div class="est-timeline-line"><span class="est-timeline-line-label">🚍 버스 승차 (6단지 방면)</span></div>
+      <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 6단지 하차 ${fmtTime(est.t_drop_bus)} ➔ 집 도보 9분 이동</span></div>
 
-      <!-- Step 5: 6단지 버스정류장 하차 -->
-      <div class="est-timeline-step">
-        <div class="est-step-node">🏠</div>
-        <div class="est-step-content">
-          <div>
-            <div class="est-step-name">6단지 버스정류장 ➔ 집</div>
-            <div class="est-step-detail">🚶 집까지 도보 8분</div>
-          </div>
-          <span class="est-step-clock">${fmtTime(est.t_reach_bus)}</span>
-        </div>
-      </div>
-      <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 도보 8분 이동</span></div>
-
-      <!-- Step 6: 집 도착 -->
+      <!-- Step 4: 집 도착 -->
       <div class="est-timeline-step">
         <div class="est-step-node end">🎯</div>
         <div class="est-step-content est-final-step">
@@ -2152,14 +2127,14 @@ class TransitManager {
     const detailHtml = `
       <div class="est-summary-card est-detail-timeline-card">
         <div class="est-detail-title-bar">
-          <span>🧭 <b>${isCommute ? '출근' : '퇴근'} 이동 경로 및 순차 시각표</b></span>
-          <span class="est-detail-badge">도보·환승 연계</span>
+          <span>🧭 <b>${isCommute ? '출근' : '퇴근'} 이동 경로 및 순차 시각표 (${isTimetableMode ? '🗓️ 시간표 모드' : '⚡ 실시간 모드'})</b></span>
+          <span class="est-detail-badge">도보 21분 + 두정거장 4분 연계</span>
         </div>
         <div class="est-timeline-flow">
           ${stepsHtml}
         </div>
         <div class="est-breakdown-bar">
-          <span>💡 소요시간 구성: 🚶 도보 20분 + 🚏 대기 ${est.busWaitMin + est.subWaitMin}분 + 🚍 승차 9분 = <b>총 ${est.totalMinutes}분 소요</b></span>
+          <span>💡 소요시간 구성: 🚶 도보 21분 (9+3+9) + 🚏 대기 ${est.busWaitMin + est.subWaitMin}분 + 🚍 승차 7분 (지하철 4분+버스 3분) = <b>총 ${est.totalMinutes}분 소요</b></span>
         </div>
       </div>
     `;
