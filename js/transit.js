@@ -2012,8 +2012,7 @@ class TransitManager {
     const busLabelBadge = `<b style="color:#0369a1;">${est.chosenBus?.routeNum || '버스'}</b> (${est.chosenBus?.label || '다음'})${busPlateStr}`;
 
     const subModeTag = isTimetableMode ? '[🗓️시간표]' : '[⚡실시간]';
-    const trainNoStr = (!isTimetableMode && est.chosenTrain?.trainNo) ? ` <span class="dark-red-num">(${est.chosenTrain.trainNo})</span>` : '';
-    const trainLabelBadge = `<b style="color:#1d4ed8;">9호선 일반 (${est.chosenTrain?.departureTime || est.chosenTrain?.clockStr || ''} 탑승 ${subModeTag})</b>${trainNoStr}`;
+    const trainLabelBadge = `<b style="color:#1d4ed8;">9호선 일반 (${est.chosenTrain?.departureTime || est.chosenTrain?.clockStr || ''} 탑승 ${subModeTag})</b>`;
 
     const stepsHtml = isCommute ? `
       <!-- Step 1: 집 출발 -->
@@ -2045,7 +2044,7 @@ class TransitManager {
         <div class="est-step-content">
           <div>
             <div class="est-step-name">선유도역 승강장 ➔ ${trainLabelBadge}</div>
-            <div class="est-step-detail">🚇 9호선 일반${trainNoStr} (대기 약 ${est.subWaitMin}분 / 두 정거장 4분 이동)</div>
+            <div class="est-step-detail">🚇 9호선 일반 (대기 약 ${est.subWaitMin}분 / 두 정거장 4분 이동)</div>
           </div>
           <span class="est-step-clock">${fmtTime(est.t_sub_board)} 탑승</span>
         </div>
@@ -2077,7 +2076,7 @@ class TransitManager {
         <div class="est-step-content">
           <div>
             <div class="est-step-name">국회의사당역 승강장 ➔ ${trainLabelBadge}</div>
-            <div class="est-step-detail">🚇 9호선 일반 탑승${trainNoStr} (대기 약 ${est.subWaitMin}분 / 두 정거장 4분 이동)</div>
+            <div class="est-step-detail">🚇 9호선 일반 탑승 (대기 약 ${est.subWaitMin}분 / 두 정거장 4분 이동)</div>
           </div>
           <span class="est-step-clock">${fmtTime(est.t_sub_board)} 탑승</span>
         </div>
