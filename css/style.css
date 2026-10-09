@@ -2100,37 +2100,52 @@ body[data-theme="obsidian"] .transit-status-banner {
 
 .transit-tab-wrap {
   display: flex;
-  background: #F1F5F9;
-  padding: 4px;
+  background: #e2e8f0;
+  padding: 5px;
   margin-bottom: 12px;
-  border-radius: 12px;
+  border-radius: 9999px;
+  gap: 5px;
 }
 
 .transit-tab-btn {
   flex: 1;
-  padding: 10px 6px;
+  padding: 10px 14px;
   border: none;
-  border-radius: 9px;
-  font-size: 0.86rem;
+  border-radius: 9999px;
+  font-size: 0.88rem;
   font-weight: 700;
-  color: #64748B;
+  color: #475569;
   background: transparent;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   text-align: center;
 }
 
-.transit-tab-btn.active {
-  background: #ffffff !important;               /* 과도한 노란색 제거 -> 깨끗한 화이트 카드 */
-  color: #0f172a !important;
-  border: 2px solid #0284c7 !important;         /* 세련된 오션 블루 선택 테두리 */
-  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.2) !important;
+/* 출근 버튼 활성화: 선명한 파란색 타원 */
+#tabCommute.transit-tab-btn.active,
+.transit-tab-btn#tabCommute.active {
+  background: linear-gradient(135deg, #1d4ed8, #2563eb) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 4px 14px rgba(29, 78, 216, 0.4) !important;
+  font-weight: 800;
+}
+
+/* 퇴근 버튼 활성화: 짙은 빨간색 타원 */
+#tabOffwork.transit-tab-btn.active,
+.transit-tab-btn#tabOffwork.active {
+  background: linear-gradient(135deg, #881337, #991b1b) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 4px 14px rgba(153, 27, 27, 0.45) !important;
   font-weight: 800;
 }
 
 .transit-tab-btn:hover:not(.active) {
-  background: #e2e8f0;
-  color: #1e293b;
+  background: rgba(255, 255, 255, 0.6);
+  color: #0f172a;
 }
 
 .highlight-shift-word {
@@ -2141,20 +2156,16 @@ body[data-theme="obsidian"] .transit-status-banner {
 }
 
 .highlight-shift-word.commute-text {
-  color: #0284c7;
+  color: #1d4ed8;
 }
 
 .highlight-shift-word.offwork-text {
-  color: #ea580c;
+  color: #991b1b;
 }
 
-.transit-tab-btn.active .highlight-shift-word.commute-text {
-  color: #0284c7;
-  text-decoration: none;
-}
-
+.transit-tab-btn.active .highlight-shift-word.commute-text,
 .transit-tab-btn.active .highlight-shift-word.offwork-text {
-  color: #ea580c;
+  color: #ffffff !important;
   text-decoration: none;
 }
 
@@ -3262,12 +3273,18 @@ body[data-theme="noble-gold"] .transit-tab-btn {
   color: #94a3b8 !important;
 }
 
-body[data-theme="obsidian"] .transit-tab-btn.active,
-body[data-theme="noble-gold"] .transit-tab-btn.active {
-  background: rgba(15, 23, 42, 0.9) !important;
-  color: #e2e8f0 !important;
-  border-color: #38bdf8 !important;
-  box-shadow: 0 2px 8px rgba(56, 189, 248, 0.25) !important;
+body[data-theme="obsidian"] #tabCommute.transit-tab-btn.active,
+body[data-theme="noble-gold"] #tabCommute.transit-tab-btn.active {
+  background: linear-gradient(135deg, #1d4ed8, #2563eb) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(29, 78, 216, 0.5) !important;
+}
+
+body[data-theme="obsidian"] #tabOffwork.transit-tab-btn.active,
+body[data-theme="noble-gold"] #tabOffwork.transit-tab-btn.active {
+  background: linear-gradient(135deg, #881337, #991b1b) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(153, 27, 27, 0.5) !important;
 }
 
 body[data-theme="obsidian"] .bit-board-card,

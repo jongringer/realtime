@@ -104,3 +104,45 @@ commuteTests.forEach(t => {
 if (!commutePass) {
   process.exit(1);
 }
+
+console.log('=== 날씨 위치 판정 엔진 테스트 (목5동 vs 여의도동) ===');
+const { getWeatherLocationForDateTime } = require('./js/shift-engine.js');
+const weatherLocTests = [
+  // 9/2 일근: 06시부터 17시까지 여의도동, 이후는 목5동
+  { dt: new Date('2026-09-02T05:59:00'), expected: '목5동', desc: '일근 당일 05:59 -> 목5동 (집)' },
+  { dt: new Date('2026-09-02T06:00:00'), expected: '여의도동', desc: '일근 당일 06:00 -> 여의도동 (출근)' },
+  { dt: new Date('2026-09-02T12:00:00'), expected: '여의도동', desc: '일근 당일 12:00 -> 여의도동 (근무)' },
+  { dt: new Date('2026-09-02T16:59:00'), expected: '여의도동', desc: '일근 당일 16:59 -> 여의도동 (퇴근 전)' },
+  { dt: new Date('2026-09-02T17:00:00'), expected: '목5동', desc: '일근 당일 17:00 -> 목5동 (귀가)' },
+  { dt: new Date('2026-09-02T23:30:00'), expected: '목5동', desc: '일근 당일 23:30 -> 목5동 (집)' },
+
+  // 9/3 야근: 15시부터 여의도동, 익일 야근 15시까지 목5동
+  { dt: new Date('2026-09-03T08:00:00'), expected: '목5동', desc: '야근 당일 08:00 -> 목5동 (집)' },
+  { dt: new Date('2026-09-03T14:59:00'), expected: '목5동', desc: '야근 당일 14:59 -> 목5동 (출근 전)' },
+  { dt: new Date('2026-09-03T15:00:00'), expected: '여의도동', desc: '야근 당일 15:00 -> 여의도동 (출근)' },
+  { dt: new Date('2026-09-03T22:00:00'), expected: '여의도동', desc: '야근 당일 22:00 -> 여의도동 (야간근무)' },
+
+  // 9/4 조근: 06시까지 여의도동, 이후 목5동
+  { dt: new Date('2026-09-04T02:00:00'), expected: '여의도동', desc: '조근 당일 02:00 -> 여의도동 (밤샘근무)' },
+  { dt: new Date('2026-09-04T05:59:00'), expected: '여의도동', desc: '조근 당일 05:59 -> 여의도동 (퇴근 전)' },
+  { dt: new Date('2026-09-04T06:00:00'), expected: '목5동', desc: '조근 당일 06:00 -> 목5동 (퇴근)' },
+  { dt: new Date('2026-09-04T18:00:00'), expected: '목5동', desc: '조근 당일 18:00 -> 목5동 (집)' },
+
+  // 9/5 비번: 목5동 날씨
+  { dt: new Date('2026-09-05T12:00:00'), expected: '목5동', desc: '비번 당일 12:00 -> 목5동 (집)' }
+];
+
+let weatherLocPass = true;
+weatherLocTests.forEach(t => {
+  const actual = getWeatherLocationForDateTime(t.dt, overrides).name;
+  if (actual === t.expected) {
+    console.log(`  ✅ [PASS] ${t.desc}`);
+  } else {
+    console.error(`  ❌ [FAIL] ${t.desc} (expected: ${t.expected}, got: ${actual})`);
+    weatherLocPass = false;
+  }
+});
+
+if (!weatherLocPass) {
+  process.exit(1);
+}

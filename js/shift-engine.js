@@ -242,6 +242,87 @@ function getCommuteModeForDateTime(currentDate = new Date(), overrides = {}, bas
   return 'offwork';
 }
 
+/**
+ * 근무표 일정 및 현재 시각에 따라 현재 위치(목5동 vs 여의도동) 결정
+ *
+ * [사용자 정의 규칙]
+ * - 일근 : 06시부터 17시까지는 여의도동 날씨, 이후는 목5동 날씨. 익일 야근 15시까지 목5동.
+ * - 야근 : 15시부터 여의도동 날씨 (15시 이전은 목5동)
+ * - 조근 : 06시까지 여의도동 날씨, 이후 목5동 날씨
+ * - 비번 : 목5동 날씨
+ *
+ * @param {Date} [currentDate=new Date()]
+ * @param {Object} [overrides={}]
+ * @param {Object} [baseSettings={}]
+ * @returns {{ code: 'yeouido'|'mokdong', name: '여의도동'|'목5동', query: string, lat: number, lon: number, daumUrl: string }}
+ */
+function getWeatherLocationForDateTime(currentDate = new Date(), overrides = {}, baseSettings = {}) {
+  const d = new Date(currentDate);
+  const hour = d.getHours();
+  const minute = d.getMinutes();
+  const currentMinutes = hour * 60 + minute;
+  const todayStr = formatDateString(d);
+
+  const getCategory = (dateStr) => {
+    const info = getShiftInfoForDate(dateStr, overrides, baseSettings);
+    const type = (info && (info.shiftType || info.baseShift)) || '';
+    if (type.includes('일근')) return '일근';
+    if (type.includes('야근')) return '야근';
+    if (type.includes('조근')) return '조근';
+    return '비번';
+  };
+
+  const todayCat = getCategory(todayStr);
+
+  let isYeouido = false;
+
+  if (todayCat === '일근') {
+    // 일근 : 06시부터 17시까지는 여의도동, 이후는 목5동
+    if (currentMinutes >= 6 * 60 && currentMinutes < 17 * 60) {
+      isYeouido = true;
+    } else {
+      isYeouido = false;
+    }
+  } else if (todayCat === '야근') {
+    // 야근 : 15시부터 여의도동, 15시 이전(익일 야근 15시까지)은 목5동
+    if (currentMinutes >= 15 * 60) {
+      isYeouido = true;
+    } else {
+      isYeouido = false;
+    }
+  } else if (todayCat === '조근') {
+    // 조근 : 06시까지 여의도동, 이후 목5동
+    if (currentMinutes < 6 * 60) {
+      isYeouido = true;
+    } else {
+      isYeouido = false;
+    }
+  } else {
+    // 비번 : 목5동 날씨
+    isYeouido = false;
+  }
+
+  if (isYeouido) {
+    return {
+      code: 'yeouido',
+      name: '여의도동',
+      query: '여의도동 날씨',
+      lat: 37.528,
+      lon: 126.924,
+      daumUrl: 'https://m.search.daum.net/search?q=%EC%97%AC%EC%9D%98%EB%8F%84%EB%8F%99+%EB%82%A0%EC%94%A8&w=tot'
+    };
+  } else {
+    return {
+      code: 'mokdong',
+      name: '목5동',
+      query: '목5동 날씨',
+      lat: 37.535,
+      lon: 126.885,
+      daumUrl: 'https://m.search.daum.net/search?q=%EB%AA%A95%EB%8F%99+%EB%82%A0%EC%94%A8&w=tot'
+    };
+  }
+}
+
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     SHIFT_PATTERN,
@@ -253,6 +334,7 @@ if (typeof module !== 'undefined' && module.exports) {
     calculateBaseShift,
     getNextShiftFromPrevious,
     getShiftInfoForDate,
-    getCommuteModeForDateTime
+    getCommuteModeForDateTime,
+    getWeatherLocationForDateTime
   };
 }
