@@ -18,8 +18,34 @@
   <script src=https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js></script>
   <script>if(typeof pdfjsLib!=='undefined'){pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';}</script>
   <script src=https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js></script>
+  <script>
+    (function() {
+      try {
+        var savedTheme = localStorage.getItem('kbs_shift_theme') || 'apple-light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+      } catch(e) {}
+    })();
+  </script>
 </head>
 <body data-theme=apple-light>
+  <script>
+    (function() {
+      try {
+        var savedTheme = localStorage.getItem('kbs_shift_theme') || 'apple-light';
+        document.body.setAttribute('data-theme', savedTheme);
+        window.addEventListener('DOMContentLoaded', function() {
+          var icon = document.getElementById('themeToggleIcon');
+          var text = document.getElementById('themeToggleText');
+          var btn = document.getElementById('btnThemeToggle');
+          if (savedTheme !== 'apple-light') {
+            if (icon) icon.textContent = '🌙';
+            if (text) text.textContent = '밤 모드';
+            if (btn) { btn.classList.remove('is-day'); btn.classList.add('is-night'); }
+          }
+        });
+      } catch(e) {}
+    })();
+  </script>
   <main class=app-container>
     <header class=top-header>
       <div class=profile-pill id=profilePill title=프로필 설정>

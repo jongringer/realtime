@@ -9,91 +9,91 @@
   --font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
   
   /* ==========================================================================
-     테마 1: [옵시디언 럭셔리 다크 - 모던 프리미엄 (기본 추천)]
-     하이엔드 스마트 디바이스 / 테슬라 감성의 깊이 있고 기품 있는 다크 무드
+     테마 1: [옵시디언 럭셔리 다크 (밤 모드)]
+     깊이감 있는 딥 미드나이트 블루 & 골드/브론즈 하이라이트 (스크린샷 2 완벽 일치)
      ========================================================================== */
-  --bg-body: #050811;
-  --bg-app: #0b0f19;
-  --bg-card: #131b2e;
-  --card-border: 1px solid rgba(255, 255, 255, 0.08);
-  --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-  --text-main: #f8fafc;
+  --bg-body: #0c121d;
+  --bg-app: #0f1726;
+  --bg-card: #151f32;
+  --card-border: 1px solid rgba(255, 255, 255, 0.09);
+  --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --text-main: #ffffff;
   --text-muted: #94a3b8;
   --text-light: #64748b;
 
-  /* 근무 컬러 팔레트 (옵시디언 럭셔리) */
-  --shift-day-bg: #2563eb;       /* 일근 - 세련된 사파이어 오션 블루 */
-  --shift-day-text: #ffffff;
-  --shift-night-bg: #f59e0b;     /* 야근 - 타오르는 골든 선셋 앰버 */
-  --shift-night-text: #ffffff;
-  --shift-early-bg: #8b5cf6;     /* 조근 - 고혹적인 로열 바이올렛 */
-  --shift-early-text: #ffffff;
-  --shift-off-bg: #1e293b;       /* 비번 - 단정한 티타늄 슬레이트 */
+  /* 근무 컬러 팔레트 (다크 모드 - 스크린샷 2 1:1 완벽 일치) */
+  --shift-day-bg: #14382f;       /* 일근 - 딥 틸/포레스트 그린 */
+  --shift-day-text: #6ee7b7;     /* 일근 글자 - 소프트 민트 */
+  --shift-night-bg: #4d3216;     /* 야근 - 딥 웜 앰버/브라운 */
+  --shift-night-text: #fed7aa;   /* 야근 글자 - 소프트 웜 골드/피치 */
+  --shift-early-bg: #331f52;     /* 조근 - 딥 로열 바이올렛/퍼플 */
+  --shift-early-text: #ddd6fe;   /* 조근 글자 - 소프트 라벤더 */
+  --shift-off-bg: #1e293b;       /* 비번 - 티타늄 슬레이트 */
   --shift-off-text: #94a3b8;
   --shift-off-border: 1px solid #334155;
-  --shift-overtime-bg: #f43f5e;  /* 대근 - 비비드 루비 로즈 */
-  --shift-overtime-text: #ffffff;
-  --shift-vacation-bg: #10b981;  /* 휴가 - 청량한 에메랄드 세이지 */
-  --shift-vacation-text: #ffffff;
+  --shift-overtime-bg: #4a1725;  /* 대근 - 딥 와인 버건디 */
+  --shift-overtime-text: #fecdd3;/* 대근 글자 - 소프트 로즈 */
+  --shift-vacation-bg: #064e3b;  /* 휴가 - 딥 에메랄드 */
+  --shift-vacation-text: #6ee7b7;
 
-  /* 달력 스타일 */
-  --cal-bg: linear-gradient(180deg, #111827 0%, #0d131f 100%);
-  --cal-border: 1px solid rgba(255, 255, 255, 0.08);
+  /* 달력 스타일 (다크 모드) */
+  --cal-bg: #121927;
+  --cal-border: 1px solid rgba(255, 255, 255, 0.09);
   --cal-cell-border: rgba(255, 255, 255, 0.05);
-  --cal-text: #f8fafc;
-  --cal-text-dim: #94a3b8;
+  --cal-text: #ffffff;
+  --cal-text-dim: #475569;
   --cal-sun-color: #f87171;
   --cal-sat-color: #60a5fa;
-  --highlight-focus: #38bdf8;
-  --highlight-bg: rgba(56, 189, 248, 0.12);
-  --highlight-glow: rgba(56, 189, 248, 0.25);
+  --highlight-focus: #c89d5c;
+  --highlight-bg: rgba(200, 157, 92, 0.15);
+  --highlight-glow: rgba(200, 157, 92, 0.35);
 
   --primary-blue: #38bdf8;
   --primary-blue-hover: #0284c7;
-  --border-radius-card: 20px;
+  --border-radius-card: 24px;
   --border-radius-sm: 8px;
 }
 
 /* ==========================================================================
-   테마 2: [애플 & 토스 퓨어 라이트 (미니멀 클린 럭셔리)]
-   화사하고 정갈한 화이트 & 라이트 그레이 톤으로 눈이 편안한 미니멀 디자인
+   테마 2: [애플 퓨어 라이트 (낮 모드)]
+   따뜻하고 품격 있는 웜 아이보리 & 소프트 샌드 베이지 (스크린샷 1 완벽 일치)
    ========================================================================== */
 body[data-theme="apple-light"] {
-  --bg-body: #e2e8f0;
-  --bg-app: #f1f3f7;             /* 너무 밝은 흰색 대신 눈이 편안한 애플 소프트 그레이 */
+  --bg-body: #f5efe6;
+  --bg-app: #faf7f2;             /* 부드럽고 따뜻한 프리미엄 크림 베이지 */
   --bg-card: #ffffff;
-  --card-border: 1px solid #d8dee8;
-  --card-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+  --card-border: 1px solid #eadfce;
+  --card-shadow: 0 6px 20px rgba(180, 155, 125, 0.12);
   --text-main: #0f172a;
-  --text-muted: #475569;
-  --text-light: #64748b;
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
 
-  /* 근무 컬러 팔레트 (애플 퓨어 라이트) */
-  --shift-day-bg: #0284c7;       /* 일근 - 맑고 청량한 스마트 스카이블루 */
-  --shift-day-text: #0369a1;
-  --shift-night-bg: #ea580c;     /* 야근 - 생기 있는 웜 탠저린 코랄 */
-  --shift-night-text: #c2410c;
-  --shift-early-bg: #7c3aed;     /* 조근 - 품격 있는 딥 바이올렛 */
-  --shift-early-text: #6d28d9;
-  --shift-off-bg: #e2e8f0;       /* 비번 - 소프트 클라우드 그레이 */
+  /* 근무 컬러 팔레트 (라이트 모드 - 스크린샷 1 1:1 완벽 일치) */
+  --shift-day-bg: #e2ece5;       /* 일근 - 부드러운 세이지 그린 */
+  --shift-day-text: #1c5140;     /* 일근 글자 - 딥 포레스트 그린 */
+  --shift-night-bg: #f7eadc;     /* 야근 - 따뜻한 피치 샌드 베이지 */
+  --shift-night-text: #713f19;   /* 야근 글자 - 딥 웜 브라운 */
+  --shift-early-bg: #ebe4f6;     /* 조근 - 은은한 소프트 라벤더 */
+  --shift-early-text: #4d2f7b;   /* 조근 글자 - 딥 로열 바이올렛 */
+  --shift-off-bg: #e2e8f0;       /* 비번 - 소프트 클라우드 */
   --shift-off-text: #334155;
   --shift-off-border: 1px solid #cbd5e1;
-  --shift-overtime-bg: #e11d48;  /* 대근 - 비비드 카민 */
-  --shift-overtime-text: #be123c;
-  --shift-vacation-bg: #059669;  /* 휴가 - 클래식 포레스트 그린 */
-  --shift-vacation-text: #047857;
+  --shift-overtime-bg: #fde4e4;  /* 대근 - 은은한 로즈 핑크 */
+  --shift-overtime-text: #9f1239;/* 대근 글자 - 딥 버건디 */
+  --shift-vacation-bg: #d1fae5;  /* 휴가 - 청량한 민트 */
+  --shift-vacation-text: #065f46;
 
-  /* 달력 스타일 (애플 소프트 그레이) */
-  --cal-bg: #f8fafc;
-  --cal-border: 1px solid #cbd5e1;
-  --cal-cell-border: #e2e8f0;
+  /* 달력 스타일 (라이트 모드 - 웜 크림/화이트) */
+  --cal-bg: #ffffff;
+  --cal-border: 1px solid #eadfce;
+  --cal-cell-border: #f3ece1;
   --cal-text: #0f172a;
-  --cal-text-dim: #334155;
+  --cal-text-dim: #94a3b8;
   --cal-sun-color: #dc2626;
   --cal-sat-color: #2563eb;
-  --highlight-focus: #0284c7;
-  --highlight-bg: rgba(2, 132, 199, 0.1);
-  --highlight-glow: rgba(2, 132, 199, 0.2);
+  --highlight-focus: #d5a96a;
+  --highlight-bg: rgba(213, 169, 106, 0.15);
+  --highlight-glow: rgba(213, 169, 106, 0.35);
 
   --primary-blue: #0284c7;
   --primary-blue-hover: #0369a1;
@@ -198,32 +198,53 @@ body {
   display: flex;
   align-items: center;
   background-color: var(--bg-card);
-  padding: 4px 14px 4px 4px;
+  padding: 5px 14px 5px 5px;
   border-radius: 9999px;
   border: var(--card-border);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  box-shadow: var(--card-shadow);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
 }
 
-.profile-pill:hover {
-  background-color: rgba(255, 255, 255, 0.05);
-  border-color: var(--primary-blue);
+body[data-theme="apple-light"] .profile-pill {
+  background-color: #ffffff;
+  border: 1px solid #eadfce;
+  box-shadow: 0 2px 8px rgba(180, 155, 125, 0.12);
+}
+
+body[data-theme="obsidian"] .profile-pill,
+body:not([data-theme="apple-light"]) .profile-pill {
+  background-color: #162134;
+  border: 1px solid #233148;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .profile-avatar {
-  width: 36px;
-  height: 36px;
-  background: linear-gradient(135deg, #0284c7, #0369a1);
-  color: #ffffff;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 15px;
   margin-right: 10px;
-  box-shadow: 0 2px 4px rgba(2, 132, 199, 0.3);
+  flex-shrink: 0;
+  transition: all 0.25s ease;
+}
+
+body[data-theme="apple-light"] .profile-avatar {
+  background: #182335;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(24, 35, 53, 0.25);
+}
+
+body[data-theme="obsidian"] .profile-avatar,
+body:not([data-theme="apple-light"]) .profile-avatar {
+  background: #0c121d;
+  color: #ffffff;
+  border: 1.5px solid #28374e;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
 }
 
 .profile-info {
@@ -232,15 +253,16 @@ body {
 }
 
 .profile-name {
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 13.5px;
+  font-weight: 800;
   color: var(--text-main);
+  letter-spacing: -0.3px;
 }
 
 .profile-team {
   font-size: 11px;
   color: var(--text-muted);
-  margin-top: -1px;
+  margin-top: 1px;
 }
 
 .header-actions {
@@ -249,14 +271,14 @@ body {
   gap: 8px;
 }
 
-/* 상단 낮 ☀️ / 밤 🌙 단일 교대 토글 버튼 (낮일 때는 하얀바탕, 밤일 때는 검은바탕) */
+/* 상단 낮 ☀️ / 밤 🌙 단일 교대 토글 버튼 (스크린샷 1 & 2 완벽 구현) */
 .theme-toggle-single-btn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 5px 12px;
+  gap: 6px;
+  padding: 6px 14px;
   border-radius: 9999px;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 800;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -267,37 +289,37 @@ body {
   flex-shrink: 0;
 }
 
-/* ☀️ 낮 모드: 하얀 바탕 + 짙은 텍스트 */
+/* ☀️ 낮 모드: 화사한 크림 화이트 바탕 + 짙은 네이비 텍스트 (스크린샷 1) */
 body[data-theme="apple-light"] .theme-toggle-single-btn,
 .theme-toggle-single-btn.is-day {
   background-color: #ffffff !important;
   color: #0f172a !important;
-  border: 1.5px solid #cbd5e1 !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid #eadfce !important;
+  box-shadow: 0 2px 8px rgba(180, 155, 125, 0.12) !important;
 }
 
 body[data-theme="apple-light"] .theme-toggle-single-btn:hover,
 .theme-toggle-single-btn.is-day:hover {
-  background-color: #f8fafc !important;
-  border-color: #94a3b8 !important;
+  background-color: #fdfbf7 !important;
+  border-color: #d5a96a !important;
   transform: translateY(-1px);
 }
 
-/* 🌙 밤 모드: 검은 바탕 + 밝은 텍스트 */
+/* 🌙 밤 모드: 다크 네이비 서페이스 바탕 + 선명한 화이트 텍스트 (스크린샷 2) */
 body[data-theme="obsidian"] .theme-toggle-single-btn,
-body[data-theme="noble-gold"] .theme-toggle-single-btn,
+body:not([data-theme="apple-light"]) .theme-toggle-single-btn,
 .theme-toggle-single-btn.is-night {
-  background-color: #0f172a !important;
-  color: #f8fafc !important;
-  border: 1.5px solid #334155 !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5), 0 0 6px rgba(56, 189, 248, 0.2) !important;
+  background-color: #162134 !important;
+  color: #ffffff !important;
+  border: 1px solid #28374e !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
 }
 
 body[data-theme="obsidian"] .theme-toggle-single-btn:hover,
-body[data-theme="noble-gold"] .theme-toggle-single-btn:hover,
+body:not([data-theme="apple-light"]) .theme-toggle-single-btn:hover,
 .theme-toggle-single-btn.is-night:hover {
-  background-color: #1e293b !important;
-  border-color: #38bdf8 !important;
+  background-color: #1c2b42 !important;
+  border-color: #3b5278 !important;
   transform: translateY(-1px);
 }
 
@@ -430,38 +452,39 @@ body[data-theme="noble-gold"] .shift-badge-pill {
   border: var(--card-border, 1px solid #cbd5e1);
   color: var(--text-main);
   font-size: 15px;
-  width: 28px;
-  height: 28px;
-  border-radius: 7px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
   cursor: pointer;
   padding: 0;
   line-height: 1;
-  transition: all 0.18s ease;
+  transition: all 0.2s ease;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   user-select: none;
   -webkit-user-select: none;
   margin-left: 2px;
 }
 .btn-home-today:hover {
-  background: var(--primary-blue, #0284c7);
-  color: #ffffff;
-  border-color: var(--primary-blue, #0284c7);
   transform: scale(1.08);
 }
 .btn-home-today:active {
   transform: scale(0.92);
 }
 
-body[data-theme="obsidian"] .btn-home-today {
-  background: rgba(30, 41, 59, 0.85);
-  border-color: rgba(56, 189, 248, 0.3);
-}
-body[data-theme="noble-gold"] .btn-home-today {
-  background: rgba(21, 27, 38, 0.85);
-  border-color: rgba(251, 191, 36, 0.3);
+body[data-theme="apple-light"] .btn-home-today {
+  background: #ffffff;
+  border: 1px solid #eadfce;
+  box-shadow: 0 2px 6px rgba(180, 155, 125, 0.12);
 }
 
-/* 근무알람 버튼 */
+body[data-theme="obsidian"] .btn-home-today,
+body:not([data-theme="apple-light"]) .btn-home-today {
+  background: #162134;
+  border: 1px solid #233148;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* 근무알람 버튼 (스크린샷 1 & 2 따뜻한 어번/테라코타 둥근 알약형) */
 .month-alarm-wrap {
   display: flex;
   align-items: center;
@@ -471,43 +494,41 @@ body[data-theme="noble-gold"] .btn-home-today {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background: linear-gradient(135deg, #0284c7, #0369a1);
-  color: #ffffff;
+  background: #ba6341;
+  color: #ffffff !important;
   border: none;
-  border-radius: 8px;
-  padding: 6px 12px;
-  font-size: 13px;
-  font-weight: 700;
+  border-radius: 9999px;
+  padding: 6px 14px;
+  font-size: 12.5px;
+  font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.32);
-  transition: all 0.18s ease;
+  box-shadow: 0 2px 8px rgba(186, 99, 65, 0.32);
+  transition: all 0.2s ease;
   user-select: none;
   -webkit-user-select: none;
   line-height: 1.2;
 }
 
 .btn-shift-alarm:hover {
-  background: linear-gradient(135deg, #0369a1, #075985);
   transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(2, 132, 199, 0.42);
+  filter: brightness(1.05);
 }
 
 .btn-shift-alarm:active {
   transform: scale(0.95);
 }
 
-body[data-theme="obsidian"] .btn-shift-alarm {
-  background: linear-gradient(135deg, #0284c7, #38bdf8);
-  color: #0f172a;
-  font-weight: 800;
-  box-shadow: 0 2px 8px rgba(56, 189, 248, 0.3);
+body[data-theme="apple-light"] .btn-shift-alarm {
+  background: #ba6341;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(186, 99, 65, 0.32);
 }
 
-body[data-theme="noble-gold"] .btn-shift-alarm {
-  background: linear-gradient(135deg, #d97706, #fbbf24);
-  color: #1e1b18;
-  font-weight: 800;
-  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+body[data-theme="obsidian"] .btn-shift-alarm,
+body:not([data-theme="apple-light"]) .btn-shift-alarm {
+  background: #8c472a;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(140, 71, 42, 0.45);
 }
 
 .shift-alarm-icon {
@@ -548,7 +569,7 @@ body[data-theme="noble-gold"] .btn-shift-alarm {
 .today-card {
   background: var(--bg-card);
   border-radius: var(--border-radius-card);
-  padding: 32px 18px 28px 18px; /* 날씨 크기만큼 상하 여백 넉넉하게 확장 */
+  padding: 24px 18px 20px 18px;
   margin-bottom: 12px;
   box-shadow: var(--card-shadow);
   border: var(--card-border);
@@ -557,17 +578,30 @@ body[data-theme="noble-gold"] .btn-shift-alarm {
   overflow: hidden;
 }
 
+body[data-theme="apple-light"] .today-card {
+  background: linear-gradient(160deg, #fdfbf7 0%, #f6efe5 100%);
+  border: 1.5px solid #eadfce;
+  box-shadow: 0 8px 24px rgba(180, 155, 125, 0.15);
+}
+
+body[data-theme="obsidian"] .today-card,
+body:not([data-theme="apple-light"]) .today-card {
+  background: linear-gradient(160deg, #172235 0%, #111a29 100%);
+  border: 1.5px solid #22324a;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
 .today-top-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .today-time-group {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 6px;
 }
 
 .today-date-text {
@@ -576,6 +610,15 @@ body[data-theme="noble-gold"] .btn-shift-alarm {
   color: var(--text-main);
   letter-spacing: -0.6px;
   line-height: 1.2;
+}
+
+body[data-theme="apple-light"] .today-date-text {
+  color: #0f172a !important;
+}
+
+body[data-theme="obsidian"] .today-date-text,
+body:not([data-theme="apple-light"]) .today-date-text {
+  color: #ffffff !important;
 }
 
 .today-clock-wrap {
@@ -613,29 +656,29 @@ body[data-theme="noble-gold"] .btn-shift-alarm {
 }
 
 .realtime-clock-pill {
-  font-size: 18.5px !important; /* 날짜 숫자와 동일한 18.5px의 큼직한 시계 글씨 */
+  font-size: 18px !important;
   font-weight: 900 !important;
-  background-color: rgba(2, 132, 199, 0.08);
-  color: #0284c7;
-  padding: 5px 12px;
-  border-radius: 9px;
-  border: 1.2px solid rgba(2, 132, 199, 0.25);
+  padding: 6px 14px;
+  border-radius: 12px;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.3px;
   white-space: nowrap;
-  box-shadow: 0 1px 3px rgba(2, 132, 199, 0.06);
+  transition: all 0.25s ease;
 }
 
 body[data-theme="apple-light"] .realtime-clock-pill {
-  background-color: #f0f9ff;
-  color: #0369a1;
-  border-color: #bae6fd;
+  background-color: #efe8dd;
+  color: #0f172a;
+  border: 1px solid #dfd3c2;
+  box-shadow: 0 1px 4px rgba(180, 155, 125, 0.1);
 }
 
-body[data-theme="obsidian"] .realtime-clock-pill {
-  background-color: rgba(30, 41, 59, 0.85);
-  color: #38bdf8;
-  border-color: rgba(56, 189, 248, 0.3);
+body[data-theme="obsidian"] .realtime-clock-pill,
+body:not([data-theme="apple-light"]) .realtime-clock-pill {
+  background-color: #0e1624;
+  color: #ffffff;
+  border: 1px solid #1e2d44;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
 body[data-theme="noble-gold"] .realtime-clock-pill {
@@ -769,26 +812,31 @@ body[data-theme="noble-gold"] .realtime-clock-pill {
 }
 
 body[data-theme="apple-light"] .today-weather-pill {
-  background: #ffffff;
-  border: 1.5px solid #64748b;
-  color: #000000 !important;
-  font-weight: 800;
+  background: #faf6f0;
+  border: 1px solid #e0d4c2;
+  color: #0f172a !important;
+  font-weight: 750;
+  box-shadow: 0 2px 6px rgba(180, 155, 125, 0.1);
 }
 
 body[data-theme="apple-light"] .today-weather-pill:hover {
-  background: #f8fafc;
-  border-color: #2563eb;
+  background: #ffffff;
+  border-color: #d5a96a;
 }
 
-body[data-theme="obsidian"] .today-weather-pill {
-  background: rgba(30, 41, 59, 0.85);
-  border-color: rgba(255, 255, 255, 0.25);
+body[data-theme="obsidian"] .today-weather-pill,
+body:not([data-theme="apple-light"]) .today-weather-pill {
+  background: #131e2f;
+  border: 1px solid #23334c;
   color: #f8fafc !important;
+  font-weight: 750;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
-body[data-theme="obsidian"] .today-weather-pill:hover {
-  background: rgba(51, 65, 85, 0.95);
-  border-color: #60a5fa;
+body[data-theme="obsidian"] .today-weather-pill:hover,
+body:not([data-theme="apple-light"]) .today-weather-pill:hover {
+  background: #18253a;
+  border-color: #3b5278;
 }
 
 .day-weather-mini {
@@ -836,43 +884,163 @@ body[data-theme="obsidian"] .today-weather-pill:hover {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  padding-right: 6px; /* 우측 가이드라인에서 넉넉한 여백 확보 - 잘림 절대 방지 */
+  padding-right: 4px;
 }
 
 .today-shift-badge {
   position: relative;
-  font-size: 32px !important; /* 큼직하고 시원한 가로 글씨 */
+  font-size: 32px !important;
   font-weight: 900 !important;
   letter-spacing: -0.5px;
-  color: #ffffff !important;
-  padding: 8px 24px;
-  border-radius: 14px;
+  padding: 10px 22px;
+  min-width: 96px;
+  border-radius: 16px;
   display: inline-flex !important;
-  flex-direction: row !important; /* 무조건 가로 배치 */
+  flex-direction: row !important;
   align-items: center;
   justify-content: center;
   text-align: center;
-  white-space: nowrap !important; /* 세로 줄바꿈 방지 */
+  white-space: nowrap !important;
   line-height: 1.15;
   box-sizing: border-box;
-  /* 테두리에 '흰색에서 빨간색이 도는' 회전 빛 그라데이션 레일 효과 */
+  /* 고급 3D 베벨 표면 + 회전 라이트(빛) 레일 애니메이션 */
   background:
-    linear-gradient(var(--today-badge-bg, #ea580c), var(--today-badge-bg, #ea580c)) padding-box,
+    var(--today-badge-surface, linear-gradient(145deg, #C29665 0%, #A87A46 50%, #875E2E 100%)) padding-box,
     conic-gradient(
       from var(--border-angle),
-      transparent 0%,
-      transparent 35%,
-      rgba(239, 68, 68, 0.35) 55%,
-      #ef4444 75%,
-      #fca5a5 88%,
-      #ffffff 94%,
-      #fca5a5 97%,
-      rgba(239, 68, 68, 0.35) 100%
+      var(--today-badge-light-rail, transparent 0%, transparent 40%, rgba(245, 158, 11, 0.4) 60%, #F59E0B 75%, #FDE68A 88%, #FFFFFF 94%, #FDE68A 97%, rgba(245, 158, 11, 0.4) 100%)
     ) border-box !important;
   border: 3.5px solid transparent !important;
   animation: borderRotate 2.5s linear infinite;
-  box-shadow: 0 4px 18px rgba(239, 68, 68, 0.45) !important;
+  box-shadow:
+    inset 0 2px 2px var(--today-badge-highlight, rgba(255, 255, 255, 0.5)),
+    inset 0 -2px 3px var(--today-badge-shadow, rgba(0, 0, 0, 0.35)),
+    var(--today-badge-outer-shadow, 0 6px 18px rgba(0, 0, 0, 0.45)) !important;
   z-index: 2;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.today-shift-badge:hover {
+  transform: scale(1.03);
+}
+
+/* --- [우상단 오늘 근무 뱃지: 기본 다크(밤 모드) 컬러 세팅] --- */
+.today-shift-badge.badge-night {
+  --today-badge-surface: linear-gradient(145deg, #C29665 0%, #A87A46 50%, #875E2E 100%);
+  --today-badge-text: #ffffff;
+  --today-badge-highlight: rgba(255, 255, 255, 0.5);
+  --today-badge-shadow: rgba(0, 0, 0, 0.4);
+  --today-badge-outer-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+  --today-badge-light-rail: transparent 0%, transparent 40%, rgba(245, 158, 11, 0.4) 60%, #F59E0B 75%, #FDE68A 88%, #FFFFFF 94%, #FDE68A 97%, rgba(245, 158, 11, 0.4) 100%;
+}
+.today-shift-badge.badge-day {
+  --today-badge-surface: linear-gradient(145deg, #23584A 0%, #184439 50%, #10332B 100%);
+  --today-badge-text: #ffffff;
+  --today-badge-highlight: rgba(255, 255, 255, 0.5);
+  --today-badge-shadow: rgba(0, 0, 0, 0.4);
+  --today-badge-outer-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+  --today-badge-light-rail: transparent 0%, transparent 40%, rgba(16, 185, 129, 0.4) 60%, #10B981 75%, #6EE7B7 88%, #FFFFFF 94%, #6EE7B7 97%, rgba(16, 185, 129, 0.4) 100%;
+}
+.today-shift-badge.badge-early {
+  --today-badge-surface: linear-gradient(145deg, #4F3278 0%, #3B225E 50%, #2A1744 100%);
+  --today-badge-text: #ffffff;
+  --today-badge-highlight: rgba(255, 255, 255, 0.5);
+  --today-badge-shadow: rgba(0, 0, 0, 0.4);
+  --today-badge-outer-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+  --today-badge-light-rail: transparent 0%, transparent 40%, rgba(139, 92, 246, 0.4) 60%, #8B5CF6 75%, #C4B5FD 88%, #FFFFFF 94%, #C4B5FD 97%, rgba(139, 92, 246, 0.4) 100%;
+}
+.today-shift-badge.badge-off {
+  --today-badge-surface: linear-gradient(145deg, #2D3748 0%, #1F2837 50%, #141B26 100%);
+  --today-badge-text: #e2e8f0;
+  --today-badge-highlight: rgba(255, 255, 255, 0.25);
+  --today-badge-shadow: rgba(0, 0, 0, 0.4);
+  --today-badge-outer-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+  --today-badge-light-rail: transparent 0%, transparent 40%, rgba(100, 116, 139, 0.4) 60%, #64748B 75%, #94A3B8 88%, #FFFFFF 94%, #94A3B8 97%, rgba(100, 116, 139, 0.4) 100%;
+}
+.today-shift-badge.badge-overtime {
+  --today-badge-surface: linear-gradient(145deg, #6B1F35 0%, #511325 50%, #3A0B18 100%);
+  --today-badge-text: #ffffff;
+  --today-badge-highlight: rgba(255, 255, 255, 0.5);
+  --today-badge-shadow: rgba(0, 0, 0, 0.4);
+  --today-badge-outer-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+  --today-badge-light-rail: transparent 0%, transparent 40%, rgba(244, 63, 94, 0.4) 60%, #F43F5E 75%, #FECDD3 88%, #FFFFFF 94%, #FECDD3 97%, rgba(244, 63, 94, 0.4) 100%;
+}
+.today-shift-badge.badge-vacation {
+  --today-badge-surface: linear-gradient(145deg, #1C6246 0%, #124B35 50%, #0B3524 100%);
+  --today-badge-text: #ffffff;
+  --today-badge-highlight: rgba(255, 255, 255, 0.5);
+  --today-badge-shadow: rgba(0, 0, 0, 0.4);
+  --today-badge-outer-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+  --today-badge-light-rail: transparent 0%, transparent 40%, rgba(16, 185, 129, 0.4) 60%, #10B981 75%, #6EE7B7 88%, #FFFFFF 94%, #6EE7B7 97%, rgba(16, 185, 129, 0.4) 100%;
+}
+
+/* --- [우상단 오늘 근무 뱃지: 애플 퓨어 라이트 (낮 모드) 컬러 세팅 - 스크린샷 1 완벽 일치] --- */
+body[data-theme="apple-light"] .today-shift-badge.badge-night {
+  --today-badge-surface: linear-gradient(145deg, #ECC89F 0%, #D8A974 50%, #C48E56 100%);
+  --today-badge-text: #111827;
+  --today-badge-highlight: rgba(255, 255, 255, 0.7);
+  --today-badge-shadow: rgba(113, 63, 25, 0.3);
+  --today-badge-outer-shadow: 0 6px 18px rgba(196, 142, 86, 0.35);
+  --today-badge-light-rail: transparent 0%, transparent 40%, rgba(216, 169, 116, 0.4) 60%, #D8A974 75%, #FFF0DC 88%, #FFFFFF 94%, #FFF0DC 97%, rgba(216, 169, 116, 0.4) 100%;
+}
+body[data-theme="apple-light"] .today-shift-badge.badge-day {
+  --today-badge-surface: linear-gradient(145deg, #CFE7D8 0%, #A9D4BC 50%, #85C09F 100%);
+  --today-badge-text: #0F3728;
+  --today-badge-highlight: rgba(255, 255, 255, 0.7);
+  --today-badge-shadow: rgba(28, 81, 64, 0.25);
+  --today-badge-outer-shadow: 0 6px 18px rgba(133, 192, 159, 0.35);
+  --today-badge-light-rail: transparent 0%, transparent 40%, rgba(133, 192, 159, 0.4) 60%, #85C09F 75%, #E2ECE5 88%, #FFFFFF 94%, #E2ECE5 97%, rgba(133, 192, 159, 0.4) 100%;
+}
+body[data-theme="apple-light"] .today-shift-badge.badge-early {
+  --today-badge-surface: linear-gradient(145deg, #E2D7F5 0%, #C8B5E8 50%, #AE93DB 100%);
+  --today-badge-text: #351D5A;
+  --today-badge-highlight: rgba(255, 255, 255, 0.7);
+  --today-badge-shadow: rgba(77, 47, 123, 0.25);
+  --today-badge-outer-shadow: 0 6px 18px rgba(174, 147, 219, 0.35);
+  --today-badge-light-rail: transparent 0%, transparent 40%, rgba(174, 147, 219, 0.4) 60%, #AE93DB 75%, #EBE4F6 88%, #FFFFFF 94%, #EBE4F6 97%, rgba(174, 147, 219, 0.4) 100%;
+}
+body[data-theme="apple-light"] .today-shift-badge.badge-off {
+  --today-badge-surface: linear-gradient(145deg, #E5DFD5 0%, #D3CBC0 50%, #BDB4A7 100%);
+  --today-badge-text: #2B251F;
+  --today-badge-highlight: rgba(255, 255, 255, 0.7);
+  --today-badge-shadow: rgba(100, 90, 80, 0.2);
+  --today-badge-outer-shadow: 0 6px 18px rgba(189, 180, 167, 0.3);
+  --today-badge-light-rail: transparent 0%, transparent 40%, rgba(160, 150, 135, 0.3) 60%, #BDB4A7 75%, #FFFFFF 94%, rgba(160, 150, 135, 0.3) 100%;
+}
+body[data-theme="apple-light"] .today-shift-badge.badge-overtime {
+  --today-badge-surface: linear-gradient(145deg, #F9D0D8 0%, #F1A7B8 50%, #E67E96 100%);
+  --today-badge-text: #670921;
+  --today-badge-highlight: rgba(255, 255, 255, 0.7);
+  --today-badge-shadow: rgba(159, 18, 57, 0.25);
+  --today-badge-outer-shadow: 0 6px 18px rgba(230, 126, 150, 0.35);
+  --today-badge-light-rail: transparent 0%, transparent 40%, rgba(244, 63, 94, 0.4) 60%, #E67E96 75%, #FDE4E4 88%, #FFFFFF 94%, #FDE4E4 97%, rgba(244, 63, 94, 0.4) 100%;
+}
+body[data-theme="apple-light"] .today-shift-badge.badge-vacation {
+  --today-badge-surface: linear-gradient(145deg, #C6F6D5 0%, #9AE6B4 50%, #68D391 100%);
+  --today-badge-text: #1C4532;
+  --today-badge-highlight: rgba(255, 255, 255, 0.7);
+  --today-badge-shadow: rgba(6, 95, 70, 0.25);
+  --today-badge-outer-shadow: 0 6px 18px rgba(104, 211, 145, 0.35);
+  --today-badge-light-rail: transparent 0%, transparent 40%, rgba(16, 185, 129, 0.4) 60%, #68D391 75%, #D1FAE5 88%, #FFFFFF 94%, #D1FAE5 97%, rgba(16, 185, 129, 0.4) 100%;
+}
+
+.today-shift-badge span {
+  display: inline-block;
+  white-space: nowrap !important;
+  margin: 0 auto;
+  text-align: center;
+  color: var(--today-badge-text, #ffffff) !important;
+  -webkit-text-fill-color: var(--today-badge-text, #ffffff) !important;
+  font-weight: 900 !important;
+}
+
+body[data-theme="apple-light"] .today-shift-badge span {
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5);
+}
+
+body[data-theme="obsidian"] .today-shift-badge span,
+body:not([data-theme="apple-light"]) .today-shift-badge span {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
 .today-bottom-section {
@@ -880,37 +1048,6 @@ body[data-theme="obsidian"] .today-weather-pill:hover {
   align-items: center;
   margin-top: 12px;
   width: 100%;
-}
-
-
-/* 근무별 바탕색 (일근 / 야근 / 조근 / 비번)과 완벽 동기화 */
-.today-shift-badge.badge-day {
-  --today-badge-bg: var(--shift-day-bg, #0284c7);
-}
-.today-shift-badge.badge-night {
-  --today-badge-bg: var(--shift-night-bg, #ea580c);
-}
-.today-shift-badge.badge-early {
-  --today-badge-bg: var(--shift-early-bg, #7c3aed);
-}
-.today-shift-badge.badge-off {
-  --today-badge-bg: var(--shift-off-bg, #334155);
-}
-.today-shift-badge.badge-overtime {
-  --today-badge-bg: var(--shift-overtime-bg, #e11d48);
-}
-.today-shift-badge.badge-vacation {
-  --today-badge-bg: var(--shift-vacation-bg, #059669);
-}
-
-.today-shift-badge span {
-  display: inline-block;
-  white-space: nowrap !important; /* 가로 1줄 고정 */
-  margin: 0 auto;
-  text-align: center;
-  color: #ffffff !important;
-  -webkit-text-fill-color: #ffffff !important;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
 }
 
 .today-time-text {
@@ -961,19 +1098,29 @@ body[data-theme="obsidian"] .today-weather-pill:hover {
   color: #2563eb !important; /* 토요일: 선명한 파란색 */
 }
 
-/* 애플 테마: 평일 요일 및 평일 날짜를 선명한 검은색으로 (단, 공휴일은 제외하여 빨간색 보장) */
+/* 애플 낮모드 테마: 달력 요일 및 날짜 글씨체를 밤모드와 동일하게 선명하고 굵은 폰트로 통일 */
 body[data-theme="apple-light"] .calendar-weekdays {
-  border-bottom: 1.5px solid #cbd5e1;
+  border-bottom: 1.5px solid #eadfce;
+}
+
+body[data-theme="apple-light"] .weekday {
+  font-weight: 900 !important;
+  letter-spacing: -0.4px;
 }
 
 body[data-theme="apple-light"] .weekday:not(.sun):not(.sat) {
-  color: #111827 !important;
-  font-weight: 800;
+  color: #0f172a !important;
+  font-weight: 900 !important;
+}
+
+body[data-theme="apple-light"] .calendar-day-cell .day-number {
+  font-weight: 900 !important;
+  letter-spacing: -0.5px;
 }
 
 body[data-theme="apple-light"] .calendar-day-cell:not(.sun):not(.sat):not(.holiday) .day-number {
-  color: #111827 !important;
-  font-weight: 800;
+  color: #0f172a !important;
+  font-weight: 900 !important;
 }
 
 .calendar-grid {
@@ -1067,63 +1214,65 @@ body[data-theme="apple-light"] .calendar-day-cell:not(.sun):not(.sat):not(.holid
 
 .calendar-day-cell.today {
   position: relative;
-  border-radius: 9px;
+  border-radius: 12px;
   background: var(--bg-card, #ffffff);
-  /* conic-gradient로 밝은 광원 빔이 3.5px 두께 테두리를 따라 한바퀴 선명하게 순환 */
+  /* conic-gradient로 골드 광원 빔이 3px 두께 테두리를 따라 한바퀴 선명하게 순환 */
   background:
     linear-gradient(var(--bg-card, #ffffff), var(--bg-card, #ffffff)) padding-box,
     conic-gradient(
       from var(--border-angle),
       transparent 0%,
       transparent 40%,
-      rgba(2, 132, 199, 0.45) 60%,
-      #0284c7 75%,
-      #38bdf8 88%,
+      rgba(213, 169, 106, 0.4) 60%,
+      #c89d5c 75%,
+      #fef3c7 88%,
       #ffffff 94%,
-      #38bdf8 97%,
-      rgba(2, 132, 199, 0.45) 100%
+      #fef3c7 97%,
+      rgba(213, 169, 106, 0.4) 100%
     ) border-box !important;
-  border: 3.5px solid transparent !important; /* 그라데이션이 시원하게 잘 보이도록 3.5px 두께로 확대 */
+  border: 3px solid transparent !important;
   animation: borderRotate 2.5s linear infinite;
-  box-shadow: 0 0 16px rgba(56, 189, 248, 0.45) !important;
+  box-shadow: 0 0 14px rgba(213, 169, 106, 0.4) !important;
   z-index: 2;
 }
 
-/* 다크 모드(옵시디언/골드)에서의 오늘 날짜 광채 최적화 */
-body[data-theme="obsidian"] .calendar-day-cell.today {
+/* ☀️ 낮 모드: 샴페인 골드 프레임 테두리 (스크린샷 1 완벽 일치) */
+body[data-theme="apple-light"] .calendar-day-cell.today {
   background:
-    linear-gradient(#111827, #111827) padding-box,
+    linear-gradient(#fdfbf7, #fdfbf7) padding-box,
     conic-gradient(
       from var(--border-angle),
       transparent 0%,
       transparent 40%,
-      rgba(56, 189, 248, 0.35) 60%,
-      #0284c7 75%,
-      #38bdf8 88%,
+      rgba(213, 169, 106, 0.45) 60%,
+      #d5a96a 75%,
+      #fff4e0 88%,
       #ffffff 94%,
-      #38bdf8 97%,
-      rgba(56, 189, 248, 0.35) 100%
+      #fff4e0 97%,
+      rgba(213, 169, 106, 0.45) 100%
     ) border-box !important;
-  border: 3.5px solid transparent !important;
-  box-shadow: 0 0 18px rgba(56, 189, 248, 0.5) !important;
+  border: 3px solid transparent !important;
+  box-shadow: 0 0 14px rgba(213, 169, 106, 0.45) !important;
 }
 
-body[data-theme="noble-gold"] .calendar-day-cell.today {
+/* 🌙 밤 모드: 다크 메탈릭 골드 프레임 테두리 (스크린샷 2 완벽 일치) */
+body[data-theme="obsidian"] .calendar-day-cell.today,
+body:not([data-theme="apple-light"]) .calendar-day-cell.today {
   background:
-    linear-gradient(#151b26, #151b26) padding-box,
+    linear-gradient(#1a2436, #1a2436) padding-box,
     conic-gradient(
       from var(--border-angle),
       transparent 0%,
       transparent 40%,
-      rgba(217, 119, 6, 0.35) 60%,
-      #d97706 75%,
-      #fbbf24 88%,
+      rgba(200, 157, 92, 0.4) 60%,
+      #c89d5c 75%,
+      #fed7aa 88%,
       #ffffff 94%,
-      #fbbf24 97%,
-      rgba(217, 119, 6, 0.35) 100%
+      #fed7aa 97%,
+      rgba(200, 157, 92, 0.4) 100%
     ) border-box !important;
-  border: 3.5px solid transparent !important;
-  box-shadow: 0 0 18px rgba(251, 191, 36, 0.45) !important;
+  border: 3px solid transparent !important;
+  box-shadow: 0 0 16px rgba(200, 157, 92, 0.5) !important;
 }
 
 /* @property 미지원 구형 브라우저 대비 부드러운 펄스 폴백 */
@@ -1222,107 +1371,113 @@ body[data-theme="noble-gold"] .calendar-day-cell.today {
   }
 }
 
-/* --- [테마 1: 옵시디언 럭셔리 다크 - 실크 효과] --- */
+/* --- [테마 1: 옵시디언 럭셔리 다크 (밤 모드) - 스크린샷 2 완벽 일치] --- */
 .shift-badge.shift-day {
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.35) 0%, rgba(56, 189, 248, 0.22) 100%);
-  border: 1px solid rgba(56, 189, 248, 0.5);
-  color: #e0f2fe;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 2px 6px rgba(37, 99, 235, 0.15);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  background: #14382f;
+  border: 1px solid #1e5043;
+  color: #6ee7b7;
+  font-weight: 800;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.08), 0 2px 4px rgba(0, 0, 0, 0.3);
+  text-shadow: none;
 }
 
 .shift-badge.shift-night {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.36) 0%, rgba(251, 191, 36, 0.22) 100%);
-  border: 1px solid rgba(251, 191, 36, 0.55);
-  color: #fef3c7;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 2px 6px rgba(245, 158, 11, 0.15);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  background: #4d3216;
+  border: 1px solid #6e4720;
+  color: #fed7aa;
+  font-weight: 800;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.08), 0 2px 4px rgba(0, 0, 0, 0.3);
+  text-shadow: none;
 }
 
 .shift-badge.shift-early {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.35) 0%, rgba(167, 139, 250, 0.22) 100%);
-  border: 1px solid rgba(167, 139, 250, 0.5);
-  color: #ede9fe;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 2px 6px rgba(139, 92, 246, 0.15);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  background: #331f52;
+  border: 1px solid #4c2d79;
+  color: #ddd6fe;
+  font-weight: 800;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.08), 0 2px 4px rgba(0, 0, 0, 0.3);
+  text-shadow: none;
 }
 
 .shift-badge.shift-off {
-  background: linear-gradient(135deg, rgba(100, 116, 139, 0.22) 0%, rgba(71, 85, 105, 0.15) 100%);
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  color: #cbd5e1;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #94a3b8;
+  font-weight: 700;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  text-shadow: none;
 }
 
 .shift-badge.shift-overtime {
-  background: linear-gradient(135deg, rgba(244, 63, 94, 0.38) 0%, rgba(251, 113, 133, 0.22) 100%);
-  border: 1px solid rgba(251, 113, 133, 0.55);
-  color: #ffe4e6;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 2px 6px rgba(244, 63, 94, 0.18);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  background: #4a1725;
+  border: 1px solid #6d2237;
+  color: #fecdd3;
+  font-weight: 800;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.08), 0 2px 4px rgba(0, 0, 0, 0.3);
+  text-shadow: none;
 }
 
 .shift-badge.shift-vacation {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.35) 0%, rgba(52, 211, 153, 0.22) 100%);
-  border: 1px solid rgba(52, 211, 153, 0.5);
-  color: #d1fae5;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 2px 6px rgba(16, 185, 129, 0.15);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  background: #064e3b;
+  border: 1px solid #047857;
+  color: #6ee7b7;
+  font-weight: 800;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.08), 0 2px 4px rgba(0, 0, 0, 0.3);
+  text-shadow: none;
 }
 
-/* --- [테마 2: 애플 퓨어 라이트 - 파스텔 실크 효과] --- */
+/* --- [테마 2: 애플 퓨어 라이트 (낮 모드) - 스크린샷 1 완벽 일치] --- */
 body[data-theme="apple-light"] .shift-badge.shift-day {
-  background: linear-gradient(135deg, rgba(2, 132, 199, 0.16) 0%, rgba(56, 189, 248, 0.25) 100%);
-  border: 1px solid rgba(2, 132, 199, 0.4);
-  color: #0369a1;
+  background: #e2ece5;
+  border: 1px solid #c5ddce;
+  color: #1c5140;
   font-weight: 800;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 2px 4px rgba(2, 132, 199, 0.08);
+  box-shadow: 0 1px 3px rgba(28, 81, 64, 0.08);
   text-shadow: none;
 }
 
 body[data-theme="apple-light"] .shift-badge.shift-night {
-  background: linear-gradient(135deg, rgba(234, 88, 12, 0.16) 0%, rgba(251, 146, 60, 0.25) 100%);
-  border: 1px solid rgba(234, 88, 12, 0.4);
-  color: #c2410c;
+  background: #f7eadc;
+  border: 1px solid #edd3ba;
+  color: #713f19;
   font-weight: 800;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 2px 4px rgba(234, 88, 12, 0.08);
+  box-shadow: 0 1px 3px rgba(113, 63, 25, 0.08);
   text-shadow: none;
 }
 
 body[data-theme="apple-light"] .shift-badge.shift-early {
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.16) 0%, rgba(167, 139, 250, 0.25) 100%);
-  border: 1px solid rgba(124, 58, 237, 0.4);
-  color: #6d28d9;
+  background: #ebe4f6;
+  border: 1px solid #dacaf0;
+  color: #4d2f7b;
   font-weight: 800;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 2px 4px rgba(124, 58, 237, 0.08);
+  box-shadow: 0 1px 3px rgba(77, 47, 123, 0.08);
   text-shadow: none;
 }
 
 body[data-theme="apple-light"] .shift-badge.shift-off {
-  background: linear-gradient(135deg, rgba(203, 213, 225, 0.35) 0%, rgba(241, 245, 249, 0.65) 100%);
+  background: #e2e8f0;
   border: 1px solid #cbd5e1;
   color: #334155;
   font-weight: 700;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8);
+  box-shadow: none;
   text-shadow: none;
 }
 
 body[data-theme="apple-light"] .shift-badge.shift-overtime {
-  background: linear-gradient(135deg, rgba(225, 29, 72, 0.16) 0%, rgba(251, 113, 133, 0.25) 100%);
-  border: 1px solid rgba(225, 29, 72, 0.4);
-  color: #be123c;
+  background: #fde4e4;
+  border: 1px solid #f8bebe;
+  color: #9f1239;
   font-weight: 800;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 2px 4px rgba(225, 29, 72, 0.08);
+  box-shadow: 0 1px 3px rgba(159, 18, 57, 0.08);
   text-shadow: none;
 }
 
 body[data-theme="apple-light"] .shift-badge.shift-vacation {
-  background: linear-gradient(135deg, rgba(5, 150, 105, 0.16) 0%, rgba(52, 211, 153, 0.25) 100%);
-  border: 1px solid rgba(5, 150, 105, 0.4);
-  color: #047857;
+  background: #d1fae5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
   font-weight: 800;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 2px 4px rgba(5, 150, 105, 0.08);
+  box-shadow: 0 1px 3px rgba(6, 95, 70, 0.08);
   text-shadow: none;
 }
 
