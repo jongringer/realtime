@@ -107,6 +107,17 @@ class TransitManager {
     } catch (e) {}
     this.activeTimetableTab = 'seonyudo';
 
+    // 정류소 전체 버스 도착정보(ARS 직결) 모달 관련 설정
+    this.stationBusApiKey = '0f40f3c7a3220ef7d0f45825f4364e47d05d10fa087632a03db7c8c2222aae63';
+    this.stationBusesCache = {};
+    this.stationModalFilter = 'all'; // 'all' | 'town' | 'blue' | 'green' | 'other'
+    this.stationModalSort = 'arrival'; // 'arrival' | 'route'
+    this.stationModalCountdown = 15;
+    this.stationModalTicker = null;
+    this.currentStationModalArsId = '15-154';
+    this.currentStationModalName = '이대목동병원·목동6단지앞';
+    this.isFetchingStationBuses = false;
+
     this.initElements();
     this.initEvents();
 
@@ -1198,8 +1209,22 @@ class TransitManager {
       <div class="bit-board-card">
         <div class="bit-header-row">
           <div class="bit-title-group">
-            <span class="bit-ars-badge">ARS ${config.arsId}</span>
-            <strong class="bit-station-name">${config.stationName}</strong>
+            <span class="bit-ars-badge clickable-ars-badge" 
+                  onclick="window.transitManager && window.transitManager.openStationBusesModal('${config.arsId}', '${config.stationName}')" 
+                  role="button" 
+                  tabindex="0" 
+                  title="이 정류소 전체 버스 도착정보(카카오맵 스타일) 팝업 조회">
+              ARS ${config.arsId} 🔍
+            </span>
+            <strong class="bit-station-name clickable-station-name" 
+                    onclick="window.transitManager && window.transitManager.openStationBusesModal('${config.arsId}', '${config.stationName}')" 
+                    title="이 정류소 전체 버스 도착정보(카카오맵 스타일) 팝업 조회">${config.stationName}</strong>
+            <button type="button" 
+                    class="btn-open-all-buses" 
+                    onclick="window.transitManager && window.transitManager.openStationBusesModal('${config.arsId}', '${config.stationName}')" 
+                    title="이 정류소에 정차하는 모든 버스 실시간 도착정보 팝업 조회">
+              전체버스 ↗
+            </button>
           </div>
           <div style="display:flex; align-items:center; gap:6px;">
             <span class="bit-status-live"><span class="bit-status-dot"></span> 서울시 버스실시간</span>
@@ -1604,6 +1629,601 @@ class TransitManager {
     }
 
     bodyContainer.innerHTML = contentHtml;
+  }
+
+  // ==========================================
+  // 4. 정류소 전체 버스 도착정보 팝업 시스템 (카카오맵 실시간 도착 스타일)
+  // ARS 15-154 클릭 시 정차하는 모든 버스(6637, 571, 674, 700부천, 6018, 양천01, 603, 6620 등)의
+  // 다음/다다음 버스 도착정보를 실시간 초 단위 카운트다운과 함께 팝업으로 제공
+  // ==========================================
+
+  async fetchStationBuses(arsId) {
+    const cleanArsId = String(arsId).replace(/[^0-9]/g, '');
+    const directUrl = `http://ws.bus.go.kr/api/rest/stationinfo/getStationByUid?serviceKey=${this.stationBusApiKey}&arsId=${cleanArsId}&resultType=json`;
+
+    // 1차: 직접 HTTP 통신
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const res = await fetch(directUrl, {
+        cache: 'no-store',
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const data = await res.json();
+        const items = data?.msgBody?.itemList;
+        if (Array.isArray(items) && items.length > 0) {
+          this.stationBusesCache[cleanArsId] = items;
+          return items;
+        }
+      }
+    } catch (e) {
+      // 프록시 fallback
+    }
+
+    // 2차: CORS 프록시 fallback (웹 브라우저 환경)
+    const proxyList = [
+      url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+      url => `https://corsproxy.io/?${encodeURIComponent(url)}`
+    ];
+
+    for (const makeProxy of proxyList) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
+        const proxyUrl = makeProxy(directUrl);
+        const res = await fetch(proxyUrl, {
+          cache: 'no-store',
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+          const data = await res.json();
+          const items = data?.msgBody?.itemList;
+          if (Array.isArray(items) && items.length > 0) {
+            this.stationBusesCache[cleanArsId] = items;
+            return items;
+          }
+        }
+      } catch (err) {}
+    }
+
+    return this.stationBusesCache[cleanArsId] || [];
+  }
+
+  openStationBusesModal(arsId = '15-154', stationName = '') {
+    this.currentStationModalArsId = arsId || '15-154';
+    this.currentStationModalName = stationName || (String(arsId).includes('154') ? '이대목동병원·목동6단지앞' : '선유도역1번출구·한신아파트');
+    this.stationModalFilter = 'all';
+    this.stationModalCountdown = 15;
+
+    this.ensureStationBusesModal();
+    const modal = document.getElementById('stationBusesModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      modal.classList.add('active');
+    }
+
+    this.loadStationBusesData(true);
+    this.startStationBusesTicker();
+  }
+
+  closeStationBusesModal() {
+    const modal = document.getElementById('stationBusesModal');
+    if (modal) {
+      modal.style.display = 'none';
+      modal.classList.remove('active');
+    }
+    this.stopStationBusesTicker();
+  }
+
+  switchStationModalFilter(filterKey) {
+    this.stationModalFilter = filterKey;
+    this.renderStationBusesModal();
+  }
+
+  toggleStationModalSort(sortKey) {
+    if (sortKey) {
+      this.stationModalSort = sortKey;
+    } else {
+      this.stationModalSort = (this.stationModalSort === 'arrival') ? 'route' : 'arrival';
+    }
+    this.renderStationBusesModal();
+  }
+
+  triggerStationModalRefresh() {
+    this.stationModalCountdown = 15;
+    const btn = document.getElementById('btnRefreshStationBuses');
+    if (btn) btn.classList.add('spinning');
+    this.loadStationBusesData(true).finally(() => {
+      if (btn) btn.classList.remove('spinning');
+    });
+  }
+
+  ensureStationBusesModal() {
+    if (document.getElementById('stationBusesModal')) return;
+
+    const modalHtml = `
+      <div class="modal-overlay" id="stationBusesModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.7); backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px); z-index:100000; justify-content:center; align-items:center; padding:12px;">
+        <div class="modal-container station-buses-container" style="background:#f8fafc; width:100%; max-width:480px; max-height:90vh; border-radius:20px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.35); display:flex; flex-direction:column; overflow:hidden; border:1px solid #cbd5e1;">
+          
+          <!-- 모달 상단 헤더 (카카오맵 스타일 다크 블루 그라데이션) -->
+          <div class="modal-header station-modal-header" style="background:linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color:#ffffff; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; align-items:center; gap:8px; min-width:0; flex:1;">
+              <span style="font-size:18px; flex-shrink:0;">🚏</span>
+              <div style="min-width:0; overflow:hidden;">
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <strong id="stModalStationName" style="font-size:15px; font-weight:900; letter-spacing:-0.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">정류소 전체 버스 도착</strong>
+                  <span id="stModalArsBadge" style="background:#0284c7; color:#ffffff; font-size:10px; font-weight:800; padding:2px 6px; border-radius:4px; flex-shrink:0;">ARS 15-154</span>
+                </div>
+                <div style="font-size:11px; color:#94a3b8; margin-top:2px; display:flex; align-items:center; gap:4px;">
+                  <span>카카오맵 실시간 도착정보 직결</span>
+                  <span>·</span>
+                  <span id="stModalRefreshTimerText" style="color:#38bdf8; font-weight:700;">15초 자동갱신</span>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+              <button type="button" id="btnRefreshStationBuses" onclick="window.transitManager && window.transitManager.triggerStationModalRefresh()" title="실시간 도착정보 새로고침" style="background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); color:#ffffff; font-size:12px; font-weight:700; padding:5px 9px; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; gap:3px;">
+                <span class="refresh-icon">🔄</span> 새로고침
+              </button>
+              <button type="button" class="modal-close-btn" onclick="window.transitManager && window.transitManager.closeStationBusesModal()" style="background:rgba(255,255,255,0.15); border:none; color:#ffffff; font-size:16px; width:30px; height:30px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
+            </div>
+          </div>
+
+          <!-- 서브 헤더: 카테고리 필터 탭 & 정렬 버튼 바 -->
+          <div style="background:#ffffff; border-bottom:1px solid #e2e8f0; padding:8px 12px; display:flex; flex-direction:column; gap:6px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+              <!-- 노선 유형별 필터 칩 -->
+              <div id="stModalFilterChips" style="display:flex; gap:4px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none; -webkit-overflow-scrolling:touch;">
+                <!-- JS 렌더링 -->
+              </div>
+              <!-- 정렬 토글 -->
+              <div id="stModalSortWrap" style="flex-shrink:0;">
+                <!-- JS 렌더링 -->
+              </div>
+            </div>
+          </div>
+
+          <!-- 모달 본문: 버스 도착 카드 목록 (스크롤) -->
+          <div class="modal-body" id="stModalBodyContainer" style="padding:12px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:8px; background:#f8fafc;">
+            <!-- JS 렌더링 -->
+          </div>
+
+          <!-- 모달 푸터 -->
+          <div class="modal-footer" style="padding:10px 14px; background:#ffffff; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+            <span id="stModalFooterInfo" style="font-size:11px; color:#64748b;">💡 서울시 TOPIS 실시간 버스도착정보 직결 전광판</span>
+            <button type="button" class="btn-primary" onclick="window.transitManager && window.transitManager.closeStationBusesModal()" style="background:#0284c7; color:#ffffff; border:none; padding:7px 16px; border-radius:8px; font-weight:700; cursor:pointer; font-size:12px;">닫기</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    const modalEl = document.getElementById('stationBusesModal');
+    if (modalEl) {
+      modalEl.addEventListener('click', (e) => {
+        if (e.target === modalEl) this.closeStationBusesModal();
+      });
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const m = document.getElementById('stationBusesModal');
+        if (m && m.style.display !== 'none') this.closeStationBusesModal();
+      }
+    });
+  }
+
+  async loadStationBusesData(showLoading = false) {
+    if (this.isFetchingStationBuses) return;
+    this.isFetchingStationBuses = true;
+
+    const cleanArsId = String(this.currentStationModalArsId).replace(/[^0-9]/g, '');
+    const bodyContainer = document.getElementById('stModalBodyContainer');
+
+    if (showLoading && bodyContainer && (!this.stationBusesCache[cleanArsId] || this.stationBusesCache[cleanArsId].length === 0)) {
+      bodyContainer.innerHTML = `
+        <div style="padding:40px 16px; text-align:center;">
+          <div style="font-size:28px; animation:spin 1s infinite linear; display:inline-block; margin-bottom:10px;">🔄</div>
+          <div style="font-size:14.5px; font-weight:800; color:#0284c7;">정류소 전체 버스 도착정보 수신 중...</div>
+          <p style="font-size:11.5px; color:#64748b; margin-top:4px;">서울시 TOPIS 서버에서 이 정류소의 모든 버스 실시간 위치를 조회하고 있습니다.</p>
+        </div>
+      `;
+    }
+
+    try {
+      await this.fetchStationBuses(this.currentStationModalArsId);
+      this.renderStationBusesModal();
+    } catch (err) {
+      console.error('loadStationBusesData 오류:', err);
+      if (bodyContainer) {
+        bodyContainer.innerHTML = `
+          <div style="padding:32px 16px; text-align:center; color:#64748b;">
+            <div style="font-size:26px; margin-bottom:8px;">⚠️</div>
+            <div style="font-size:14px; font-weight:800; color:#dc2626;">도착정보를 가져오지 못했습니다.</div>
+            <p style="font-size:11.5px; margin-top:4px;">일시적인 통신 지연입니다. 잠시 후 다시 시도해 주세요.</p>
+            <button type="button" onclick="window.transitManager && window.transitManager.loadStationBusesData(true)" style="margin-top:12px; background:#0284c7; color:#fff; border:none; padding:6px 14px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;">다시 시도</button>
+          </div>
+        `;
+      }
+    } finally {
+      this.isFetchingStationBuses = false;
+    }
+  }
+
+  getRouteBadgeStyle(routeType, rtNm) {
+    const t = String(routeType);
+    if (t === '2' || rtNm.startsWith('양천')) {
+      return { typeName: '마을', badgeBg: '#059669', badgeColor: '#ffffff', pillBg: '#ecfdf5', pillText: '#059669', pillBorder: '#a7f3d0' };
+    }
+    if (t === '3') {
+      return { typeName: '간선', badgeBg: '#1d4ed8', badgeColor: '#ffffff', pillBg: '#eff6ff', pillText: '#1d4ed8', pillBorder: '#bfdbfe' };
+    }
+    if (t === '4') {
+      return { typeName: '지선', badgeBg: '#16a34a', badgeColor: '#ffffff', pillBg: '#f0fdf4', pillText: '#15803d', pillBorder: '#bbf7d0' };
+    }
+    if (t === '1') {
+      return { typeName: '공항', badgeBg: '#b45309', badgeColor: '#ffffff', pillBg: '#fef3c7', pillText: '#b45309', pillBorder: '#fde68a' };
+    }
+    if (t === '8') {
+      return { typeName: '경기', badgeBg: '#6366f1', badgeColor: '#ffffff', pillBg: '#eef2ff', pillText: '#4338ca', pillBorder: '#c7d2fe' };
+    }
+    if (t === '6') {
+      return { typeName: '광역', badgeBg: '#dc2626', badgeColor: '#ffffff', pillBg: '#fef2f2', pillText: '#dc2626', pillBorder: '#fecaca' };
+    }
+    return { typeName: '일반', badgeBg: '#475569', badgeColor: '#ffffff', pillBg: '#f1f5f9', pillText: '#334155', pillBorder: '#cbd5e1' };
+  }
+
+  renderStationBusesModal() {
+    const nameEl = document.getElementById('stModalStationName');
+    const arsBadgeEl = document.getElementById('stModalArsBadge');
+    const filterContainer = document.getElementById('stModalFilterChips');
+    const sortWrap = document.getElementById('stModalSortWrap');
+    const bodyContainer = document.getElementById('stModalBodyContainer');
+    const footerInfo = document.getElementById('stModalFooterInfo');
+
+    if (!bodyContainer) return;
+
+    if (nameEl) nameEl.textContent = this.currentStationModalName;
+    if (arsBadgeEl) arsBadgeEl.textContent = `ARS ${this.currentStationModalArsId}`;
+
+    const cleanArsId = String(this.currentStationModalArsId).replace(/[^0-9]/g, '');
+    const rawItems = this.stationBusesCache[cleanArsId] || [];
+
+    if (rawItems.length === 0) {
+      bodyContainer.innerHTML = `
+        <div style="padding:32px 16px; text-align:center; color:#64748b;">
+          <div style="font-size:24px; margin-bottom:8px;">🚏</div>
+          <div style="font-size:14px; font-weight:800; color:#334155;">현재 도착 예정인 버스 정보가 없습니다.</div>
+          <p style="font-size:11.5px; margin-top:4px;">심야 시간이거나 버스 운행 준비 중일 수 있습니다.</p>
+        </div>
+      `;
+      return;
+    }
+
+    const now = new Date();
+    const nowMs = now.getTime();
+
+    // 1. 카테고리별 카운트 계산
+    const countTotal = rawItems.length;
+    const countTown = rawItems.filter(i => String(i.routeType) === '2' || i.rtNm.startsWith('양천')).length;
+    const countBlue = rawItems.filter(i => String(i.routeType) === '3').length;
+    const countGreen = rawItems.filter(i => String(i.routeType) === '4').length;
+    const countOther = rawItems.filter(i => !['2','3','4'].includes(String(i.routeType)) && !i.rtNm.startsWith('양천')).length;
+
+    // 필터 칩 렌더링
+    if (filterContainer) {
+      const filters = [
+        { key: 'all', label: `전체 ${countTotal}` },
+        { key: 'town', label: `마을 ${countTown}` },
+        { key: 'blue', label: `간선 ${countBlue}` },
+        { key: 'green', label: `지선 ${countGreen}` }
+      ];
+      if (countOther > 0) {
+        filters.push({ key: 'other', label: `경기·공항 ${countOther}` });
+      }
+
+      filterContainer.innerHTML = filters.map(f => {
+        const active = (this.stationModalFilter === f.key);
+        return `
+          <button type="button" onclick="window.transitManager && window.transitManager.switchStationModalFilter('${f.key}')"
+            style="padding:4px 9px; border-radius:14px; font-size:11px; font-weight:${active ? '800' : '600'}; border:1px solid ${active ? '#0284c7' : '#e2e8f0'}; background:${active ? '#0284c7' : '#ffffff'}; color:${active ? '#ffffff' : '#64748b'}; cursor:pointer; white-space:nowrap; transition:all 0.15s;">
+            ${f.label}
+          </button>
+        `;
+      }).join('');
+    }
+
+    // 정렬 토글 렌더링
+    if (sortWrap) {
+      const isArrivalSort = (this.stationModalSort === 'arrival');
+      sortWrap.innerHTML = `
+        <button type="button" onclick="window.transitManager && window.transitManager.toggleStationModalSort()"
+          title="정렬 기준 변경 (도착순 ↔ 노선번호순)"
+          style="padding:4px 8px; border-radius:8px; font-size:10.5px; font-weight:700; border:1px solid #cbd5e1; background:#f8fafc; color:#334155; cursor:pointer; display:inline-flex; align-items:center; gap:3px;">
+          <span>${isArrivalSort ? '⏱️ 도착순' : '🔤 번호순'}</span>
+          <span style="font-size:9px; color:#94a3b8;">↕</span>
+        </button>
+      `;
+    }
+
+    // 2. 필터 적용
+    let filtered = rawItems.filter(item => {
+      const t = String(item.routeType);
+      const isTown = (t === '2' || item.rtNm.startsWith('양천'));
+      if (this.stationModalFilter === 'all') return true;
+      if (this.stationModalFilter === 'town') return isTown;
+      if (this.stationModalFilter === 'blue') return t === '3';
+      if (this.stationModalFilter === 'green') return t === '4';
+      if (this.stationModalFilter === 'other') return (!['2','3','4'].includes(t) && !isTown);
+      return true;
+    });
+
+    // 3. 각 버스 파싱
+    const parsedList = filtered.map(item => {
+      const traTime1 = parseInt(item.traTime1 || '0', 10);
+      const arrmsg1 = (item.arrmsg1 || '').trim();
+      const stationNm1 = (item.stationNm1 || '').trim();
+      const isArriving1 = arrmsg1.includes('곧 도착') || (traTime1 > 0 && traTime1 <= 35);
+      const isWait1 = arrmsg1.includes('출발대기');
+      const isEnd1 = arrmsg1.includes('운행종료');
+
+      let sec1 = traTime1;
+      if (isArriving1 && sec1 <= 0) sec1 = 25;
+
+      // 정류장 수
+      let stopText1 = '';
+      const m1 = arrmsg1.match(/\[(\d+)번째\s*전\]/);
+      if (m1) {
+        stopText1 = `${m1[1]}번째 전`;
+      } else if (item.staOrd && item.sectOrd1) {
+        const diff = parseInt(item.staOrd, 10) - parseInt(item.sectOrd1, 10);
+        if (diff > 0) stopText1 = `${diff}번째 전`;
+      }
+
+      // 2번째 버스
+      const traTime2 = parseInt(item.traTime2 || '0', 10);
+      const arrmsg2 = (item.arrmsg2 || '').trim();
+      const stationNm2 = (item.stationNm2 || '').trim();
+      const isArriving2 = arrmsg2.includes('곧 도착') || (traTime2 > 0 && traTime2 <= 35);
+      const isWait2 = arrmsg2.includes('출발대기');
+      const isEnd2 = arrmsg2.includes('운행종료');
+
+      let sec2 = traTime2;
+      if (isArriving2 && sec2 <= 0) sec2 = 50;
+
+      let stopText2 = '';
+      const m2 = arrmsg2.match(/\[(\d+)번째\s*전\]/);
+      if (m2) {
+        stopText2 = `${m2[1]}번째 전`;
+      } else if (item.staOrd && item.sectOrd2) {
+        const diff2 = parseInt(item.staOrd, 10) - parseInt(item.sectOrd2, 10);
+        if (diff2 > 0) stopText2 = `${diff2}번째 전`;
+      }
+
+      // 정렬 랭크
+      let rank = 1;
+      let effectiveSec = sec1;
+      if (isArriving1) { rank = 0; effectiveSec = 0; }
+      else if (sec1 > 0) { rank = 1; effectiveSec = sec1; }
+      else if (isWait1) { rank = 2; effectiveSec = 99999; }
+      else if (isEnd1) { rank = 3; effectiveSec = 999999; }
+      else { rank = 2; effectiveSec = 99999; }
+
+      return {
+        item,
+        rank,
+        effectiveSec,
+        sec1,
+        targetTime1: (sec1 > 0) ? (nowMs + sec1 * 1000) : null,
+        arrmsg1,
+        stationNm1,
+        stopText1,
+        isArriving1,
+        isWait1,
+        isEnd1,
+        sec2,
+        targetTime2: (sec2 > 0) ? (nowMs + sec2 * 1000) : null,
+        arrmsg2,
+        stationNm2,
+        stopText2,
+        isArriving2,
+        isWait2,
+        isEnd2
+      };
+    });
+
+    // 4. 정렬 적용
+    if (this.stationModalSort === 'arrival') {
+      parsedList.sort((a, b) => {
+        if (a.rank !== b.rank) return a.rank - b.rank;
+        if (a.effectiveSec !== b.effectiveSec) return a.effectiveSec - b.effectiveSec;
+        return a.item.rtNm.localeCompare(b.item.rtNm, undefined, { numeric: true });
+      });
+    } else {
+      // 노선번호순
+      parsedList.sort((a, b) => {
+        return a.item.rtNm.localeCompare(b.item.rtNm, undefined, { numeric: true });
+      });
+    }
+
+    // 5. 카카오맵 스타일 카드 렌더링
+    const cardsHtml = parsedList.map(p => {
+      const it = p.item;
+      const badge = this.getRouteBadgeStyle(it.routeType, it.rtNm);
+
+      // 첫 번째 버스 도착시간/상태 렌더링
+      let eta1Html = '';
+      if (p.isArriving1) {
+        eta1Html = `<span class="k-eta k-eta-arriving" style="color:#dc2626; font-size:15px; font-weight:900;">⚡ 곧 도착</span>`;
+      } else if (p.isWait1) {
+        eta1Html = `<span class="k-eta k-eta-wait" style="color:#d97706; font-size:13.5px; font-weight:800;">⏸️ 출발대기</span>`;
+      } else if (p.isEnd1) {
+        eta1Html = `<span class="k-eta k-eta-end" style="color:#64748b; font-size:13px; font-weight:700;">🚫 운행종료</span>`;
+      } else if (p.targetTime1) {
+        eta1Html = `<span class="k-eta k-eta-live live-station-bus-countdown" data-target-time="${p.targetTime1}" style="color:#0284c7; font-size:15px; font-weight:900;">${this.formatSec(p.sec1)}</span>`;
+      } else {
+        eta1Html = `<span style="color:#475569; font-size:13px; font-weight:700;">${p.arrmsg1 || '운행 중'}</span>`;
+      }
+
+      // 첫 번째 버스 위치 정보 (정류장 수 + 현재 정류장명)
+      let loc1Html = '';
+      if (p.stopText1 || p.stationNm1) {
+        const stopPill = p.stopText1 ? `<span style="background:#e0f2fe; color:#0369a1; font-weight:800; font-size:11px; padding:1px 5px; border-radius:4px; margin-right:4px;">${p.stopText1}</span>` : '';
+        const curName = p.stationNm1 ? `<span style="color:#64748b; font-size:11.5px;">${p.stationNm1}</span>` : '';
+        loc1Html = `<span class="k-loc-wrap" style="display:inline-flex; align-items:center;">${stopPill}${curName}</span>`;
+      }
+
+      // 도착 예정 시각
+      let clock1Html = '';
+      if (p.targetTime1 && !p.isWait1 && !p.isEnd1) {
+        const dt1 = new Date(p.targetTime1);
+        const clockStr1 = `${String(dt1.getHours()).padStart(2, '0')}:${String(dt1.getMinutes()).padStart(2, '0')}`;
+        clock1Html = `<span style="font-size:11px; color:#0284c7; font-weight:700; margin-left:auto;">(${clockStr1} 도착)</span>`;
+      }
+
+      // 두 번째 버스 렌더링
+      let next2Html = '';
+      if (p.isEnd2) {
+        next2Html = `<span style="color:#94a3b8; font-size:11.5px;">다다음: 운행종료</span>`;
+      } else if (p.isWait2) {
+        next2Html = `<span style="color:#d97706; font-size:11.5px; font-weight:700;">다다음: 차고지 대기</span>`;
+      } else if (p.isArriving2) {
+        next2Html = `<span style="color:#dc2626; font-size:11.5px; font-weight:800;">다다음: ⚡ 곧 도착</span>`;
+      } else if (p.targetTime2) {
+        const dt2 = new Date(p.targetTime2);
+        const clockStr2 = `${String(dt2.getHours()).padStart(2, '0')}:${String(dt2.getMinutes()).padStart(2, '0')}`;
+        const stopTag2 = p.stopText2 ? ` [${p.stopText2}]` : '';
+        next2Html = `
+          <span style="font-size:11.5px; color:#475569;">
+            다다음: <b class="live-station-bus-countdown" data-target-time="${p.targetTime2}" style="color:#2563eb; font-weight:800;">${Math.floor(p.sec2 / 60)}분 후</b>${stopTag2}
+            <span style="color:#64748b; font-size:11px; margin-left:2px;">(${clockStr2})</span>
+          </span>
+        `;
+      } else if (p.arrmsg2) {
+        next2Html = `<span style="font-size:11.5px; color:#64748b;">다다음: ${p.arrmsg2}</span>`;
+      }
+
+      // 좌석 잔여/탑승 인원
+      const seatInfo = it.remndrNmpr1 && parseInt(it.remndrNmpr1, 10) > 0
+        ? `<span style="background:#fef3c7; color:#92400e; font-size:10px; font-weight:800; padding:1px 5px; border-radius:4px; margin-left:4px;">잔여 ${it.remndrNmpr1}석</span>`
+        : '';
+
+      return `
+        <div class="k-bus-card" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:11px 13px; box-shadow:0 1px 3px rgba(0,0,0,0.03); transition:all 0.15s ease;">
+          <!-- 버스 헤더: 노선 번호 뱃지 + 방면 + 다음 정류장 -->
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <div style="display:flex; align-items:center; gap:7px;">
+              <span style="background:${badge.badgeBg}; color:${badge.badgeColor}; font-size:15.5px; font-weight:900; padding:3px 9px; border-radius:7px; letter-spacing:0.3px; display:inline-block; line-height:1.2;">${it.rtNm}</span>
+              <span style="background:${badge.pillBg}; color:${badge.pillText}; border:1px solid ${badge.pillBorder}; font-size:10.5px; font-weight:800; padding:1px 6px; border-radius:4px;">${badge.typeName}</span>
+              ${seatInfo}
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:12.5px; font-weight:800; color:#0f172a;"><strong style="color:#0369a1;">${it.adirection || ''}</strong> 방면</div>
+              ${it.nxtStn ? `<div style="font-size:10.5px; color:#64748b; margin-top:1px;">다음: ${it.nxtStn}</div>` : ''}
+            </div>
+          </div>
+
+          <!-- 🔴 다음 버스 도착 영역 -->
+          <div style="background:#f8fafc; border:1px solid #edf2f7; border-radius:8px; padding:8px 10px; margin-bottom:4px; display:flex; flex-direction:column; gap:4px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span style="color:#dc2626; font-size:11px; font-weight:800; display:inline-flex; align-items:center; gap:3px;">
+                  <span style="width:7px; height:7px; border-radius:50%; background:#dc2626; display:inline-block;"></span>
+                  다음 버스
+                </span>
+                ${loc1Html}
+              </div>
+              ${clock1Html}
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
+              <div>${eta1Html}</div>
+            </div>
+          </div>
+
+          <!-- 🔵 다다음 버스 도착 영역 -->
+          ${next2Html ? `
+            <div style="background:#ffffff; border:1px dashed #e2e8f0; border-radius:6px; padding:5px 8px; display:flex; align-items:center; justify-content:space-between;">
+              <div style="display:flex; align-items:center; gap:4px;">
+                <span style="color:#2563eb; font-size:10px; font-weight:800;">🔵</span>
+                ${next2Html}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+
+    bodyContainer.innerHTML = cardsHtml;
+
+    if (footerInfo) {
+      footerInfo.innerHTML = `💡 서울시 TOPIS 실시간 버스도착정보 시스템 직결 (이 정류소 전체 <b>${countTotal}개</b> 노선)`;
+    }
+  }
+
+  startStationBusesTicker() {
+    this.stopStationBusesTicker();
+    this.stationModalTicker = setInterval(() => {
+      this.updateStationBusesTickers();
+    }, 1000);
+  }
+
+  stopStationBusesTicker() {
+    if (this.stationModalTicker) {
+      clearInterval(this.stationModalTicker);
+      this.stationModalTicker = null;
+    }
+  }
+
+  updateStationBusesTickers() {
+    const modal = document.getElementById('stationBusesModal');
+    if (!modal || modal.style.display === 'none') {
+      this.stopStationBusesTicker();
+      return;
+    }
+
+    const now = Date.now();
+    const els = modal.querySelectorAll('.live-station-bus-countdown');
+    if (els && els.length > 0) {
+      els.forEach(el => {
+        const targetTime = parseInt(el.getAttribute('data-target-time'), 10);
+        if (!targetTime || isNaN(targetTime)) return;
+
+        const diffSec = Math.max(0, Math.floor((targetTime - now) / 1000));
+        if (diffSec <= 0) {
+          el.innerHTML = `<span style="color:#dc2626; font-weight:900;">⚡ 곧 도착</span>`;
+        } else if (diffSec < 60) {
+          el.innerHTML = `<span style="color:#dc2626; font-weight:900;">${diffSec}초 후</span>`;
+        } else {
+          const m = Math.floor(diffSec / 60);
+          const s = diffSec % 60;
+          const sStr = s < 10 ? '0' + s : s;
+          el.innerHTML = `<span style="font-weight:900;">${m}분</span> <span style="font-size:12px; font-weight:700;">${sStr}초 후</span>`;
+        }
+      });
+    }
+
+    // 15초 자동 새로고침 카운트다운
+    if (this.stationModalCountdown > 0) {
+      this.stationModalCountdown--;
+    }
+
+    const timerTextEl = document.getElementById('stModalRefreshTimerText');
+    if (timerTextEl) {
+      timerTextEl.textContent = `${this.stationModalCountdown}초 후 자동갱신`;
+    }
+
+    if (this.stationModalCountdown <= 0) {
+      this.stationModalCountdown = 15;
+      if (!this.isFetchingStationBuses) {
+        this.loadStationBusesData(false);
+      }
+    }
   }
 
   /**
@@ -2061,4 +2681,10 @@ class TransitManager {
 
 document.addEventListener('DOMContentLoaded', () => {
   window.transitManager = new TransitManager();
+  window.openStationBusesModal = (arsId, name) => {
+    if (window.transitManager) window.transitManager.openStationBusesModal(arsId, name);
+  };
+  window.closeStationBusesModal = () => {
+    if (window.transitManager) window.transitManager.closeStationBusesModal();
+  };
 });
