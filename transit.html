@@ -928,7 +928,7 @@
   <main class="container">
     <header class="header-card">
       <div class="header-top">
-        <span class="header-badge">🟢 실시간 버스 · 9호선 역사시간표 우선</span>
+        <span class="header-badge">⚡ 서울시 실시간 버스 & 9호선 열차번호 동시 연동</span>
         <span class="live-time-pill" id="liveClock">--:--:--</span>
       </div>
       <h1 class="header-title">출퇴근 실시간 대중교통 전광판</h1>
@@ -940,9 +940,9 @@
     <div class="notice-box">
       <span style="font-size: 16px;">⚡</span>
       <div>
-        <b>실시간 버스 GPS 및 9호선 역사 고정시간표 우선 연동</b>
+        <b>서울시 TOPIS 실시간 버스 & 9호선 실시간 열차 직결</b>
         <div style="font-size: 11px; color: #166534; margin-top: 2px;">
-          9호선 일반열차는 오디세이보다 역사 공식 고정 시간표를 최우선으로 반영하여 정확한 출발 시각과 잔여 초를 카운트다운합니다.
+          서울시 공식 공공데이터를 통해 실시간 버스 차량번호 및 9호선 실시간 열차번호와 실시간 위치를 1초 단위로 안내합니다.
         </div>
       </div>
     </div>
@@ -1110,14 +1110,13 @@
       } catch (e) {}
 
       const proxies = [
-        url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-        url => `https://corsproxy.io/?${encodeURIComponent(url)}`
+        url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
       ];
 
       for (const makeProxy of proxies) {
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 3500);
+          const timeoutId = setTimeout(() => controller.abort(), 8000);
           const proxyUrl = makeProxy(directUrl);
           const res = await fetch(proxyUrl, { cache: 'no-store', signal: controller.signal });
           clearTimeout(timeoutId);
@@ -1154,14 +1153,13 @@
       } catch (e) {}
 
       const proxies = [
-        url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-        url => `https://corsproxy.io/?${encodeURIComponent(url)}`
+        url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
       ];
 
       for (const makeProxy of proxies) {
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 3500);
+          const timeoutId = setTimeout(() => controller.abort(), 8000);
           const proxyUrl = makeProxy(directUrl);
           const res = await fetch(proxyUrl, { cache: 'no-store', signal: controller.signal });
           clearTimeout(timeoutId);

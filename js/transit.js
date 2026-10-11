@@ -387,16 +387,15 @@ class TransitManager {
       // Android가 아닌 웹(HTTPS) 브라우저 환경에서 Mixed Content 차단 발생 시 프록시 fallback
     }
 
-    // 2차: 안전한 CORS 프록시 fallback (웹 배포 환경)
+    // 2차: 안전한 CORS/HTTPS 프록시 fallback (웹 배포 환경)
     const proxyList = [
-      url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-      url => `https://corsproxy.io/?${encodeURIComponent(url)}`
+      url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
     ];
 
     for (const makeProxy of proxyList) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3500);
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
         const proxyUrl = makeProxy(directUrl);
         const res = await fetch(proxyUrl, {
           cache: 'no-store',
@@ -447,16 +446,15 @@ class TransitManager {
       // 프록시 fallback
     }
 
-    // 2차: CORS 프록시 fallback
+    // 2차: 안전한 CORS/HTTPS 프록시 fallback (웹 배포 환경)
     const proxyList = [
-      url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-      url => `https://corsproxy.io/?${encodeURIComponent(url)}`
+      url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
     ];
 
     for (const makeProxy of proxyList) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3500);
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
         const proxyUrl = makeProxy(directUrl);
         const res = await fetch(proxyUrl, {
           cache: 'no-store',
@@ -1663,16 +1661,15 @@ class TransitManager {
       // 프록시 fallback
     }
 
-    // 2차: CORS 프록시 fallback (웹 브라우저 환경)
+    // 2차: 안전한 CORS/HTTPS 프록시 fallback (웹 브라우저 환경)
     const proxyList = [
-      url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-      url => `https://corsproxy.io/?${encodeURIComponent(url)}`
+      url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
     ];
 
     for (const makeProxy of proxyList) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3500);
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
         const proxyUrl = makeProxy(directUrl);
         const res = await fetch(proxyUrl, {
           cache: 'no-store',
