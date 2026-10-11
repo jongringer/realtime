@@ -14,7 +14,7 @@
   <meta property=og:image content=https://kbs-4shift-5855.surge.sh/icons/og-image.png?v=202610_icon>
   <meta property=og:url content=https://kbs-4shift-5855.surge.sh>
   <meta name=twitter:card content=summary_large_image>
-  <link rel=stylesheet href=css/style.css?v=20261010_v1>
+  <link rel=stylesheet href=css/style.css?v=20261011_v2>
   <script src=https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js></script>
   <script>if(typeof pdfjsLib!=='undefined'){pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';}</script>
   <script src=https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js></script>
@@ -151,17 +151,19 @@
 
     <!-- 실시간 버스 정류장(5자리 ID) 및 지하철역 실시간 도착 전광판 섹터 -->
     <section class="transit-lookup-card" id="transitLookupSection">
-      <div class="transit-lookup-header">
-        <div class="transit-lookup-title-wrap">
+      <div class="transit-lookup-header transit-lookup-header-stacked">
+        <!-- 1행: 타이틀 한 줄로 시원하게 -->
+        <div class="transit-lookup-title-row">
           <span class="transit-lookup-header-icon">🚏🚇</span>
-          <div>
-            <h3 class="transit-lookup-title">실시간 버스 · 지하철 도착 안내</h3>
-            <p class="transit-lookup-subtitle">정류장 5자리 ID / 정류소명 / 지하철역 실시간 연동</p>
-          </div>
+          <h3 class="transit-lookup-title">실시간 버스 · 지하철 도착정보</h3>
         </div>
-        <div class="transit-lookup-header-actions">
-          <span id="transitLookupLiveBadge" class="transit-lookup-live-badge">⚡ TOPIS 직결</span>
-          <button type="button" class="btn-lookup-refresh" id="btnLookupRefresh" title="도착 정보 새로고침">🔄</button>
+        <!-- 2행: 부제목(좌측) + TOPIS 직결 및 새로고침 버튼 (우측) -->
+        <div class="transit-lookup-sub-row">
+          <p class="transit-lookup-subtitle">정류장 5자리 ID / 정류소명 / 지하철역 실시간 연동</p>
+          <div class="transit-lookup-header-actions">
+            <span id="transitLookupLiveBadge" class="transit-lookup-live-badge">⚡ TOPIS 직결</span>
+            <button type="button" class="btn-lookup-refresh" id="btnLookupRefresh" title="도착 정보 새로고침">🔄</button>
+          </div>
         </div>
       </div>
 
@@ -440,6 +442,6 @@
   <script src=js/app.js?v=20261009_v1></script>
   <script src=js/timetable-15154.js?v=20260929_tt></script>
   <script src=js/transit.js?v=20261010_v3></script>
-  <script src=js/transit-lookup.js?v=20261011_v1></script>
+  <script src=js/transit-lookup.js?v=20261011_v2></script>
 </body>
 </html>

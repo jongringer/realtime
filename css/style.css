@@ -5337,6 +5337,37 @@ body:not([data-theme="apple-light"]) .today-date-text.is-saturday {
   margin-bottom: 14px;
 }
 
+.transit-lookup-header-stacked {
+  display: flex;
+  flex-direction: column !important;
+  gap: 6px;
+  align-items: stretch !important;
+  margin-bottom: 14px;
+}
+
+.transit-lookup-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.transit-lookup-title-row .transit-lookup-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text-main);
+  white-space: nowrap;
+}
+
+.transit-lookup-sub-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
 .transit-lookup-title-wrap {
   display: flex;
   align-items: center;
@@ -5599,12 +5630,13 @@ body[data-theme="apple-light"] .sugg-badge-ars {
   background: #e0f2fe;
 }
 
-/* --- 빠른 선택 칩 (Quick Chips) --- */
+/* --- 빠른 선택 (3대 핵심 거점 단독 줄 분리 & 보조 칩) --- */
 .lookup-quick-chips-wrap {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
   margin-bottom: 14px;
+  width: 100%;
 }
 
 .quick-chips-label {
@@ -5614,16 +5646,164 @@ body[data-theme="apple-light"] .sugg-badge-ars {
   white-space: nowrap;
 }
 
-.quick-chips-scroll {
+.quick-priority-column {
   display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  white-space: nowrap;
-  padding-bottom: 2px;
-  scrollbar-width: none;
+  flex-direction: column;
+  gap: 7px;
+  width: 100%;
 }
 
-.quick-chips-scroll::-webkit-scrollbar {
+.quick-priority-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 13px;
+  border: 1.5px solid var(--card-border);
+  background: var(--bg-card);
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+body[data-theme="apple-light"] .quick-priority-card {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.quick-priority-card:active {
+  transform: scale(0.985);
+}
+
+.quick-priority-card.is-active-target {
+  border-color: #0284c7 !important;
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.25) !important;
+}
+
+.quick-priority-card.chip-prio-bus {
+  border-left: 4px solid #059669;
+}
+
+.quick-priority-card.chip-prio-subway {
+  border-left: 4px solid #d97706;
+}
+
+.prio-card-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+  flex: 1;
+}
+
+.prio-tag-badge {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 6px;
+  color: #ffffff;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.prio-name {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--text-main);
+  white-space: nowrap;
+}
+
+.prio-route-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: #059669;
+  background: rgba(5, 150, 105, 0.1);
+  padding: 2px 7px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+body[data-theme="apple-light"] .prio-route-tag {
+  background: #ecfdf5;
+}
+
+.prio-subway-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: #b45309;
+  background: rgba(217, 119, 6, 0.12);
+  padding: 2px 7px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+body[data-theme="apple-light"] .prio-subway-tag {
+  background: #fef3c7;
+}
+
+.prio-card-right {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.prio-status-text {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.prio-status-text.prio-text-accent {
+  color: #0284c7 !important;
+  font-weight: 800;
+}
+
+body:not([data-theme="apple-light"]) .prio-status-text.prio-text-accent {
+  color: #38bdf8 !important;
+}
+
+.prio-chevron {
+  font-size: 17px;
+  color: var(--text-muted);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.quick-sub-chips-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.quick-chips-sublabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.quick-chips-scroll-sub {
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+  flex: 1;
+}
+
+.quick-chips-scroll-sub::-webkit-scrollbar {
   display: none;
 }
 
@@ -5631,15 +5811,16 @@ body[data-theme="apple-light"] .sugg-badge-ars {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 5px 10px;
+  padding: 4px 9px;
   border-radius: 9999px;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 700;
   border: 1px solid var(--card-border);
   background: rgba(255, 255, 255, 0.05);
   color: var(--text-main);
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 body[data-theme="apple-light"] .quick-chip-btn {
@@ -6390,6 +6571,361 @@ body:not([data-theme="apple-light"]) .quick-chip-btn.chip-top-6637 {
   background: rgba(16, 185, 129, 0.15);
   color: #34d399;
   border-color: rgba(52, 211, 153, 0.4);
+}
+
+/* ==========================================================================
+   🚇 9호선 선유도역 당산방면 일반열차 공식 시간표 & 실시간 운행 카드 시스템
+   ========================================================================== */
+.seonyudo-timetable-card {
+  background: linear-gradient(135deg, rgba(217, 119, 6, 0.08), rgba(245, 158, 11, 0.03));
+  border: 1.5px solid rgba(217, 119, 6, 0.3);
+  border-radius: 16px;
+  padding: 13px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-bottom: 4px;
+}
+
+body[data-theme="apple-light"] .seonyudo-timetable-card {
+  background: #fffdf5;
+  border-color: #fde68a;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.06);
+}
+
+.badge-dangsan-target {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(2, 132, 199, 0.15);
+  color: #0284c7;
+  white-space: nowrap;
+}
+
+body[data-theme="apple-light"] .badge-dangsan-target {
+  background: #e0f2fe;
+}
+
+.timetable-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(217, 119, 6, 0.2);
+  padding-bottom: 8px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tt-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tt-icon { font-size: 15px; }
+
+.tt-title {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.badge-tt-mode {
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  background: #d97706;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+.seonyudo-live-alert {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 11.5px;
+  color: #dc2626;
+  font-weight: 700;
+}
+
+body[data-theme="apple-light"] .seonyudo-live-alert {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.live-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #dc2626;
+  animation: pulseArrive 1s infinite alternate;
+  flex-shrink: 0;
+}
+
+.timetable-train-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.timetable-train-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 8px 11px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+body[data-theme="apple-light"] .timetable-train-row {
+  background: #ffffff;
+  border-color: #f1f5f9;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.timetable-train-row.is-next-immediate {
+  border-left: 3.5px solid #dc2626 !important;
+  border-color: rgba(220, 38, 38, 0.3);
+  background: rgba(220, 38, 38, 0.04);
+}
+
+body[data-theme="apple-light"] .timetable-train-row.is-next-immediate {
+  background: #fff8f8;
+  border-color: #fca5a5;
+}
+
+.tt-left {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.tt-seq-tag {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.tt-dep-time {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.2px;
+}
+
+.tt-dest-text {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.tt-right {
+  margin-left: auto;
+}
+
+.btn-toggle-timetable {
+  width: 100%;
+  padding: 7px 12px;
+  border-radius: 9px;
+  border: 1px solid rgba(217, 119, 6, 0.35);
+  background: rgba(217, 119, 6, 0.08);
+  color: #b45309;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+  margin-top: 4px;
+}
+
+body[data-theme="apple-light"] .btn-toggle-timetable {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+.btn-toggle-timetable:active {
+  transform: scale(0.98);
+}
+
+.seonyudo-full-schedule-box {
+  background: var(--bg-card);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  max-height: 230px;
+  overflow-y: auto;
+  margin-top: 4px;
+}
+
+body[data-theme="apple-light"] .seonyudo-full-schedule-box {
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+
+.full-schedule-header {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #b45309;
+  border-bottom: 1px dashed rgba(217, 119, 6, 0.3);
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+}
+
+.full-schedule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.full-schedule-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 3px 6px;
+  border-radius: 5px;
+  font-size: 11px;
+}
+
+.full-schedule-row.cur-hour-row {
+  background: rgba(217, 119, 6, 0.15);
+  font-weight: 800;
+}
+
+body[data-theme="apple-light"] .full-schedule-row.cur-hour-row {
+  background: #fef3c7;
+}
+
+.f-hour {
+  font-weight: 800;
+  color: var(--text-main);
+  min-width: 32px;
+}
+
+.f-mins {
+  color: var(--text-muted);
+  word-break: break-all;
+}
+
+.full-schedule-row.cur-hour-row .f-mins {
+  color: #b45309;
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   🧭 출퇴근 이동 경로 및 순차 시각표 2단 헤더 & 낮모드 밝은 배경 오버라이드
+   ========================================================================== */
+.est-title-tworow {
+  display: flex;
+  flex-direction: column !important;
+  gap: 6px;
+  align-items: stretch !important;
+}
+
+.est-title-top-row {
+  width: 100%;
+}
+
+.est-title-top-row .est-detail-title-text {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.est-title-sub-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.est-mode-badge {
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  background: rgba(2, 132, 199, 0.15);
+  color: #0284c7;
+  border: 1px solid rgba(2, 132, 199, 0.3);
+}
+
+body[data-theme="apple-light"] .est-mode-badge {
+  background: #e0f2fe;
+  color: #0369a1;
+  border-color: #bae6fd;
+}
+
+/* --- ☀️ 낮 모드 (apple-light) 전용 밝은 배경 & 고대비 텍스트 보장 --- */
+body[data-theme="apple-light"] .est-summary-card,
+body[data-theme="apple-light"] .est-detail-timeline-card,
+body:not([data-theme="obsidian"]):not([data-theme="midnight"]):not([data-theme="noble-gold"]):not(.dark-theme):not(.dark-mode) .est-summary-card,
+body:not([data-theme="obsidian"]):not([data-theme="midnight"]):not([data-theme="noble-gold"]):not(.dark-theme):not(.dark-mode) .est-detail-timeline-card {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06) !important;
+}
+
+body[data-theme="apple-light"] .est-main-header,
+body:not([data-theme="obsidian"]):not([data-theme="midnight"]):not([data-theme="noble-gold"]):not(.dark-theme):not(.dark-mode) .est-main-header {
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body[data-theme="apple-light"] .est-detail-title-bar,
+body:not([data-theme="obsidian"]):not([data-theme="midnight"]):not([data-theme="noble-gold"]):not(.dark-theme):not(.dark-mode) .est-detail-title-bar {
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body[data-theme="apple-light"] .est-step-content,
+body:not([data-theme="obsidian"]):not([data-theme="midnight"]):not([data-theme="noble-gold"]):not(.dark-theme):not(.dark-mode) .est-step-content {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+body[data-theme="apple-light"] .est-step-name,
+body:not([data-theme="obsidian"]):not([data-theme="midnight"]):not([data-theme="noble-gold"]):not(.dark-theme):not(.dark-mode) .est-step-name {
+  color: #0f172a !important;
+}
+
+body[data-theme="apple-light"] .est-step-detail,
+body:not([data-theme="obsidian"]):not([data-theme="midnight"]):not([data-theme="noble-gold"]):not(.dark-theme):not(.dark-mode) .est-step-detail {
+  color: #475569 !important;
+}
+
+body[data-theme="apple-light"] .est-step-node,
+body:not([data-theme="obsidian"]):not([data-theme="midnight"]):not([data-theme="noble-gold"]):not(.dark-theme):not(.dark-mode) .est-step-node {
+  background: #ffffff !important;
+  border-color: #0284c7 !important;
+}
+
+body[data-theme="apple-light"] .est-timeline-line-label,
+body:not([data-theme="obsidian"]):not([data-theme="midnight"]):not([data-theme="noble-gold"]):not(.dark-theme):not(.dark-mode) .est-timeline-line-label {
+  background: #ffffff !important;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+body[data-theme="apple-light"] .transit-lookup-card,
+body:not([data-theme="obsidian"]):not([data-theme="midnight"]):not([data-theme="noble-gold"]):not(.dark-theme):not(.dark-mode) .transit-lookup-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05) !important;
 }
 
 

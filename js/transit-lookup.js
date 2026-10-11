@@ -113,6 +113,52 @@
     { name: '도림천', lines: ['2호선'] }
   ];
 
+  // 9호선 선유도역 공식 시간표 데이터 (당산·여의도·중앙보훈병원 방면 일반열차)
+  const SEONYUDO_WEEKDAY_TIMETABLE = {
+    5: [34, 48, 59],
+    6: [11, 23, 35, 43, 50, 59],
+    7: [5, 11, 18, 24, 30, 37, 43, 49, 56],
+    8: [2, 8, 15, 21, 27, 34, 40, 46, 53],
+    9: [2, 11, 22, 33, 44, 55],
+    10: [6, 17, 28, 39, 50],
+    11: [1, 13, 25, 36, 47, 58],
+    12: [9, 20, 31, 42, 53],
+    13: [4, 15, 26, 38, 50],
+    14: [1, 12, 23, 34, 45, 56],
+    15: [7, 18, 29, 40, 51],
+    16: [2, 10, 14, 26, 37, 39, 49, 59],
+    17: [5, 12, 19, 26, 33, 40, 46, 53],
+    18: [0, 7, 14, 21, 27, 34, 41, 48, 55],
+    19: [2, 8, 15, 22, 31, 40, 49, 58],
+    20: [7, 18, 29, 40, 51],
+    21: [2, 13, 24, 35, 46, 57],
+    22: [8, 19, 30, 41, 52],
+    23: [3, 14, 25, 36, 47, 57],
+    24: [7, 18, 30, 43, 56]
+  };
+
+  const SEONYUDO_WEEKEND_TIMETABLE = {
+    5: [36, 47, 57],
+    6: [9, 21, 33, 45, 57],
+    7: [9, 21, 33, 45, 57],
+    8: [9, 21, 33, 45, 57],
+    9: [9, 21, 32, 42, 53],
+    10: [4, 15, 26, 37, 48, 59],
+    11: [10, 21, 32, 43, 54],
+    12: [5, 16, 27, 38, 49],
+    13: [0, 11, 22, 33, 44, 55],
+    14: [6, 17, 28, 39, 50],
+    15: [1, 12, 23, 34, 45, 56],
+    16: [7, 18, 29, 40, 51],
+    17: [2, 13, 24, 35, 46, 57],
+    18: [8, 19, 30, 41, 52],
+    19: [3, 14, 25, 36, 47, 58],
+    20: [9, 20, 31, 42, 53],
+    21: [4, 15, 26, 37, 50],
+    22: [3, 16, 30, 44, 56],
+    23: [11, 27, 41, 55]
+  };
+
   class TransitLookupController {
     constructor() {
       this.busApiKey = '0f40f3c7a3220ef7d0f45825f4364e47d05d10fa087632a03db7c8c2222aae63';
@@ -455,15 +501,26 @@
       this.currentId = cleanName;
       this.currentName = cleanName + '역';
       this.refreshCountdown = this.autoRefreshInterval;
-      this.showLoading(`🚇 [${cleanName}역] 실시간 열차 운행정보 수신 중...`);
+
+      // 9호선 선유도역의 경우 당산방면 공식 시간표를 0초 딜레이로 즉시 먼저 표출!
+      if (cleanName === '선유도') {
+        this.saveRecentHistory('subway', cleanName, '선유도역');
+        this.renderQuickChips();
+        this.renderSubwayBoard(cleanName, this.lastSubwayData || []);
+        this.startTicker();
+      } else {
+        this.showLoading(`🚇 [${cleanName}역] 실시간 열차 운행정보 수신 중...`);
+      }
 
       try {
         const arrivals = await this.fetchSubwayRealtime(cleanName);
         this.lastSubwayData = arrivals;
 
         if (!arrivals || arrivals.length === 0) {
-          this.showEmptySubway(cleanName);
-          return;
+          if (cleanName !== '선유도') {
+            this.showEmptySubway(cleanName);
+            return;
+          }
         }
 
         // 최근 기록 저장
@@ -471,11 +528,99 @@
         this.renderQuickChips();
 
         // 지하철 전광판 렌더링
-        this.renderSubwayBoard(cleanName, arrivals);
+        this.renderSubwayBoard(cleanName, arrivals || []);
         this.startTicker();
       } catch (err) {
-        this.showError(`지하철 도착 정보를 불러오지 못했습니다: ${err.message}`);
+        if (cleanName === '선유도') {
+          // 선유도역은 API 지연/실패 시에도 공식 시간표로 정상 운행 정보 지속 제공
+          this.renderSubwayBoard(cleanName, this.lastSubwayData || []);
+          this.startTicker();
+        } else {
+          this.showError(`지하철 도착 정보를 불러오지 못했습니다: ${err.message}`);
+        }
       }
+    }
+
+    isWeekendOrHoliday(date = new Date()) {
+      if (typeof window !== 'undefined' && window.transitManager && typeof window.transitManager.isWeekendOrHoliday === 'function') {
+        return window.transitManager.isWeekendOrHoliday(date);
+      }
+      const day = date.getDay();
+      if (day === 0 || day === 6) return true;
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      const md = `${m}-${d}`;
+      const fixed = ['01-01','03-01','05-05','06-06','08-15','10-03','10-09','12-25'];
+      return fixed.includes(md);
+    }
+
+    getSeonyudoUpcomingTrains(now = new Date(), count = 4) {
+      const isHoliday = this.isWeekendOrHoliday(now);
+      const schedule = isHoliday ? SEONYUDO_WEEKEND_TIMETABLE : SEONYUDO_WEEKDAY;
+      const rawH = now.getHours();
+      const currentH = (rawH === 0) ? 24 : rawH;
+      const currentMinutes = currentH * 60 + now.getMinutes();
+      const currentSec = now.getSeconds();
+      const nowMs = now.getTime();
+
+      const results = [];
+      const hours = Object.keys(schedule).map(Number).sort((a, b) => a - b);
+
+      for (const h of hours) {
+        const mins = schedule[h];
+        for (const m of mins) {
+          const trainMin = h * 60 + m;
+          const diffSec = (trainMin - currentMinutes) * 60 - currentSec;
+          if (diffSec >= -30) {
+            let dest = '중앙보훈병원';
+            if (h === 24 && !isHoliday) {
+              if (m === 18) dest = '삼전(종착)';
+              else if (m === 30) dest = '신논현(종착)';
+              else if (m === 43) dest = '동작(종착)';
+              else if (m === 56) dest = '당산(종착) 막차';
+            } else if (h === 23 && isHoliday) {
+              if (m === 27) dest = '신논현(종착)';
+              else if (m === 41) dest = '동작(종착)';
+              else if (m === 55) dest = '당산(종착) 막차';
+            }
+
+            const displayH = (h === 24) ? '00' : String(h).padStart(2, '0');
+            const displayM = String(m).padStart(2, '0');
+
+            results.push({
+              departureTime: `${displayH}:${displayM}`,
+              endStationName: dest,
+              sec: Math.max(0, diffSec),
+              remainMinutes: Math.floor(Math.max(0, diffSec) / 60),
+              remainSeconds: Math.max(0, diffSec) % 60,
+              targetTime: nowMs + Math.max(0, diffSec) * 1000
+            });
+            if (results.length >= count) break;
+          }
+        }
+        if (results.length >= count) break;
+      }
+
+      // 심야 첫차 처리 (새벽 1시~4시)
+      if (results.length === 0 && (rawH >= 1 && rawH < 5)) {
+        const firstH = hours[0];
+        const firstM = schedule[firstH][0];
+        const displayH = String(firstH).padStart(2, '0');
+        const displayM = String(firstM).padStart(2, '0');
+        const firstTrainMin = firstH * 60 + firstM;
+        const diffSec = (firstTrainMin - (rawH * 60 + now.getMinutes())) * 60 - currentSec;
+        results.push({
+          departureTime: `${displayH}:${displayM}`,
+          endStationName: '중앙보훈병원',
+          sec: Math.max(0, diffSec),
+          remainMinutes: Math.floor(Math.max(0, diffSec) / 60),
+          remainSeconds: Math.max(0, diffSec) % 60,
+          targetTime: nowMs + Math.max(0, diffSec) * 1000,
+          isFirstTrain: true
+        });
+      }
+
+      return results;
     }
 
     // ==========================================
@@ -789,10 +934,11 @@
       if (!this.resultContainer) return;
 
       const currentTimeStr = new Date().toLocaleTimeString('ko-KR', { hour12: false });
+      const safeArrivals = Array.isArray(arrivals) ? arrivals : [];
 
       // 상행(내선)과 하행(외선)으로 그룹화
-      const upTrains = arrivals.filter(a => a.updnLine === '상행' || a.updnLine === '내선');
-      const downTrains = arrivals.filter(a => a.updnLine === '하행' || a.updnLine === '외선');
+      const upTrains = safeArrivals.filter(a => a.updnLine === '상행' || a.updnLine === '내선');
+      const downTrains = safeArrivals.filter(a => a.updnLine === '하행' || a.updnLine === '외선');
 
       const renderTrainGroup = (title, list, icon) => {
         if (!list || list.length === 0) {
@@ -843,6 +989,130 @@
         `;
       };
 
+      // 🚇 9호선 선유도역 전용: 당산방면 일반열차 공식 시간표 & 실시간 즉시 표출!
+      if (stationName === '선유도') {
+        const isHoliday = this.isWeekendOrHoliday(new Date());
+        const seonyudoTrains = this.getSeonyudoUpcomingTrains(new Date(), 4);
+        const liveUpTrain = upTrains[0] || null;
+
+        let upcomingHtml = '';
+        if (seonyudoTrains.length > 0) {
+          upcomingHtml = seonyudoTrains.map((tr, idx) => {
+            const isFirst = (idx === 0);
+            return `
+              <div class="timetable-train-row ${isFirst ? 'is-next-immediate' : ''}">
+                <div class="tt-left">
+                  <span class="tt-seq-tag ${isFirst ? 'seq-first' : 'seq-second'}">${isFirst ? '다음 열차' : `${idx + 1}번째`}</span>
+                  <span class="tt-dep-time"><strong>${tr.departureTime}</strong></span>
+                  <span class="badge-normal-train">일반</span>
+                  <span class="tt-dest-text">${this.escapeHtml(tr.endStationName)}행</span>
+                </div>
+                <div class="tt-right">
+                  <span class="live-bus-sec" data-target-time="${tr.targetTime}">
+                    ${this.formatSecondsHtml(tr.sec)}
+                  </span>
+                </div>
+              </div>
+            `;
+          }).join('');
+        } else {
+          upcomingHtml = `<div class="subway-empty-msg">오늘 운행이 종료되었습니다 (첫차 05:34).</div>`;
+        }
+
+        // 전체 시간표 테이블 생성
+        const scheduleData = isHoliday ? SEONYUDO_WEEKEND_TIMETABLE : SEONYUDO_WEEKDAY;
+        const currentHour = new Date().getHours();
+        const fullRowsHtml = Object.keys(scheduleData).map(hStr => {
+          const h = Number(hStr);
+          const isCurH = (h === currentHour || (h === 24 && currentHour === 0));
+          const dispH = (h === 24) ? '00' : String(h).padStart(2, '0');
+          const minList = scheduleData[h].map(m => String(m).padStart(2, '0')).join(' · ');
+          return `
+            <div class="full-schedule-row ${isCurH ? 'cur-hour-row' : ''}">
+              <span class="f-hour">${dispH}시</span>
+              <span class="f-mins">${minList}</span>
+            </div>
+          `;
+        }).join('');
+
+        const boardHtml = `
+          <div class="lookup-board-wrap">
+            <!-- 선유도역 정보 헤더 -->
+            <div class="lookup-board-header subway-theme-header">
+              <div class="station-meta-info">
+                <div class="station-name-row">
+                  <span class="station-icon">🚇</span>
+                  <h4 class="station-title">9호선 선유도역</h4>
+                  <span class="station-ars-badge" style="background:#c89d5c;">일반열차 전용역</span>
+                  <span class="badge-dangsan-target">당산역 방면 1정거장(2분)</span>
+                </div>
+                <div class="station-sub-row">
+                  <span class="station-route-count">당산·중앙보훈병원 방면 일반열차 시각표 직결</span>
+                  <span class="station-update-time">수신: ${currentTimeStr}</span>
+                  <span class="station-auto-ticker">🔄 <strong id="lookupAutoRefreshCountdown">${this.refreshCountdown}초</strong> 갱신</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 1. 당산방면 일반열차 시간표 카드 (사용자 핵심 요구: 즉시 확인) -->
+            <div class="seonyudo-timetable-card">
+              <div class="timetable-header-row">
+                <div class="tt-title-wrap">
+                  <span class="tt-icon">🧭</span>
+                  <h4 class="tt-title">당산 · 여의도 · 중앙보훈병원 방면 일반열차</h4>
+                </div>
+                <span class="badge-tt-mode">공식 시간표 & 실시간</span>
+              </div>
+
+              ${liveUpTrain ? `
+                <div class="seonyudo-live-alert">
+                  <span class="live-pulse-dot"></span>
+                  <span class="live-alert-text">⚡ 실시간 위치: <strong>${this.escapeHtml(liveUpTrain.trainLineNm || '열차')}</strong> (${this.escapeHtml(liveUpTrain.arvlMsg2 || liveUpTrain.arvlMsg3 || '운행중')})</span>
+                </div>
+              ` : ''}
+
+              <div class="timetable-train-list">
+                ${upcomingHtml}
+              </div>
+
+              <!-- 오늘 전체 시간표 펼치기 토글 버튼 -->
+              <button type="button" class="btn-toggle-timetable" id="btnToggleSeonyudoTimetable">
+                📋 오늘 당산방면 전체 시간표 (${isHoliday ? '주말·공휴일' : '평일'}) <span id="toggleTtArrow">펼치기 ▼</span>
+              </button>
+              <div class="seonyudo-full-schedule-box" id="seonyudoFullScheduleBox" style="display: none;">
+                <div class="full-schedule-header">
+                  <span>9호선 선유도역 → 당산·중앙보훈병원 방면 (${isHoliday ? '주말·공휴일' : '평일'})</span>
+                </div>
+                <div class="full-schedule-list">
+                  ${fullRowsHtml}
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. 하행 (신목동 · 개화 방면) 열차 운행 현황 -->
+            <div class="subway-board-grid">
+              ${renderTrainGroup('하행 (신목동·가양·개화 방면)', downTrains, '⬇️')}
+            </div>
+          </div>
+        `;
+
+        this.resultContainer.innerHTML = boardHtml;
+
+        // 토글 버튼 이벤트 바인딩
+        const btnToggle = document.getElementById('btnToggleSeonyudoTimetable');
+        const scheduleBox = document.getElementById('seonyudoFullScheduleBox');
+        const arrowSpan = document.getElementById('toggleTtArrow');
+        if (btnToggle && scheduleBox) {
+          btnToggle.addEventListener('click', () => {
+            const isHidden = (scheduleBox.style.display === 'none');
+            scheduleBox.style.display = isHidden ? 'block' : 'none';
+            if (arrowSpan) arrowSpan.textContent = isHidden ? '접기 ▲' : '펼치기 ▼';
+          });
+        }
+        return;
+      }
+
+      // 일반 지하철역 전광판 렌더링
       const boardHtml = `
         <div class="lookup-board-wrap">
           <!-- 지하철역 정보 헤더 -->
@@ -854,7 +1124,7 @@
                 <span class="station-ars-badge subway-badge-tag">실시간 열차 운행정보</span>
               </div>
               <div class="station-sub-row">
-                <span class="station-route-count">실시간 열차 <strong>${arrivals.length}대 감지</strong></span>
+                <span class="station-route-count">실시간 열차 <strong>${safeArrivals.length}대 감지</strong></span>
                 <span class="station-update-time">수신: ${currentTimeStr}</span>
                 <span class="station-auto-ticker">🔄 <strong id="lookupAutoRefreshCountdown">${this.refreshCountdown}초</strong> 갱신</span>
               </div>
@@ -873,43 +1143,93 @@
     }
 
     // ==========================================
-    // 최근 검색 / 빠른 선택 칩
+    // 최근 검색 / 빠른 선택 칩 (3대 핵심 거점 단독 줄 분리)
     // ==========================================
     renderQuickChips() {
       if (!this.chipsContainer) return;
 
       const history = this.getRecentHistory();
       
-      // 최상위 1순위 & 2순위: 6637 단독 정차 정류소 (15158 양정고, 15156 경인초교)
-      const topPriorityChips = [
-        { type: 'bus', id: '15158', name: '양정고 (6637)', isTop: true },
-        { type: 'bus', id: '15156', name: '경인초교 (6637)', isTop: true }
+      // 최상위 3대 핵심 거점 (각 항목이 독립된 1행을 차지하는 와이드 카드)
+      // 1: 15158 양정고 (6637 당산방면)
+      // 2: 15156 경인초교 (6637 목동방면)
+      // 3: 9호선 선유도역 (당산방면 일반열차 시간표)
+      const topPriorityCards = [
+        {
+          type: 'bus',
+          id: '15158',
+          name: '양정고등학교',
+          badgeText: '🚏 15158',
+          badgeClass: 'badge-green',
+          titleText: '양정고등학교',
+          routeTag: '6637 당산방면',
+          statusText: '단독 정차'
+        },
+        {
+          type: 'bus',
+          id: '15156',
+          name: '경인초교',
+          badgeText: '🚏 15156',
+          badgeClass: 'badge-green',
+          titleText: '경인초교 · 목동5·6단지',
+          routeTag: '6637 목동방면',
+          statusText: '단독 정차'
+        },
+        {
+          type: 'subway',
+          id: '선유도',
+          name: '선유도역',
+          badgeText: '🚇 9호선',
+          badgeClass: 'badge-line-9',
+          titleText: '선유도역',
+          routeTag: '당산방면 일반열차',
+          statusText: '시간표 즉시 확인',
+          isSubwayAccent: true
+        }
       ];
 
+      // 3대 핵심 거점 수직 스택 카드 HTML
+      const priorityStackHtml = topPriorityCards.map(p => {
+        const isActive = (this.currentId === p.id);
+        return `
+          <button type="button" class="quick-priority-card ${p.type === 'bus' ? 'chip-prio-bus' : 'chip-prio-subway'} ${isActive ? 'is-active-target' : ''}"
+                  data-type="${p.type}" data-id="${p.id}" data-name="${this.escapeHtml(p.name)}">
+            <div class="prio-card-left">
+              <span class="prio-tag-badge ${p.badgeClass}">${p.badgeText}</span>
+              <span class="prio-name">${p.titleText}</span>
+              <span class="${p.type === 'bus' ? 'prio-route-tag' : 'prio-subway-tag'}">${p.routeTag}</span>
+            </div>
+            <div class="prio-card-right">
+              <span class="prio-status-text ${p.isSubwayAccent ? 'prio-text-accent' : ''}">${p.statusText}</span>
+              <span class="prio-chevron">›</span>
+            </div>
+          </button>
+        `;
+      }).join('');
+
+      // 기타 보조 추천 및 최근 검색 칩들
       const otherDefaultChips = [
         { type: 'bus', id: '15154', name: '이대목동병원' },
+        { type: 'subway', id: '당산', name: '당산역(2·9)' },
         { type: 'bus', id: '19210', name: '선유도역1번' },
-        { type: 'bus', id: '19212', name: '선유도역' },
-        { type: 'subway', id: '선유도', name: '선유도역(9)' },
-        { type: 'subway', id: '당산', name: '당산역(2·9)' }
+        { type: 'bus', id: '19212', name: '선유도역' }
       ];
 
-      // 최상위 2개는 무조건 맨 앞(1번, 2번) 고정, 그 뒤로 최근 기록 및 기본값 연결
-      const filteredHistory = history.filter(h => h.id !== '15158' && h.id !== '15156');
-      const merged = [...topPriorityChips, ...filteredHistory];
+      // 최근 검색 기록 중 상위 3개와 중복되지 않는 항목들 필터링
+      const filteredHistory = history.filter(h => h.id !== '15158' && h.id !== '15156' && h.id !== '선유도');
+      const secondaryMerged = [...filteredHistory];
       otherDefaultChips.forEach(def => {
-        if (!merged.some(m => m.type === def.type && m.id === def.id)) {
-          merged.push(def);
+        if (!secondaryMerged.some(m => m.type === def.type && m.id === def.id)) {
+          secondaryMerged.push(def);
         }
       });
 
-      const chipsHtml = merged.slice(0, 8).map(chip => {
+      const secondaryChipsHtml = secondaryMerged.slice(0, 6).map(chip => {
         const isBus = (chip.type === 'bus');
         const icon = isBus ? '🚏' : '🚇';
         const label = isBus ? `[${chip.id}] ${chip.name}` : `${chip.name}`;
-        const topClass = chip.isTop ? 'chip-top-6637' : '';
         return `
-          <button type="button" class="quick-chip-btn ${isBus ? 'chip-bus' : 'chip-subway'} ${topClass}" 
+          <button type="button" class="quick-chip-btn ${isBus ? 'chip-bus' : 'chip-subway'}"
                   data-type="${chip.type}" data-id="${chip.id}" data-name="${this.escapeHtml(chip.name)}">
             <span class="chip-icon">${icon}</span>
             <span class="chip-text">${label}</span>
@@ -917,9 +1237,38 @@
         `;
       }).join('');
 
-      this.chipsContainer.innerHTML = chipsHtml;
+      // 전체 빠른 선택 컨테이너 렌더링
+      this.chipsContainer.innerHTML = `
+        <div class="quick-priority-column">
+          ${priorityStackHtml}
+        </div>
+        <div class="quick-sub-chips-row">
+          <span class="quick-chips-sublabel">추천·최근:</span>
+          <div class="quick-chips-scroll-sub">
+            ${secondaryChipsHtml}
+          </div>
+        </div>
+      `;
 
-      // 칩 클릭 이벤트
+      // 1. 상위 3대 핵심 카드 클릭 이벤트
+      this.chipsContainer.querySelectorAll('.quick-priority-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const type = card.getAttribute('data-type');
+          const id = card.getAttribute('data-id');
+          const name = card.getAttribute('data-name');
+          if (type === 'bus') {
+            this.inputQuery.value = id;
+            if (this.btnClearQuery) this.btnClearQuery.style.display = 'flex';
+            this.lookupBusByArs(id, name);
+          } else {
+            this.inputQuery.value = name;
+            if (this.btnClearQuery) this.btnClearQuery.style.display = 'flex';
+            this.lookupSubway(id);
+          }
+        });
+      });
+
+      // 2. 보조 칩 클릭 이벤트
       this.chipsContainer.querySelectorAll('.quick-chip-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const type = btn.getAttribute('data-type');

@@ -2510,9 +2510,14 @@
 
       const detailHtml = `
         <div class="est-summary-card est-detail-timeline-card">
-          <div class="est-detail-title-bar">
-            <span>🧭 <b>${isCommute ? '출근' : '퇴근'} 이동 경로 및 최적 연계 시각표 (${isTimetableMode ? '🗓️ 시간표 모드' : '⚡ 실시간 모드'})</b></span>
-            <span class="est-detail-badge">도보 21분 + 두정거장 4분 연계</span>
+          <div class="est-detail-title-bar est-title-tworow">
+            <div class="est-title-top-row">
+              <span class="est-title-main">🧭 <b>${isCommute ? '출근' : '퇴근'} 이동 경로 및 순차 시각표</b></span>
+            </div>
+            <div class="est-title-sub-row">
+              <span class="est-mode-badge">${isTimetableMode ? '🗓️ 시간표 모드' : '⚡ 실시간 모드'}</span>
+              <span class="est-detail-badge">도보 21분 + 두정거장 4분 연계</span>
+            </div>
           </div>
           <div class="est-timeline-flow">${stepsHtml}</div>
           <div class="est-breakdown-bar">
