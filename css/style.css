@@ -6080,6 +6080,109 @@ body:not([data-theme="apple-light"]) .train-msg.status-imminent {
 .badge-line-airport { background: #0891b2; }
 .badge-line-default { background: #475569; }
 
+/* --- 6637 전용 정류소 (15158 양정고교 ↔ 15156 경인초교) 최상위 스위처 & 하이라이트 --- */
+.dedicated-6637-switch-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(5, 150, 105, 0.08);
+  border: 1px solid rgba(5, 150, 105, 0.25);
+  border-radius: 12px;
+  padding: 8px 10px;
+  margin-bottom: 2px;
+  flex-wrap: wrap;
+}
+
+body[data-theme="apple-light"] .dedicated-6637-switch-bar {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+}
+
+.dedicated-tag {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #059669;
+  white-space: nowrap;
+}
+
+.dedicated-tab-group {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.btn-6637-tab {
+  flex: 1;
+  min-width: 140px;
+  padding: 6px 10px;
+  border-radius: 9px;
+  border: 1px solid var(--card-border);
+  background: var(--bg-card);
+  color: var(--text-main);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+body[data-theme="apple-light"] .btn-6637-tab {
+  background: #ffffff;
+  border-color: #cbd5e1;
+}
+
+.btn-6637-tab:active {
+  transform: scale(0.97);
+}
+
+.btn-6637-tab.active {
+  background: linear-gradient(135deg, #059669, #047857);
+  color: #ffffff;
+  border-color: #059669;
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.35);
+}
+
+.btn-6637-tab .tab-ars-num {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.btn-6637-tab:not(.active) .tab-ars-num {
+  background: rgba(5, 150, 105, 0.12);
+  color: #059669;
+}
+
+.badge-only-6637 {
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: #059669;
+  color: #ffffff;
+  letter-spacing: -0.2px;
+}
+
+.quick-chip-btn.chip-top-6637 {
+  border-color: #059669;
+  background: rgba(5, 150, 105, 0.12);
+  color: #059669;
+  font-weight: 800;
+}
+
+body:not([data-theme="apple-light"]) .quick-chip-btn.chip-top-6637 {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border-color: rgba(52, 211, 153, 0.4);
+}
+
+
 
 
 

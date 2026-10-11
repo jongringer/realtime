@@ -141,6 +141,16 @@
       this.initDom();
       this.initEvents();
       this.renderQuickChips();
+
+      // 디폴트로 버스 정류장 6637 전용 정류소 15158(양정고등학교) 자동 로딩!
+      this.loadDefaultStation();
+    }
+
+    loadDefaultStation() {
+      // 1순위 기본값: 15158 (양정고등학교, 6637 단독 정차)
+      setTimeout(() => {
+        this.lookupBusByArs('15158', '양정고등학교');
+      }, 60);
     }
 
     initDom() {
@@ -296,14 +306,28 @@
       // 1. 지하철역 추천 필터링 (최대 4개)
       const subways = SUBWAY_STATIONS.filter(s => s.name.includes(cleanSubway)).slice(0, 4);
 
-      // 2. 버스 정류소명 실시간 API 검색 (비동기, 최대 6개)
+      // 2. 6637 전용 정류소 (15158, 15156) 우선 매칭 검사
+      const priority6637Stops = [
+        { arsId: '15158', stNm: '양정고등학교 (6637 단독)', keywords: ['15158', '6637', '양정', '양정고', '목동'] },
+        { arsId: '15156', stNm: '경인초교.목동아파트5.6단지사잇길 (6637 단독)', keywords: ['15156', '6637', '경인', '경인초', '목동'] }
+      ];
+      const matchedPriority = priority6637Stops.filter(p => p.keywords.some(k => k.includes(query) || query.includes(k)));
+
+      // 3. 버스 정류소명 실시간 API 검색 (비동기)
       let busStations = [];
       try {
-        busStations = await this.fetchStationsByName(query);
-        busStations = busStations.filter(b => b.arsId && b.arsId !== '0').slice(0, 6);
+        const fetched = await this.fetchStationsByName(query);
+        busStations = fetched.filter(b => b.arsId && b.arsId !== '0');
       } catch (e) {
         // 네트워크 지연 시 조용히 스킵
       }
+
+      // 최우선 6637 정류소를 맨 앞에 배치 (중복 제거)
+      matchedPriority.forEach(p => {
+        busStations = busStations.filter(b => b.arsId !== p.arsId);
+        busStations.unshift({ arsId: p.arsId, stNm: p.stNm });
+      });
+      busStations = busStations.slice(0, 7);
 
       if (subways.length === 0 && busStations.length === 0) {
         this.hideSuggestions();
@@ -665,8 +689,23 @@
         }).join('');
       }
 
+      const cleanArs = String(arsId).replace(/[^0-9]/g, '');
+
       const boardHtml = `
         <div class="lookup-board-wrap">
+          <!-- 6637 전용 정류소 최상위 빠른 전환 탭 (15158 양정고 ↔ 15156 경인초교) -->
+          <div class="dedicated-6637-switch-bar">
+            <span class="dedicated-tag">🚌 6637 전용</span>
+            <div class="dedicated-tab-group">
+              <button type="button" class="btn-6637-tab ${cleanArs === '15158' ? 'active' : ''}" data-ars="15158" data-name="양정고등학교">
+                <span class="tab-ars-num">15158</span> 양정고교 (당산방면)
+              </button>
+              <button type="button" class="btn-6637-tab ${cleanArs === '15156' ? 'active' : ''}" data-ars="15156" data-name="경인초교.목동아파트5.6단지">
+                <span class="tab-ars-num">15156</span> 경인초교 (목동방면)
+              </button>
+            </div>
+          </div>
+
           <!-- 상단 정류소 정보 헤더 -->
           <div class="lookup-board-header">
             <div class="station-meta-info">
@@ -674,6 +713,7 @@
                 <span class="station-icon">🚏</span>
                 <h4 class="station-title">${this.escapeHtml(stationName)}</h4>
                 <span class="station-ars-badge">ARS ${formattedArs}</span>
+                ${cleanArs === '15158' || cleanArs === '15156' ? `<span class="badge-only-6637">6637 전용 정류소</span>` : ''}
               </div>
               <div class="station-sub-row">
                 <span class="station-route-count">정차 노선 <strong>${busList.length}개</strong></span>
@@ -707,6 +747,16 @@
       `;
 
       this.resultContainer.innerHTML = boardHtml;
+
+      // 6637 전용 정류소 탭 클릭 이벤트
+      this.resultContainer.querySelectorAll('.btn-6637-tab').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const targetArs = btn.getAttribute('data-ars');
+          const targetName = btn.getAttribute('data-name');
+          if (this.inputQuery) this.inputQuery.value = targetArs;
+          this.lookupBusByArs(targetArs, targetName);
+        });
+      });
 
       // 필터 버튼 이벤트 바인딩
       this.resultContainer.querySelectorAll('.btn-filter').forEach(btn => {
@@ -823,7 +873,14 @@
       if (!this.chipsContainer) return;
 
       const history = this.getRecentHistory();
-      const defaultChips = [
+      
+      // 최상위 1순위 & 2순위: 6637 단독 정차 정류소 (15158 양정고, 15156 경인초교)
+      const topPriorityChips = [
+        { type: 'bus', id: '15158', name: '양정고 (6637)', isTop: true },
+        { type: 'bus', id: '15156', name: '경인초교 (6637)', isTop: true }
+      ];
+
+      const otherDefaultChips = [
         { type: 'bus', id: '15154', name: '이대목동병원' },
         { type: 'bus', id: '19210', name: '선유도역1번' },
         { type: 'bus', id: '19212', name: '선유도역' },
@@ -831,9 +888,10 @@
         { type: 'subway', id: '당산', name: '당산역(2·9)' }
       ];
 
-      // 최근 검색 우선, 부족하면 기본값 합산 (중복 배제)
-      const merged = [...history];
-      defaultChips.forEach(def => {
+      // 최상위 2개는 무조건 맨 앞(1번, 2번) 고정, 그 뒤로 최근 기록 및 기본값 연결
+      const filteredHistory = history.filter(h => h.id !== '15158' && h.id !== '15156');
+      const merged = [...topPriorityChips, ...filteredHistory];
+      otherDefaultChips.forEach(def => {
         if (!merged.some(m => m.type === def.type && m.id === def.id)) {
           merged.push(def);
         }
@@ -843,8 +901,9 @@
         const isBus = (chip.type === 'bus');
         const icon = isBus ? '🚏' : '🚇';
         const label = isBus ? `[${chip.id}] ${chip.name}` : `${chip.name}`;
+        const topClass = chip.isTop ? 'chip-top-6637' : '';
         return `
-          <button type="button" class="quick-chip-btn ${isBus ? 'chip-bus' : 'chip-subway'}" 
+          <button type="button" class="quick-chip-btn ${isBus ? 'chip-bus' : 'chip-subway'} ${topClass}" 
                   data-type="${chip.type}" data-id="${chip.id}" data-name="${this.escapeHtml(chip.name)}">
             <span class="chip-icon">${icon}</span>
             <span class="chip-text">${label}</span>
