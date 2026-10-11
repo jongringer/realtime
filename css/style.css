@@ -153,7 +153,10 @@ body[data-theme="noble-gold"] {
 
 html, body {
   touch-action: pan-x pan-y pinch-zoom; /* 어느 위치에서나 버벅임 없이 즉시 두 손가락 확대/축소 가능 */
-  -webkit-text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100% !important;
+  text-size-adjust: 100% !important;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -2439,8 +2442,11 @@ body:not([data-theme="apple-light"]) .transit-tab-wrap {
   border-bottom: 1.5px solid #f1f5f9;
   padding-bottom: 7px;
   gap: 6px;
-  flex-wrap: nowrap !important;
-  white-space: nowrap !important;
+  flex-wrap: wrap;
+}
+
+body[data-theme="obsidian"] .bit-header-row {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
 }
 
 .bit-title-group {
@@ -2448,9 +2454,7 @@ body:not([data-theme="apple-light"]) .transit-tab-wrap {
   align-items: center;
   gap: 5px;
   min-width: 0;
-  flex: 1;
-  overflow: hidden;
-  white-space: nowrap !important;
+  flex-wrap: wrap;
 }
 
 .bit-ars-badge {
@@ -2821,35 +2825,65 @@ body[data-theme="noble-gold"] .transit-clock-time {
   color: #38bdf8 !important;
 }
 
-/* [🔵 다다음 대중교통] 보조 박스 (9:16 컴팩트 1줄 최적화) */
+/* [🔵 다다음 대중교통] 2단 카드 포맷 (다음 버스와 동일한 구조로 글씨 넘침 원천 방지) */
 .next2-transit-box {
   background: #f8fafc;
-  border: 1px solid #bfdbfe;
-  border-radius: 7px;
+  border: 1.5px solid #bfdbfe;
+  border-radius: 9px;
   padding: 7px 10px;
-  margin-top: 6px;
+  margin-top: 5px;
+}
+
+body[data-theme="obsidian"] .next2-transit-box {
+  background: rgba(30, 58, 138, 0.15);
+  border-color: rgba(96, 165, 250, 0.35);
+}
+
+.next2-tag-blue {
+  color: #1d4ed8;
+  font-weight: 900;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+body[data-theme="obsidian"] .next2-tag-blue {
+  color: #60a5fa;
+}
+
+.next2-time-big {
+  font-size: 19px !important;
+  font-weight: 900 !important;
+  color: #0284c7;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+body[data-theme="obsidian"] .next2-time-big {
+  color: #38bdf8;
+}
+
+.next2-transit-sub {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 700;
+  color: #0284c7;
+  border-top: 1px dashed rgba(59, 130, 246, 0.25);
+  padding-top: 4px;
+  margin-top: 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-body[data-theme="obsidian"] .next2-transit-box {
-  background: rgba(255, 255, 255, 0.03);
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-.next2-tag-blue {
-  color: #1d4ed8;
-  font-weight: 800;
-  font-size: 12.5px;
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: baseline;
+body[data-theme="obsidian"] .next2-transit-sub {
+  color: #93c5fd;
+  border-top-color: rgba(96, 165, 250, 0.2);
 }
 
 .next2-transit-box .transit-clock-time {
@@ -2857,13 +2891,112 @@ body[data-theme="obsidian"] .next2-transit-box {
   color: #1d4ed8;
 }
 
-body[data-theme="obsidian"] .next2-tag-blue {
-  color: #60a5fa;
-}
-
 body[data-theme="obsidian"] .next2-transit-box .transit-clock-time,
 body[data-theme="noble-gold"] .next2-transit-box .transit-clock-time {
   color: #60a5fa !important;
+}
+
+/* [🟣 다다다음 대중교통] 2단 카드 포맷 */
+.next3-transit-box {
+  background: #faf5ff;
+  border: 1.5px solid #d8b4fe;
+  border-radius: 9px;
+  padding: 7px 10px;
+  margin-top: 5px;
+}
+
+body[data-theme="obsidian"] .next3-transit-box {
+  background: rgba(88, 28, 135, 0.15);
+  border-color: rgba(192, 132, 252, 0.35);
+}
+
+.next3-tag-purple {
+  color: #6b21a8;
+  font-weight: 900;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+body[data-theme="obsidian"] .next3-tag-purple {
+  color: #c084fc;
+}
+
+.next3-time-big {
+  font-size: 19px !important;
+  font-weight: 900 !important;
+  color: #7c3aed;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+body[data-theme="obsidian"] .next3-time-big {
+  color: #c084fc;
+}
+
+.next3-transit-sub {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #7c3aed;
+  border-top: 1px dashed rgba(168, 85, 247, 0.25);
+  padding-top: 4px;
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body[data-theme="obsidian"] .next3-transit-sub {
+  color: #d8b4fe;
+  border-top-color: rgba(192, 132, 252, 0.2);
+}
+
+/* ⚡ 곧 도착 대형 폰트 스타일 (낮모드 & 밤모드 모두 일반 시각 21.5px로 큼직하게 강조) */
+.transit-time-arrive-big {
+  font-size: 21.5px !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.3px !important;
+  line-height: 1.2 !important;
+  display: inline-block;
+  vertical-align: baseline;
+}
+
+body[data-theme="apple-light"] .transit-time-arrive-big,
+.transit-time-arrive-big {
+  color: #dc2626 !important;
+}
+
+body[data-theme="obsidian"] .transit-time-arrive-big,
+body[data-theme="noble-gold"] .transit-time-arrive-big,
+body:not([data-theme="apple-light"]) .transit-time-arrive-big {
+  color: #ff4d4f !important;
+  text-shadow: 0 0 10px rgba(255, 77, 79, 0.55) !important;
+}
+
+/* 9호선 카드 내 '⚡ 곧 도착' 전용 하이라이트 (낮모드 & 밤모드) */
+.subway-9-card .transit-time-arrive-big,
+.subway-arrive-imminent {
+  font-size: 21.5px !important;
+  font-weight: 900 !important;
+}
+
+body[data-theme="apple-light"] .subway-9-card .transit-time-arrive-big,
+body[data-theme="apple-light"] .subway-arrive-imminent {
+  color: #dc2626 !important;
+}
+
+body[data-theme="obsidian"] .subway-9-card .transit-time-arrive-big,
+body[data-theme="obsidian"] .subway-arrive-imminent,
+body[data-theme="noble-gold"] .subway-9-card .transit-time-arrive-big,
+body[data-theme="noble-gold"] .subway-arrive-imminent {
+  color: #ff4d4f !important;
+  text-shadow: 0 0 12px rgba(255, 77, 79, 0.6) !important;
 }
 
 /* ==========================================================================
@@ -5733,22 +5866,24 @@ body[data-theme="apple-light"] .btn-sort {
   background: #f8fafc;
 }
 
-/* --- 버스 카드 리스트 --- */
+/* --- 버스 카드 리스트 (모바일 및 글자 크기 확대 최적화 와이드 카드) --- */
 .lookup-cards-container {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  width: 100%;
 }
 
 .lookup-bus-card {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--card-border);
   border-radius: 14px;
-  padding: 10px 12px;
-  gap: 12px;
+  padding: 11px 12px;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
   transition: background 0.15s ease;
 }
 
@@ -5758,17 +5893,21 @@ body[data-theme="apple-light"] .lookup-bus-card {
   box-shadow: 0 1px 4px rgba(0,0,0,0.03);
 }
 
-.bus-card-left {
+/* 상단 헤더: 노선 번호 뱃지 + 유형 + 방면 안내 (가로 전체 활용) */
+.bus-card-top-header {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 80px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  flex-wrap: wrap;
 }
 
-.bus-route-header {
+.bus-route-main-info {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-shrink: 0;
 }
 
 .bus-badge {
@@ -5788,29 +5927,100 @@ body[data-theme="apple-light"] .lookup-bus-card {
 .badge-sky { background: #0284c7; }
 
 .bus-type-tag {
-  font-size: 10.5px;
-  color: var(--text-muted);
-  font-weight: 600;
-}
-
-.bus-direction-text {
   font-size: 11px;
   color: var(--text-muted);
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 110px;
+  font-weight: 700;
 }
 
+.bus-direction-pill {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+body[data-theme="apple-light"] .bus-direction-pill {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+/* 하단 도착 정보: 다음 버스 & 다다음 버스 와이드 블록 */
+.bus-card-arrival-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+}
+
+.bus-arrival-block {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 7px 10px;
+  gap: 6px;
+  flex-wrap: wrap;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+body[data-theme="apple-light"] .bus-arrival-block {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.first-bus-block {
+  border-left: 3px solid #dc2626 !important;
+}
+
+body[data-theme="apple-light"] .first-bus-block {
+  background: #fffbfa;
+  border-color: #fed7aa;
+}
+
+body[data-theme="obsidian"] .first-bus-block {
+  background: rgba(239, 68, 68, 0.05);
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.second-bus-block {
+  border-left: 3px solid #3b82f6 !important;
+}
+
+body[data-theme="apple-light"] .second-bus-block {
+  background: #f8fafc;
+  border-color: #bfdbfe;
+}
+
+body[data-theme="obsidian"] .second-bus-block {
+  background: rgba(59, 130, 246, 0.05);
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.arr-main-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* 레거시 호환 클래스 유지 */
+.bus-card-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 .bus-card-right {
   display: flex;
   flex-direction: column;
   gap: 6px;
   flex: 1;
-  text-align: right;
 }
-
 .bus-arrival-row {
   display: flex;
   justify-content: flex-end;

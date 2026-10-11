@@ -246,7 +246,7 @@ class TransitManager {
         let timeHtml = '';
 
         if (diffSec <= 0) {
-          timeHtml = `<span class="transit-time-arrive">⚡ 곧 도착 (진입)</span>`;
+          timeHtml = `<span class="transit-time-arrive transit-time-arrive-big">⚡ 곧 도착 (진입)</span>`;
         } else if (diffSec < 60) {
           timeHtml = `<span class="transit-time-imminent">${diffSec}초 후</span>`;
         } else {
@@ -327,7 +327,7 @@ class TransitManager {
   }
 
   formatSec(sec) {
-    if (sec <= 0) return `<span class="transit-time-arrive">⚡ 곧 도착</span>`;
+    if (sec <= 0) return `<span class="transit-time-arrive transit-time-arrive-big">⚡ 곧 도착</span>`;
     if (sec < 60) return `<span class="transit-time-imminent">${sec}초 후</span>`;
     const m = Math.floor(sec / 60);
     const s = sec % 60;
@@ -1130,34 +1130,61 @@ class TransitManager {
         </div>
       `;
 
-      // --- 🔵 다다음 버스 UI ---
+      // --- 🔵 다다음 버스 UI (다음 버스와 동일한 2단 카드 포맷으로 글씨 넘침 원천 방지) ---
       let next2Html = '';
       if (next2) {
         let next2TimeHtml = '';
-        let next2SubText = '';
+        let next2SubLoc = '';
+        let next2ArrClock = '';
+        let next2ScheduleBadge = '';
 
         if (next2.isWait) {
-          next2TimeHtml = `<span style="color:#d97706; font-weight:700;">출발대기</span>`;
-          next2SubText = '차고지 대기';
+          next2TimeHtml = `<span class="transit-time-imminent" style="color:#d97706;">⏸️ 출발대기</span>`;
+          next2SubLoc = `상태: <b>기점/차고지 대기</b>`;
         } else if (next2.isEnd) {
-          next2TimeHtml = `<span style="color:#64748b; font-weight:700;">운행종료</span>`;
-          next2SubText = '종료';
+          next2TimeHtml = `<span class="transit-time-arrive" style="color:#64748b;">🚫 운행종료</span>`;
+          next2SubLoc = `상태: <b>오늘 운행종료</b>`;
+        } else if (next2.isArrivingSoon || next2.sec <= 30) {
+          next2TimeHtml = `<span class="transit-time-arrive transit-time-arrive-big">⚡ 곧 도착</span>`;
+          const loc = next2.stopText ? `${next2.stopText} · 진입 중` : '정류소 진입 중';
+          next2SubLoc = `위치: <b>${loc}</b>`;
         } else if (next2.targetTime) {
-          const next2ArrTime = new Date(next2.targetTime);
-          const next2Clock = next2.priorityTime || `${String(next2ArrTime.getHours()).padStart(2, '0')}:${String(next2ArrTime.getMinutes()).padStart(2, '0')}`;
           next2TimeHtml = `<span class="live-countdown next2-countdown" data-target-time="${next2.targetTime}">${this.formatSec(next2.sec)}</span>`;
-          const priorityTag = next2.isPriority ? ` <span style="font-size:10px; color:#b45309; font-weight:700;">[시간표]</span>` : '';
-          next2SubText = `<b class="transit-clock-time">${next2Clock}</b>${priorityTag}${next2.stopText ? ` · ${next2.stopText}` : ''}`;
+          const loc = next2.stopText || '운행 중';
+          next2SubLoc = `위치: <b>${loc}</b>`;
+        } else {
+          next2TimeHtml = `<span class="transit-time-arrive transit-time-arrive-big">⚡ 곧 도착</span>`;
+          next2SubLoc = `위치: <b>운행 중</b>`;
         }
 
-        const vehicleBadge2 = next2.plainNo ? `<span style="font-size:10.5px; color:#475569; font-weight:600; margin-left:4px;">(${this.formatPlateSmall(next2.plainNo)})</span>` : '';
+        if (next2.isPriority && next2.priorityTime) {
+          next2ArrClock = next2.priorityTime;
+          next2ScheduleBadge = `<span class="badge-priority-timetable" style="display:inline-flex; align-items:center; background:#fef3c7; color:#92400e; font-size:10px; padding:1px 5px; border-radius:4px; font-weight:700; margin-left:4px; border:1px solid #fde68a;">[시간표]</span>`;
+        } else if (next2.targetTime && !next2.isWait && !next2.isEnd) {
+          const next2ArrTime = new Date(next2.targetTime);
+          next2ArrClock = `${String(next2ArrTime.getHours()).padStart(2, '0')}:${String(next2ArrTime.getMinutes()).padStart(2, '0')}`;
+        }
+
+        const vehicleBadge2 = next2.plainNo
+          ? `<span class="badge-bus-plate" style="display:inline-flex; align-items:center; background:#eff6ff; color:#1e40af; font-size:11px; padding:2px 7px; border-radius:5px; font-weight:700; margin-left:6px; border:1px solid #bfdbfe;">${this.formatPlateWithBigDigits(next2.plainNo, '🚌')}</span>`
+          : '';
 
         next2Html = `
-          <div class="next2-transit-box">
-            <span class="next2-tag-blue">
-              <span>🔵 다다음 (${next2SubText}):${vehicleBadge2}</span>
-            </span>
-            ${next2TimeHtml}
+          <div class="next-transit-box next2-transit-box">
+            <div class="next-transit-header">
+              <span class="next2-tag-blue">
+                <span>🔵</span>
+                <span>다다음 버스</span>
+                ${vehicleBadge2}
+              </span>
+              <span class="next-time-big next2-time-big">
+                ${next2TimeHtml}
+              </span>
+            </div>
+            <div class="next-transit-sub next2-transit-sub">
+              <span class="transit-sub-pos">${next2SubLoc}</span>
+              ${next2ArrClock ? `<span class="transit-sub-time"><span class="transit-arr-label">도착 예정:</span> <b class="transit-clock-time" style="color:#0284c7; font-weight:900;">${next2ArrClock}</b>${next2ScheduleBadge}</span>` : ''}
+            </div>
           </div>
         `;
       }
@@ -1178,11 +1205,21 @@ class TransitManager {
         const next3ArrTime = new Date(next3TargetMs);
         const next3Clock = `${String(next3ArrTime.getHours()).padStart(2, '0')}:${String(next3ArrTime.getMinutes()).padStart(2, '0')}`;
         next3Html = `
-          <div class="next2-transit-box next3-transit-box" style="margin-top:4px; opacity:0.95;">
-            <span class="next2-tag-blue" style="color:#475569;">
-              <span>🟣 다다다음 (<b class="transit-clock-time" style="font-size:14px; font-weight:800; color:#6366f1;">${next3Clock}</b> · 정규배차)</span>
-            </span>
-            <span class="live-countdown next2-countdown" data-target-time="${next3TargetMs}">${this.formatSec(next3Sec)}</span>
+          <div class="next-transit-box next3-transit-box" style="margin-top:5px;">
+            <div class="next-transit-header">
+              <span class="next3-tag-purple">
+                <span>🟣</span>
+                <span>다다다음</span>
+                <span class="badge-regular-service" style="display:inline-flex; align-items:center; background:#f5f3ff; color:#6d28d9; font-size:10px; padding:1px 5px; border-radius:4px; font-weight:700; margin-left:6px; border:1px solid #ddd6fe;">정규배차</span>
+              </span>
+              <span class="next-time-big next3-time-big">
+                <span class="live-countdown next2-countdown next3-countdown" data-target-time="${next3TargetMs}">${this.formatSec(next3Sec)}</span>
+              </span>
+            </div>
+            <div class="next-transit-sub next3-transit-sub">
+              <span class="transit-sub-pos">배차: <b>평일 5~8분 / 주말 8~12분</b></span>
+              <span class="transit-sub-time"><span class="transit-arr-label">도착 예정:</span> <b class="transit-clock-time" style="color:#7c3aed; font-weight:900;">${next3Clock}</b></span>
+            </div>
           </div>
         `;
       }
@@ -1310,18 +1347,47 @@ class TransitManager {
 
     let subwayTrainsHtml = '';
     if (t1) {
+      const arrivalLabel = isTimetableMode ? '시간표 도착:' : '도착 예정:';
+
       let t2Html = '';
       if (t2) {
-        const t2VehicleTag = t2.trainNo ? `<span class="next2-train-plate" style="font-size:11px; color:#1e40af; font-weight:700; margin-left:4px;">(${this.formatPlateSmall(t2.trainNo)})</span>` : '';
+        const t2VehicleTag = t2.trainNo
+          ? `<span class="badge-bus-plate badge-train-plate" style="display:inline-flex; align-items:center; background:#eff6ff; color:#1e40af; font-size:11px; padding:2px 7px; border-radius:5px; font-weight:800; margin-left:6px; border:1.5px solid #bfdbfe;">${this.formatPlateWithBigDigits(t2.trainNo, '🚇')}</span>`
+          : `<span class="badge-low-bus" style="background:#fef3c7; color:#b45309; border-color:#fde68a;">${isTimetableMode ? '🗓️ 정시시간표' : '역고정(공식)'}</span>`;
         const t2TimeHtml = (t2.isArrivingSoon || t2.sec <= 30)
-          ? `<span style="color:#dc2626; font-weight:800; font-size:12px;">⚡ 곧 도착</span>`
+          ? `<span class="transit-time-arrive-big subway-arrive-imminent" style="font-weight:900; font-size:20px; letter-spacing:-0.3px;">⚡ 곧 도착</span>`
           : `<span class="live-countdown next2-countdown" data-target-time="${t2.targetTime}">${this.formatSec(t2.sec)}</span>`;
+
+        let t2SubLoc = '';
+        if (isTimetableMode) {
+          t2SubLoc = isCommute ? '선유도역 탑승' : '국회의사당역 탑승';
+        } else {
+          t2SubLoc = t2.curLocation ? `${t2.curLocation} ${t2.statusMsg || ''}`.trim() : (isCommute ? '선유도역 탑승' : '국회의사당역 탑승');
+        }
+        t2SubLoc = t2SubLoc.replace(/9호선\s*공식\s*시간표\s*기준/g, '')
+                           .replace(/공식\s*시간표\s*정시\s*운행/g, '')
+                           .replace(/공식\s*시간표/g, '')
+                           .replace(/시간표\s*기준/g, '')
+                           .replace(/역고정\s*\(공식\)/g, '')
+                           .trim();
+        if (!t2SubLoc) t2SubLoc = isCommute ? '선유도역 탑승' : '국회의사당역 탑승';
+
         t2Html = `
-          <div class="next2-transit-box">
-            <span class="next2-tag-blue">
-              <span>🔵 다다음 (<b class="transit-clock-time subway-clock-time-next2" style="font-size:16.5px; font-weight:900;">${t2.clockStr}</b>)${t2VehicleTag}</span>
-            </span>
-            ${t2TimeHtml}
+          <div class="next-transit-box next2-transit-box">
+            <div class="next-transit-header">
+              <span class="next2-tag-blue">
+                <span>🔵</span>
+                <span>다다음 열차</span>
+                ${t2VehicleTag}
+              </span>
+              <span class="next-time-big next2-time-big">
+                ${t2TimeHtml}
+              </span>
+            </div>
+            <div class="next-transit-sub next2-transit-sub">
+              <span class="transit-sub-pos">위치: <b>${t2SubLoc}</b></span>
+              <span class="transit-sub-time"><span class="transit-arr-label" style="font-size:13px; font-weight:800;">${arrivalLabel}</span> <b class="transit-clock-time subway-clock-time-next2" style="font-size:18.5px; font-weight:900; margin-left:4px;">${t2.clockStr}</b></span>
+            </div>
           </div>
         `;
       }
@@ -1352,10 +1418,8 @@ class TransitManager {
       }
 
       const t1TimeHtml = (t1.isArrivingSoon || t1.sec <= 30)
-        ? `<span style="color:#dc2626; font-weight:900; font-size:13.5px;">⚡ 곧 도착</span>`
+        ? `<span class="transit-time-arrive-big subway-arrive-imminent" style="font-weight:900; font-size:21.5px; letter-spacing:-0.3px;">⚡ 곧 도착</span>`
         : `<span class="next-time-big live-countdown" data-target-time="${t1.targetTime}">${this.formatSec(t1.sec)}</span>`;
-
-      const arrivalLabel = isTimetableMode ? '시간표 도착:' : '도착 예정:';
 
       // 어디행 제거 및 시각 폰트 18.5px / 고대비 컬러로 크게 노출
       subwayTrainsHtml = `

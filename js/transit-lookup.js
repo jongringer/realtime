@@ -620,7 +620,11 @@
       } else {
         cardsHtml = filtered.map(bus => {
           const badgeClass = this.getBusBadgeClass(bus.routeType, bus.rtNm);
-          const typeName = bus.routeType || this.guessRouteType(bus.rtNm);
+          const routeTypeMap = { '1': '공항버스', '2': '마을버스', '3': '간선버스', '4': '지선버스', '5': '순환버스', '6': '광역버스' };
+          let typeName = routeTypeMap[bus.routeType] || bus.routeType;
+          if (!typeName || /^\d+$/.test(String(typeName).trim())) {
+            typeName = this.guessRouteType(bus.rtNm);
+          }
           const nextStop = bus.nxtStn ? `${bus.nxtStn} 방면` : '운행 노선';
 
           // 첫 번째 버스 도착정보
@@ -638,18 +642,20 @@
 
           return `
             <div class="lookup-bus-card">
-              <div class="bus-card-left">
-                <div class="bus-route-header">
+              <!-- 상단 헤더: 노선 번호 + 노선 유형 + 방면 안내 (가로 전체 활용) -->
+              <div class="bus-card-top-header">
+                <div class="bus-route-main-info">
                   <span class="bus-badge ${badgeClass}">${bus.rtNm}</span>
                   <span class="bus-type-tag">${typeName}</span>
                 </div>
-                <div class="bus-direction-text">${nextStop}</div>
+                <div class="bus-direction-pill">${nextStop}</div>
               </div>
 
-              <div class="bus-card-right">
-                <!-- 다음 버스 (첫 번째 버스) -->
-                <div class="bus-arrival-row first-bus">
-                  <div class="arr-label-wrap">
+              <!-- 하단 도착 정보: 다음 버스 & 다다음 버스 와이드 블록 -->
+              <div class="bus-card-arrival-list">
+                <!-- 다음 버스 -->
+                <div class="bus-arrival-block first-bus-block">
+                  <div class="arr-main-info">
                     <span class="arr-badge arr-first">다음</span>
                     ${targetTime1 ? `
                       <span class="live-bus-sec" data-target-time="${targetTime1}">
@@ -666,9 +672,9 @@
                   </div>
                 </div>
 
-                <!-- 다다음 버스 (두 번째 버스) -->
-                <div class="bus-arrival-row second-bus">
-                  <div class="arr-label-wrap">
+                <!-- 다다음 버스 -->
+                <div class="bus-arrival-block second-bus-block">
+                  <div class="arr-main-info">
                     <span class="arr-badge arr-second">다다음</span>
                     ${targetTime2 ? `
                       <span class="live-bus-sec" data-target-time="${targetTime2}">

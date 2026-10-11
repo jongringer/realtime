@@ -80,12 +80,13 @@ public class MainActivity extends BridgeActivity {
             if (this.bridge != null && this.bridge.getWebView() != null) {
                 android.webkit.WebView webView = this.bridge.getWebView();
                 android.webkit.WebSettings settings = webView.getSettings();
+                settings.setTextZoom(100); // 갤럭시/안드로이드 시스템 글자 크기 변경 시 웹뷰 레이아웃 화면비 붕괴 방지 (100% 비율 고정)
                 settings.setSupportZoom(true);
                 settings.setBuiltInZoomControls(true);
                 settings.setDisplayZoomControls(false); // 화면 위 불필요한 +/- 줌 버튼 UI 제거, 핀치 제스처만 깔끔하게 동작
                 settings.setUseWideViewPort(true);
                 settings.setLoadWithOverviewMode(true);
-                Log.d(TAG, "Native WebView pinch zoom enabled successfully.");
+                Log.d(TAG, "Native WebView pinch zoom and fixed textZoom enabled successfully.");
             }
         } catch (Exception e) {
             Log.e(TAG, "Failed to enable pinch zoom", e);
