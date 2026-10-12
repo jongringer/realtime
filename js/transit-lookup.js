@@ -199,11 +199,12 @@
       this.busApiKey = '0f40f3c7a3220ef7d0f45825f4364e47d05d10fa087632a03db7c8c2222aae63';
       this.subwayApiKey = '476a79484b6a6f6e3833504f4f6d4e';
 
-      this.currentType = null; // 'bus' | 'subway'
-      this.currentId = null;   // arsId or stationName
-      this.currentName = '';
+      this.currentType = 'bus'; // 'bus' | 'subway'
+      this.currentId = '15158';   // 디폴트로 15158(양정고등학교) 선택
+      this.currentName = '양정고등학교';
       this.lastBusData = null;
       this.lastSubwayData = null;
+      this.shouldScrollOnRender = false; // 초기 로딩 및 자동 갱신 시에는 화면 스크롤 방지
 
       this.filterType = 'all'; // 'all' | 'town' | 'blue' | 'green' | 'red'
       this.sortType = 'arrival'; // 'arrival' | 'number'
@@ -223,12 +224,13 @@
       this.initEvents();
       this.renderQuickChips();
 
-      // 디폴트로 버스 정류장 6637 전용 정류소 15158(양정고등학교) 자동 로딩!
+      // 디폴트로 15158(양정고등학교) 자동 로딩 (초기 스크롤 방지)
       this.loadDefaultStation();
     }
 
     loadDefaultStation() {
-      // 1순위 기본값: 15158 (양정고등학교, 6637 단독 정차)
+      // 1순위 기본값: 15158 (양정고등학교) - 사용자가 직접 선택할 때만 스크롤되도록 플래그 false 유지
+      this.shouldScrollOnRender = false;
       setTimeout(() => {
         this.lookupBusByArs('15158', '양정고등학교');
       }, 60);
@@ -318,10 +320,11 @@
     }
 
     // ==========================================
-    // 화면 자동 스크롤: 도착정보 전광판으로 즉시 이동 (1회 터치 즉시 스크롤 보장)
+    // 화면 자동 스크롤: 사용자가 직접 선택했을 때만 1회 즉각 이동
+    // (위로 다시 올린 상태에서는 절대 자동으로 내려가지 않음)
     // ==========================================
     scrollToResult(smooth = true) {
-      const performScroll = () => {
+      setTimeout(() => {
         const target = document.querySelector('.lookup-board-wrap') ||
                        document.querySelector('.subway-board-wrap') ||
                        document.querySelector('.lookup-board-header') ||
@@ -334,12 +337,7 @@
             behavior: smooth ? 'smooth' : 'auto'
           });
         }
-      };
-
-      // 1차: 즉시 반응 (10ms)
-      setTimeout(performScroll, 10);
-      // 2차: DOM 및 폰트 렌더링 안정화 후 미세 보정 (150ms)
-      setTimeout(performScroll, 150);
+      }, 10);
     }
 
     executeSearch() {
@@ -824,6 +822,7 @@
     // 실시간 갱신 & 티커
     // ==========================================
     refreshCurrent() {
+      this.shouldScrollOnRender = false; // 자동 갱신 시에는 화면 스크롤 금지
       if (this.btnRefresh) this.btnRefresh.classList.add('spinning');
       const finish = () => {
         if (this.btnRefresh) {
@@ -1083,7 +1082,6 @@
       `;
 
       this.resultContainer.innerHTML = boardHtml;
-      this.scrollToResult();
 
       // 필터 버튼 이벤트 바인딩
       this.resultContainer.querySelectorAll('.btn-filter').forEach(btn => {
@@ -1273,7 +1271,6 @@
         `;
 
         this.resultContainer.innerHTML = boardHtml;
-        this.scrollToResult();
 
         // 토글 버튼 이벤트 바인딩
         const btnToggle = document.getElementById('btnToggleSeonyudoTimetable');
@@ -1317,7 +1314,6 @@
       `;
 
       this.resultContainer.innerHTML = boardHtml;
-      this.scrollToResult();
     }
 
     // ==========================================
@@ -1432,9 +1428,10 @@
         </div>
       `;
 
-      // 1. 상위 3대 핵심 카드 클릭 이벤트 (클릭 즉시 하이라이트 & 스크롤)
+      // 1. 상위 3대 핵심 카드 클릭 이벤트 (사용자가 직접 클릭할 때만 스크롤 허용)
       this.chipsContainer.querySelectorAll('.quick-priority-card').forEach(card => {
         card.addEventListener('click', () => {
+          this.shouldScrollOnRender = true; // 사용자가 직접 선택했을 때만 스크롤 활성화!
           this.chipsContainer.querySelectorAll('.quick-priority-card').forEach(c => c.classList.remove('is-active-target'));
           card.classList.add('is-active-target');
 
@@ -1454,9 +1451,10 @@
         });
       });
 
-      // 2. 보조 칩 클릭 이벤트
+      // 2. 보조 칩 클릭 이벤트 (사용자가 직접 클릭할 때만 스크롤 허용)
       this.chipsContainer.querySelectorAll('.quick-chip-btn').forEach(btn => {
         btn.addEventListener('click', () => {
+          this.shouldScrollOnRender = true; // 사용자가 직접 선택했을 때만 스크롤 활성화!
           const type = btn.getAttribute('data-type');
           const id = btn.getAttribute('data-id');
           const name = btn.getAttribute('data-name');
@@ -1639,7 +1637,6 @@
           <div class="lookup-state-text">현재 운행 중인 버스가 없거나 정류장 번호를 다시 확인해 주세요.</div>
         </div>
       `;
-      this.scrollToResult();
     }
 
     showEmptySubway(stationName) {
@@ -1651,7 +1648,6 @@
           <div class="lookup-state-text">현재 실시간 운행 중인 열차 도착 정보를 수신할 수 없습니다 (심야 시간 등).</div>
         </div>
       `;
-      this.scrollToResult();
     }
 
     // ==========================================

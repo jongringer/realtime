@@ -10,8 +10,8 @@ echo [Step 1] Pushing main branch...
 git push -u origin main
 
 echo.
-echo [Step 2] Pushing tag v1.2.44...
-git push origin v1.2.44
+echo [Step 2] Pushing tag v1.2.46...
+git push origin v1.2.46
 
 echo.
 echo ========================================================
