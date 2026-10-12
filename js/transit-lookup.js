@@ -144,6 +144,7 @@
       badgeClass: 'badge-green',
       summary: '광명시 ↔ 목동 ↔ 영등포구청역',
       stops: [
+        { arsId: '19729', stNm: '영등포구청.우리은행 (영등포구청6637버스)', dir: '목동·광명 방면' },
         { arsId: '15158', stNm: '양정고등학교', dir: '영등포구청역 방면' },
         { arsId: '15156', stNm: '경인초교.목동5·6단지사잇길', dir: '오목교·광명 방면' },
         { arsId: '15154', stNm: '이대목동병원.목동6단지앞', dir: '영등포 방면' }
@@ -199,6 +200,9 @@
     { arsId: '19176', stNm: '당산역삼성래미안아파트', keywords: ['당산', '당산역', '당산역버스정류장', '19176', '삼성래미안', '603', '6620', '양천01'] },
     { arsId: '19173', stNm: '당산역1번출구', keywords: ['당산', '당산역', '19173', '1번출구'] },
     { arsId: '19218', stNm: '당산역2번출구', keywords: ['당산', '당산역', '19218', '2번출구'] },
+
+    // [영등포구청 일대 정류소]
+    { arsId: '19729', stNm: '영등포구청.우리은행', keywords: ['영등포구청', '영등포구청6637', '영등포구청6637버스', '19729', '6637'] },
 
     // [여의도 / 국회 일대 정류소]
     { arsId: '19143', stNm: '국회의사당역', keywords: ['국회', '국회의사당', '19143', '9호선'] },
@@ -1076,14 +1080,19 @@
 
       // 필터링 적용
       let filtered = [...busList];
-      if (this.filterType === 'town') {
-        filtered = filtered.filter(b => b.routeType === '마을' || (b.rtNm && b.rtNm.includes('마을')) || (b.rtNm && b.rtNm.startsWith('양천')));
-      } else if (this.filterType === 'blue') {
-        filtered = filtered.filter(b => b.routeType === '간선' || (b.routeType && b.routeType.includes('간선')));
-      } else if (this.filterType === 'green') {
-        filtered = filtered.filter(b => b.routeType === '지선' || (b.routeType && b.routeType.includes('지선')));
-      } else if (this.filterType === 'red') {
-        filtered = filtered.filter(b => b.routeType === '광역' || b.routeType === '직행' || (b.routeType && b.routeType.includes('광역')));
+      // 19729 영등포구청 정류소: 6637 버스만 단독 노출 (사용자 요청)
+      if (String(arsId).includes('19729')) {
+        filtered = filtered.filter(b => b.rtNm === '6637');
+      } else {
+        if (this.filterType === 'town') {
+          filtered = filtered.filter(b => b.routeType === '마을' || (b.rtNm && b.rtNm.includes('마을')) || (b.rtNm && b.rtNm.startsWith('양천')));
+        } else if (this.filterType === 'blue') {
+          filtered = filtered.filter(b => b.routeType === '간선' || (b.routeType && b.routeType.includes('간선')));
+        } else if (this.filterType === 'green') {
+          filtered = filtered.filter(b => b.routeType === '지선' || (b.routeType && b.routeType.includes('지선')));
+        } else if (this.filterType === 'red') {
+          filtered = filtered.filter(b => b.routeType === '광역' || b.routeType === '직행' || (b.routeType && b.routeType.includes('광역')));
+        }
       }
 
       // 정렬 적용: 당산역(19176) 정류소 조회 시 귀가 핵심 노선인 603, 6620을 최상단 우선 노출
@@ -1517,11 +1526,12 @@
 
       const history = this.getRecentHistory();
       
-      // 최상위 4대 핵심 거점 (각 항목이 독립된 1행을 차지하는 와이드 카드)
+      // 최상위 5대 핵심 거점 (각 항목이 독립된 1행을 차지하는 와이드 카드)
       // 1: 15158 양정고 (6637 영등포구청역 방면)
-      // 2: 15156 경인초교 (6637 오목교방면)
-      // 3: 19176 당산역버스정류장 (603 · 6620 방면 - 9호선 선유도역 위로 배치)
-      // 4: 9호선 선유도역 (실시간 우선 및 시간표)
+      // 2: 19729 영등포구청6637버스 (양정고 다음 배치, 6637 단독 노출)
+      // 3: 19176 당산역버스정류장 (603 · 6620 귀가 방면)
+      // 4: 15156 경인초교 (당산역 다음 배치, 6637 오목교방면)
+      // 5: 9호선 선유도역 (실시간 우선 및 시간표)
       const topPriorityCards = [
         {
           type: 'bus',
@@ -1535,13 +1545,13 @@
         },
         {
           type: 'bus',
-          id: '15156',
-          name: '경인초교',
-          badgeText: '🚏 15156',
+          id: '19729',
+          name: '영등포구청.우리은행',
+          badgeText: '🚏 19729',
           badgeClass: 'badge-blue',
-          titleText: '경인초교 · 목동5·6단지',
-          routeTag: '6637 오목교방면',
-          statusText: '오목교방면'
+          titleText: '영등포구청6637버스',
+          routeTag: '6637 목동방면 (6637 전용)',
+          statusText: '영등포구청'
         },
         {
           type: 'bus',
@@ -1552,6 +1562,16 @@
           titleText: '당산역버스정류장',
           routeTag: '603 · 6620 방면',
           statusText: '당산역'
+        },
+        {
+          type: 'bus',
+          id: '15156',
+          name: '경인초교',
+          badgeText: '🚏 15156',
+          badgeClass: 'badge-blue',
+          titleText: '경인초교 · 목동5·6단지',
+          routeTag: '6637 오목교방면',
+          statusText: '오목교방면'
         },
         {
           type: 'subway',
