@@ -204,7 +204,7 @@
       this.currentName = '양정고등학교';
       this.lastBusData = null;
       this.lastSubwayData = null;
-      this.shouldScrollOnRender = false; // 초기 로딩 및 자동 갱신 시에는 화면 스크롤 방지
+      this.userInitiatedScroll = false; // 오직 사용자가 직접 터치/클릭했을 때만 스크롤 허용!
 
       this.filterType = 'all'; // 'all' | 'town' | 'blue' | 'green' | 'red'
       this.sortType = 'arrival'; // 'arrival' | 'number'
@@ -230,7 +230,7 @@
 
     loadDefaultStation() {
       // 1순위 기본값: 15158 (양정고등학교) - 사용자가 직접 선택할 때만 스크롤되도록 플래그 false 유지
-      this.shouldScrollOnRender = false;
+      this.userInitiatedScroll = false;
       setTimeout(() => {
         this.lookupBusByArs('15158', '양정고등학교');
       }, 60);
@@ -325,19 +325,19 @@
     // ==========================================
     scrollToResult(smooth = true) {
       setTimeout(() => {
-        const target = document.querySelector('.lookup-board-wrap') ||
-                       document.querySelector('.subway-board-wrap') ||
-                       document.querySelector('.lookup-board-header') ||
+        const target = document.querySelector('.lookup-cards-container') ||
+                       document.querySelector('.seonyudo-timetable-card') ||
+                       document.querySelector('.lookup-board-wrap') ||
                        document.getElementById('lookupResultContainer');
         if (target) {
           const rect = target.getBoundingClientRect();
-          const targetY = window.pageYOffset + rect.top - 18;
+          const targetY = window.pageYOffset + rect.top - 16;
           window.scrollTo({
             top: Math.max(0, targetY),
             behavior: smooth ? 'smooth' : 'auto'
           });
         }
-      }, 10);
+      }, 30);
     }
 
     executeSearch() {
@@ -347,6 +347,7 @@
         return;
       }
 
+      this.userInitiatedScroll = true; // 사용자 직접 검색 시 스크롤 허용!
       this.hideSuggestions();
 
       // 1. 숫자 5자리인 경우 -> 버스 ARS 즉시 조회
@@ -511,6 +512,7 @@
       // 카드 클릭 이벤트 바인딩
       this.resultContainer.querySelectorAll('.search-item-card').forEach(card => {
         card.addEventListener('click', () => {
+          this.userInitiatedScroll = true; // 사용자 직접 선택 시 스크롤 허용!
           const type = card.getAttribute('data-type');
           if (type === 'subway') {
             const name = card.getAttribute('data-name');
@@ -621,6 +623,7 @@
       // 드롭다운 클릭 이벤트 바인딩
       this.dropdown.querySelectorAll('.suggestion-item').forEach(item => {
         item.addEventListener('click', () => {
+          this.userInitiatedScroll = true; // 사용자 직접 선택 시 스크롤 허용!
           const type = item.getAttribute('data-type');
           if (type === 'subway') {
             const name = item.getAttribute('data-name');
@@ -822,7 +825,7 @@
     // 실시간 갱신 & 티커
     // ==========================================
     refreshCurrent() {
-      this.shouldScrollOnRender = false; // 자동 갱신 시에는 화면 스크롤 금지
+      this.userInitiatedScroll = false; // 자동 갱신 시에는 화면 스크롤 금지
       if (this.btnRefresh) this.btnRefresh.classList.add('spinning');
       const finish = () => {
         if (this.btnRefresh) {
@@ -1038,43 +1041,9 @@
         }).join('');
       }
 
-      const cleanArs = String(arsId).replace(/[^0-9]/g, '');
-
       const boardHtml = `
         <div class="lookup-board-wrap">
-          <!-- 상단 정류소 정보 헤더 (파란색 알약 뱃지 적용) -->
-          <div class="lookup-board-header">
-            <div class="station-meta-info">
-              <div class="station-name-row">
-                <span class="station-icon">🚏</span>
-                <span class="station-ars-badge station-ars-badge-blue">ARS ${formattedArs}</span>
-                <h4 class="station-title">${this.escapeHtml(stationName)}</h4>
-              </div>
-              <div class="station-sub-row">
-                <span class="station-route-count">정차 노선 <strong>${busList.length}개</strong></span>
-                <span class="station-update-time">수신: ${currentTimeStr}</span>
-                <span class="station-auto-ticker">🔄 <strong id="lookupAutoRefreshCountdown">${this.refreshCountdown}초</strong> 갱신</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- 필터 및 정렬 바 -->
-          <div class="lookup-filter-bar">
-            <div class="filter-btn-group">
-              <button type="button" class="btn-filter ${this.filterType === 'all' ? 'active' : ''}" data-filter="all">전체 (${busList.length})</button>
-              <button type="button" class="btn-filter ${this.filterType === 'town' ? 'active' : ''}" data-filter="town">마을</button>
-              <button type="button" class="btn-filter ${this.filterType === 'blue' ? 'active' : ''}" data-filter="blue">간선</button>
-              <button type="button" class="btn-filter ${this.filterType === 'green' ? 'active' : ''}" data-filter="green">지선</button>
-              <button type="button" class="btn-filter ${this.filterType === 'red' ? 'active' : ''}" data-filter="red">광역</button>
-            </div>
-            <div class="sort-btn-group">
-              <button type="button" class="btn-sort" id="btnToggleSort" title="도착순 / 노선순 정렬">
-                ${this.sortType === 'arrival' ? '⚡ 도착임박순' : '🔢 노선번호순'}
-              </button>
-            </div>
-          </div>
-
-          <!-- 버스 카드 목록 -->
+          <!-- 버스 번호 및 도착 예정 시각 카드 (헤더/필터 없이 즉시 표출) -->
           <div class="lookup-cards-container">
             ${cardsHtml}
           </div>
@@ -1082,6 +1051,10 @@
       `;
 
       this.resultContainer.innerHTML = boardHtml;
+      if (this.userInitiatedScroll) {
+        this.scrollToResult();
+        this.userInitiatedScroll = false;
+      }
 
       // 필터 버튼 이벤트 바인딩
       this.resultContainer.querySelectorAll('.btn-filter').forEach(btn => {
@@ -1271,6 +1244,10 @@
         `;
 
         this.resultContainer.innerHTML = boardHtml;
+        if (this.userInitiatedScroll) {
+          this.scrollToResult();
+          this.userInitiatedScroll = false;
+        }
 
         // 토글 버튼 이벤트 바인딩
         const btnToggle = document.getElementById('btnToggleSeonyudoTimetable');
@@ -1314,6 +1291,10 @@
       `;
 
       this.resultContainer.innerHTML = boardHtml;
+      if (this.userInitiatedScroll) {
+        this.scrollToResult();
+        this.userInitiatedScroll = false;
+      }
     }
 
     // ==========================================
@@ -1324,10 +1305,11 @@
 
       const history = this.getRecentHistory();
       
-      // 최상위 3대 핵심 거점 (각 항목이 독립된 1행을 차지하는 와이드 카드)
+      // 최상위 4대 핵심 거점 (각 항목이 독립된 1행을 차지하는 와이드 카드)
       // 1: 15158 양정고 (6637 영등포구청역 방면)
-      // 2: 15156 경인초교 (6637 목동방면)
+      // 2: 15156 경인초교 (6637 오목교방면)
       // 3: 9호선 선유도역 (당산방면 일반열차 시간표)
+      // 4: 19176 당산역버스
       const topPriorityCards = [
         {
           type: 'bus',
@@ -1359,10 +1341,20 @@
           routeTag: '당산방면 일반열차',
           statusText: '시간표 즉시 확인',
           isSubwayAccent: true
+        },
+        {
+          type: 'bus',
+          id: '19176',
+          name: '당산역삼성래미안아파트',
+          badgeText: '🚏 19176',
+          badgeClass: 'badge-blue',
+          titleText: '당산역버스',
+          routeTag: '당산역 버스정류소',
+          statusText: '당산역'
         }
       ];
 
-      // 3대 핵심 거점 수직 스택 카드 HTML (양정고·경인초교·선유도역 모두 깔끔하게 2줄 통일)
+      // 4대 핵심 거점 수직 스택 카드 HTML (모두 깔끔하게 2줄 통일)
       const priorityStackHtml = topPriorityCards.map(p => {
         const isActive = (this.currentId === p.id);
         return `
@@ -1393,8 +1385,8 @@
         { type: 'bus', id: '19212', name: '선유도역' }
       ];
 
-      // 최근 검색 기록 중 상위 3개와 중복되지 않는 항목들 필터링
-      const filteredHistory = history.filter(h => h.id !== '15158' && h.id !== '15156' && h.id !== '선유도');
+      // 최근 검색 기록 중 상위 4개와 중복되지 않는 항목들 필터링
+      const filteredHistory = history.filter(h => h.id !== '15158' && h.id !== '15156' && h.id !== '선유도' && h.id !== '19176');
       const secondaryMerged = [...filteredHistory];
       otherDefaultChips.forEach(def => {
         if (!secondaryMerged.some(m => m.type === def.type && m.id === def.id)) {
@@ -1428,10 +1420,10 @@
         </div>
       `;
 
-      // 1. 상위 3대 핵심 카드 클릭 이벤트 (사용자가 직접 클릭할 때만 스크롤 허용)
+      // 1. 상위 4대 핵심 카드 클릭 이벤트 (사용자가 직접 클릭할 때만 스크롤 허용)
       this.chipsContainer.querySelectorAll('.quick-priority-card').forEach(card => {
         card.addEventListener('click', () => {
-          this.shouldScrollOnRender = true; // 사용자가 직접 선택했을 때만 스크롤 활성화!
+          this.userInitiatedScroll = true; // 사용자가 직접 선택했을 때만 스크롤 활성화!
           this.chipsContainer.querySelectorAll('.quick-priority-card').forEach(c => c.classList.remove('is-active-target'));
           card.classList.add('is-active-target');
 
@@ -1454,7 +1446,7 @@
       // 2. 보조 칩 클릭 이벤트 (사용자가 직접 클릭할 때만 스크롤 허용)
       this.chipsContainer.querySelectorAll('.quick-chip-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          this.shouldScrollOnRender = true; // 사용자가 직접 선택했을 때만 스크롤 활성화!
+          this.userInitiatedScroll = true; // 사용자가 직접 선택했을 때만 스크롤 활성화!
           const type = btn.getAttribute('data-type');
           const id = btn.getAttribute('data-id');
           const name = btn.getAttribute('data-name');
