@@ -152,11 +152,12 @@ body[data-theme="noble-gold"] {
 }
 
 html, body {
-  touch-action: pan-x pan-y pinch-zoom; /* 어느 위치에서나 버벅임 없이 즉시 두 손가락 확대/축소 가능 */
+  touch-action: pan-x pan-y pinch-zoom; /* 두 손가락 확대/축소 지원 */
   -webkit-text-size-adjust: 100% !important;
   text-size-adjust: 100% !important;
-  max-width: 100%;
+  max-width: 100vw;
   overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 body {
@@ -168,22 +169,30 @@ body {
   justify-content: center;
   align-items: flex-start;
   min-height: 100vh;
+  min-height: 100dvh;
   padding: 0;
+  /* 상단 바(상태표시줄) 아래부터, 하단 홈/이전 내비게이션 바 위까지만 깔끔하게 핏 */
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
   transition: background-color 0.25s ease, color 0.25s ease;
+  box-sizing: border-box;
 }
 
-/* 모바일 뷰포트 컨테이너 */
+/* 모바일 뷰포트 컨테이너 (상태바 아래 ~ 하단 홈/이전 버튼 위까지만 노출) */
 .app-container {
   width: 100%;
   max-width: 440px;
-  min-height: 100vh;
+  min-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
   background-color: var(--bg-app);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow-x: visible;
-  padding: 6px 10px 16px 10px;
+  overflow-x: hidden;
+  padding: 6px 10px max(18px, calc(env(safe-area-inset-bottom, 0px) + 12px)) 10px;
+  box-sizing: border-box;
 }
 
 /* --------------------------------------------------------------------------
@@ -7251,9 +7260,62 @@ body[data-theme="apple-light"] .search-item-card {
   font-weight: 700;
 }
 
+/* 정류장 번호 및 정류소 이름 전용 헤더 */
+.lookup-bus-station-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--bg-card, #ffffff);
+  border: 1.5px solid var(--card-border, #cbd5e1);
+  border-radius: 14px;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
 
+body[data-theme="obsidian"] .lookup-bus-station-header,
+body:not([data-theme="apple-light"]) .lookup-bus-station-header {
+  background: #151f32;
+  border-color: rgba(255, 255, 255, 0.1);
+}
 
+.lookup-bus-station-header .station-meta-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
 
+.lookup-bus-station-header .station-name-text {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-main, #0f172a);
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+}
 
+.lookup-bus-station-header .station-meta-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--text-muted, #64748b);
+}
 
+/* 버스 노선 검색 결과 하이라이트 */
+.card-route-highlight {
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.08) 0%, rgba(59, 130, 246, 0.04) 100%) !important;
+  border: 1.5px solid #38bdf8 !important;
+  border-radius: 14px;
+  padding: 10px 14px;
+  margin-bottom: 6px;
+}
 
+.suggestion-route {
+  background: rgba(2, 132, 199, 0.04);
+}

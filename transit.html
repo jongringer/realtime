@@ -44,14 +44,18 @@
       display: flex;
       justify-content: center;
       min-height: 100vh;
-      padding: 16px 12px 40px 12px;
+      min-height: 100dvh;
+      padding: env(safe-area-inset-top, 8px) 12px max(20px, calc(env(safe-area-inset-bottom, 0px) + 14px)) 12px;
+      box-sizing: border-box;
     }
     .container {
       width: 100%;
       max-width: 450px;
+      min-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
       display: flex;
       flex-direction: column;
       gap: 12px;
+      box-sizing: border-box;
     }
     .header-card {
       background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
