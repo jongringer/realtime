@@ -5828,24 +5828,37 @@ body[data-theme="apple-light"] .quick-priority-card {
   transform: scale(0.985);
 }
 
-.quick-priority-card.is-active-target {
-  background: #e0f2fe !important; /* 선택 시 옅은 푸른색 전체 배경 */
-  border: 2px solid #0284c7 !important;
-  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.25) !important;
+.quick-priority-card.is-active-target,
+.quick-chip-btn.is-active-target {
+  background: linear-gradient(135deg, #fff1f2 0%, #fee2e2 100%) !important; /* 선택 시 옅은 붉은색 전체 배경 */
+  border: 2px solid #ef4444 !important;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.22) !important;
 }
 
-body[data-theme="apple-light"] .quick-priority-card.is-active-target {
-  background: #e0f2fe !important;
-  border-color: #0284c7 !important;
+body[data-theme="apple-light"] .quick-priority-card.is-active-target,
+body[data-theme="apple-light"] .quick-chip-btn.is-active-target,
+body:not([data-theme="obsidian"]):not([data-theme="midnight"]):not([data-theme="noble-gold"]):not(.dark-theme):not(.dark-mode) .quick-priority-card.is-active-target {
+  background: linear-gradient(135deg, #fff1f2 0%, #fee2e2 100%) !important;
+  border-color: #ef4444 !important;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.22) !important;
 }
 
-body:not([data-theme="apple-light"]) .quick-priority-card.is-active-target {
-  background: rgba(2, 132, 199, 0.22) !important;
-  border-color: #38bdf8 !important;
+body:not([data-theme="apple-light"]) .quick-priority-card.is-active-target,
+body:not([data-theme="apple-light"]) .quick-chip-btn.is-active-target,
+body[data-theme="obsidian"] .quick-priority-card.is-active-target,
+body.dark-theme .quick-priority-card.is-active-target,
+body.dark-mode .quick-priority-card.is-active-target {
+  background: linear-gradient(135deg, rgba(153, 27, 27, 0.35) 0%, rgba(220, 38, 38, 0.22) 100%) !important;
+  border-color: #f87171 !important;
+  box-shadow: 0 0 16px rgba(248, 113, 113, 0.35) !important;
 }
 
 .quick-priority-card.chip-prio-bus {
-  border-left: 4px solid #0284c7;
+  border-left: 4px solid #1d4ed8;
+}
+
+.quick-priority-card.chip-prio-bus.is-active-target {
+  border-left: 5px solid #dc2626 !important;
 }
 
 .quick-priority-card.chip-prio-subway {
@@ -5887,7 +5900,8 @@ body:not([data-theme="apple-light"]) .quick-priority-card.is-active-target {
 }
 
 .prio-tag-badge.badge-blue {
-  background: #007aff !important; /* 15158, 15156 파란색 배경 */
+  background: #1d4ed8 !important; /* 출퇴근 약간 어두운 계열의 푸른색 (#1d4ed8) */
+  box-shadow: 0 1px 4px rgba(29, 78, 216, 0.35) !important;
 }
 
 .prio-tag-badge.badge-line-9 {
@@ -6244,20 +6258,22 @@ body[data-theme="apple-light"] .btn-sort {
 .lookup-bus-card {
   display: flex;
   flex-direction: column;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--card-border);
-  border-radius: 14px;
-  padding: 11px 12px;
-  gap: 8px;
+  background: linear-gradient(135deg, #0b1120 0%, #162035 100%) !important;
+  border: 2px solid #38bdf8 !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 0 14px rgba(56, 189, 248, 0.25) !important;
+  border-radius: 16px !important;
+  padding: 13px 14px !important;
+  gap: 10px;
   width: 100%;
   box-sizing: border-box;
-  transition: background 0.15s ease;
+  transition: all 0.2s ease;
 }
 
-body[data-theme="apple-light"] .lookup-bus-card {
-  background: #ffffff;
-  border-color: #e2e8f0;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+body[data-theme="apple-light"] .lookup-bus-card,
+body:not([data-theme="obsidian"]):not([data-theme="midnight"]):not([data-theme="noble-gold"]):not(.dark-theme):not(.dark-mode) .lookup-bus-card {
+  background: #ffffff !important;
+  border: 2px solid #93c5fd !important;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.12) !important;
 }
 
 /* 상단 헤더: 노선 번호 뱃지 + 유형 + 방면 안내 (가로 전체 활용) */
@@ -6278,48 +6294,51 @@ body[data-theme="apple-light"] .lookup-bus-card {
 }
 
 .bus-badge {
-  font-size: 19px !important; /* 버스 번호 대형 표출 */
+  font-size: 20px !important; /* 버스 번호 대형 표출 */
   font-weight: 900 !important;
-  padding: 4px 11px !important;
+  padding: 4px 12px !important;
   border-radius: 9px !important;
   color: #ffffff !important;
   letter-spacing: -0.3px !important;
   display: inline-block !important;
   line-height: 1.15 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
 }
 
 .bus-badge.badge-town { background: #10b981 !important; }
-.bus-badge.badge-blue { background: #007aff !important; }
+.bus-badge.badge-blue { background: #1d4ed8 !important; } /* 출퇴근 딥 블루 (#1d4ed8) */
 .bus-badge.badge-green { background: #059669 !important; }
 .bus-badge.badge-red { background: #dc2626 !important; }
 .bus-badge.badge-sky { background: #0284c7 !important; }
 
 .bus-type-tag {
-  font-size: 11px;
+  font-size: 11.5px;
   color: var(--text-muted);
   font-weight: 700;
 }
 
 .bus-direction-pill {
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-muted);
   font-weight: 700;
-  background: rgba(255, 255, 255, 0.06);
-  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 3px 9px;
   border-radius: 6px;
   white-space: nowrap;
 }
 
-body[data-theme="apple-light"] .bus-direction-pill {
+body[data-theme="apple-light"] .bus-direction-pill,
+body:not([data-theme="obsidian"]):not([data-theme="midnight"]):not([data-theme="noble-gold"]):not(.dark-theme):not(.dark-mode) .bus-direction-pill {
   background: #f1f5f9;
-  color: #334155;
+  color: #1e293b;
+  font-weight: 800;
 }
 
 /* 하단 도착 정보: 다음 버스 & 다다음 버스 와이드 블록 */
 .bus-card-arrival-list {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 7px;
   width: 100%;
 }
 
@@ -6327,47 +6346,52 @@ body[data-theme="apple-light"] .bus-direction-pill {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 8px;
-  padding: 7px 10px;
+  border-radius: 12px;
+  padding: 9px 12px;
   gap: 6px;
   flex-wrap: wrap;
   width: 100%;
   box-sizing: border-box;
+  transition: all 0.2s ease;
 }
 
-body[data-theme="apple-light"] .bus-arrival-block {
-  background: #f8fafc;
-  border-color: #e2e8f0;
-}
-
+/* 🔥 다음 버스 도착 블록: 낮모드/밤모드 모두 전광판처럼 눈에 확 들어오는 고대비 하이라이트 배경 */
 .first-bus-block {
-  border-left: 3px solid #dc2626 !important;
+  background: linear-gradient(135deg, rgba(154, 52, 18, 0.45) 0%, rgba(124, 45, 18, 0.3) 100%) !important;
+  border: 2px solid #fb923c !important;
+  border-left: 5px solid #f97316 !important;
+  box-shadow: 0 0 16px rgba(251, 146, 60, 0.35) !important;
 }
 
-body[data-theme="apple-light"] .first-bus-block {
-  background: #fffbfa;
-  border-color: #fed7aa;
+body[data-theme="apple-light"] .first-bus-block,
+body:not([data-theme="obsidian"]):not([data-theme="midnight"]):not([data-theme="noble-gold"]):not(.dark-theme):not(.dark-mode) .first-bus-block {
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%) !important;
+  border: 2px solid #fb923c !important;
+  border-left: 5px solid #ea580c !important;
+  box-shadow: 0 3px 10px rgba(234, 88, 12, 0.14) !important;
 }
 
-body[data-theme="obsidian"] .first-bus-block {
-  background: rgba(239, 68, 68, 0.05);
-  border-color: rgba(239, 68, 68, 0.25);
+body[data-theme="apple-light"] .first-bus-block .arr-badge.arr-first,
+body:not([data-theme="obsidian"]):not([data-theme="midnight"]):not([data-theme="noble-gold"]):not(.dark-theme):not(.dark-mode) .first-bus-block .arr-badge.arr-first {
+  background: #ea580c !important;
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
 }
 
+/* 다다음 버스 도착 블록 */
 .second-bus-block {
-  border-left: 3px solid #3b82f6 !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.12) !important;
+  border-left: 4px solid #60a5fa !important;
 }
 
-body[data-theme="apple-light"] .second-bus-block {
-  background: #f8fafc;
-  border-color: #bfdbfe;
-}
-
-body[data-theme="obsidian"] .second-bus-block {
-  background: rgba(59, 130, 246, 0.05);
-  border-color: rgba(59, 130, 246, 0.2);
+body[data-theme="apple-light"] .second-bus-block,
+body:not([data-theme="obsidian"]):not([data-theme="midnight"]):not([data-theme="noble-gold"]):not(.dark-theme):not(.dark-mode) .second-bus-block {
+  background: #f8fafc !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-left: 4px solid #3b82f6 !important;
 }
 
 .arr-main-info {
@@ -7243,11 +7267,11 @@ body[data-theme="apple-light"] .transit-lookup-subtitle {
    🚏 실시간 버스·지하철 도착정보 - 파란색 ARS 뱃지 & 시원한 대형 도착시각 (v1.2.41)
    ========================================================================== */
 
-/* 1. 정류소 번호 파란색 알약 뱃지 (실시간 교통정보 헤더 일체화) */
+/* 1. 정류소 번호 파란색 알약 뱃지 (출퇴근 전광판 딥 블루 #1d4ed8 일체화) */
 .station-ars-badge,
 .station-ars-badge.station-ars-badge-blue,
 .station-ars-badge-blue {
-  background: #007aff !important;
+  background: #1d4ed8 !important; /* 출퇴근 딥 블루 (#1d4ed8) */
   color: #ffffff !important;
   font-size: 13px !important;
   font-weight: 800 !important;
@@ -7258,12 +7282,12 @@ body[data-theme="apple-light"] .transit-lookup-subtitle {
   justify-content: center !important;
   letter-spacing: 0.2px !important;
   line-height: 1.2 !important;
-  box-shadow: 0 2px 6px rgba(0, 122, 255, 0.35) !important;
+  box-shadow: 0 2px 6px rgba(29, 78, 216, 0.4) !important;
 }
 
 body[data-theme="apple-light"] .station-ars-badge,
 body[data-theme="apple-light"] .station-ars-badge-blue {
-  background: #007aff !important;
+  background: #1d4ed8 !important;
   color: #ffffff !important;
 }
 
@@ -7511,42 +7535,48 @@ body[data-theme="apple-light"] .search-item-card {
   font-weight: 700;
 }
 
-/* 정류장 번호 및 정류소 이름 전용 헤더 */
+/* 정류장 번호 및 정류소 이름 전용 헤더 (선택된 정류장·장소 시인성 극대화) */
 .lookup-bus-station-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 14px;
-  background: var(--bg-card, #ffffff);
-  border: 1.5px solid var(--card-border, #cbd5e1);
-  border-radius: 14px;
-  margin-bottom: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  padding: 12px 16px !important;
+  background: linear-gradient(135deg, #0b1329 0%, #172554 100%) !important;
+  border: 2px solid #38bdf8 !important;
+  border-radius: 16px !important;
+  margin-bottom: 10px;
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.28) !important;
 }
 
-body[data-theme="obsidian"] .lookup-bus-station-header,
-body:not([data-theme="apple-light"]) .lookup-bus-station-header {
-  background: #151f32;
-  border-color: rgba(255, 255, 255, 0.1);
+body[data-theme="apple-light"] .lookup-bus-station-header,
+body:not([data-theme="obsidian"]):not([data-theme="midnight"]):not([data-theme="noble-gold"]):not(.dark-theme):not(.dark-mode) .lookup-bus-station-header {
+  background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%) !important;
+  border: 2px solid #2563eb !important;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.16) !important;
 }
 
 .lookup-bus-station-header .station-meta-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
   min-width: 0;
   flex: 1;
 }
 
 .lookup-bus-station-header .station-name-text {
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--text-main, #0f172a);
+  font-size: 17.5px !important;
+  font-weight: 900 !important;
+  color: #f8fafc !important;
   letter-spacing: -0.3px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   margin: 0;
+}
+
+body[data-theme="apple-light"] .lookup-bus-station-header .station-name-text,
+body:not([data-theme="obsidian"]):not([data-theme="midnight"]):not([data-theme="noble-gold"]):not(.dark-theme):not(.dark-mode) .lookup-bus-station-header .station-name-text {
+  color: #0f172a !important;
 }
 
 .lookup-bus-station-header .station-meta-right {
