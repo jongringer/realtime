@@ -5680,47 +5680,78 @@ body[data-theme="apple-light"] .quick-priority-card {
 }
 
 .quick-priority-card.is-active-target {
+  background: #e0f2fe !important; /* 선택 시 옅은 푸른색 전체 배경 */
+  border: 2px solid #0284c7 !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.25) !important;
+}
+
+body[data-theme="apple-light"] .quick-priority-card.is-active-target {
+  background: #e0f2fe !important;
   border-color: #0284c7 !important;
-  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.25) !important;
+}
+
+body:not([data-theme="apple-light"]) .quick-priority-card.is-active-target {
+  background: rgba(2, 132, 199, 0.22) !important;
+  border-color: #38bdf8 !important;
 }
 
 .quick-priority-card.chip-prio-bus {
-  border-left: 4px solid #059669;
+  border-left: 4px solid #0284c7;
 }
 
 .quick-priority-card.chip-prio-subway {
-  border-left: 4px solid #d97706;
+  border-left: 4px solid #c89d5c;
 }
 
 .prio-card-left {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 3.5px;
   min-width: 0;
   flex: 1;
 }
 
+.prio-line-1 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.prio-line-2 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .prio-tag-badge {
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 800;
-  padding: 2px 7px;
+  padding: 2.5px 8px;
   border-radius: 6px;
   color: #ffffff;
   white-space: nowrap;
   flex-shrink: 0;
 }
 
+.prio-tag-badge.badge-blue {
+  background: #007aff !important; /* 15158, 15156 파란색 배경 */
+}
+
+.prio-tag-badge.badge-line-9 {
+  background: #c89d5c !important; /* 9호선 색상 */
+}
+
 .prio-name {
-  font-size: 13.5px;
-  font-weight: 800;
+  font-size: 16.5px !important; /* 양정고, 경인초교, 선유도역 폰트 대폭 확대 */
+  font-weight: 800 !important;
   color: var(--text-main);
-  white-space: nowrap;
+  letter-spacing: -0.2px;
 }
 
 .prio-route-tag {
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 11.5px;
+  font-weight: 800;
   color: #059669;
   background: rgba(5, 150, 105, 0.1);
   padding: 2px 7px;
@@ -5733,11 +5764,14 @@ body[data-theme="apple-light"] .prio-route-tag {
 }
 
 .prio-subway-tag {
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 11.5px;
+  font-weight: 800;
   color: #b45309;
   background: rgba(217, 119, 6, 0.12);
   padding: 2px 7px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
   border-radius: 6px;
   white-space: nowrap;
 }
@@ -6092,20 +6126,21 @@ body[data-theme="apple-light"] .lookup-bus-card {
 }
 
 .bus-badge {
-  font-size: 14.5px;
-  font-weight: 900;
-  padding: 2px 8px;
-  border-radius: 8px;
-  color: #ffffff;
-  letter-spacing: -0.2px;
-  display: inline-block;
+  font-size: 19px !important; /* 버스 번호 대형 표출 */
+  font-weight: 900 !important;
+  padding: 4px 11px !important;
+  border-radius: 9px !important;
+  color: #ffffff !important;
+  letter-spacing: -0.3px !important;
+  display: inline-block !important;
+  line-height: 1.15 !important;
 }
 
-.badge-town { background: #16a34a; }
-.badge-blue { background: #2563eb; }
-.badge-green { background: #059669; }
-.badge-red { background: #dc2626; }
-.badge-sky { background: #0284c7; }
+.bus-badge.badge-town { background: #10b981 !important; }
+.bus-badge.badge-blue { background: #007aff !important; }
+.bus-badge.badge-green { background: #059669 !important; }
+.bus-badge.badge-red { background: #dc2626 !important; }
+.bus-badge.badge-sky { background: #0284c7 !important; }
 
 .bus-type-tag {
   font-size: 11px;
@@ -6293,10 +6328,34 @@ body[data-theme="apple-light"] .time-min {
   font-weight: 600;
 }
 
+.arr-plate-no {
+  font-size: 11.5px !important;
+  font-weight: 800 !important;
+  padding: 2.5px 8px !important;
+  border-radius: 6px !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  letter-spacing: -0.2px !important;
+}
+
+.arr-plate-no.arr-plate-green {
+  background: #ecfdf5 !important; /* 6637 등 지선버스 번호판 전용 옅은 녹색 배경 */
+  color: #047857 !important;
+  border: 1.5px solid #a7f3d0 !important;
+}
+
+body[data-theme="obsidian"] .arr-plate-no.arr-plate-green {
+  background: rgba(5, 150, 105, 0.15) !important;
+  color: #34d399 !important;
+  border-color: rgba(5, 150, 105, 0.4) !important;
+}
+
 .arr-plate-no .plate-digit {
-  color: var(--text-main);
-  font-weight: 800;
-  font-size: 12px;
+  font-weight: 900;
+  font-size: 13px;
 }
 
 .badge-low-bus {

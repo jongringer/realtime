@@ -745,7 +745,7 @@
 
     getSeonyudoUpcomingTrains(now = new Date(), count = 4) {
       const isHoliday = this.isWeekendOrHoliday(now);
-      const schedule = isHoliday ? SEONYUDO_WEEKEND_TIMETABLE : SEONYUDO_WEEKDAY;
+      const schedule = isHoliday ? SEONYUDO_WEEKEND_TIMETABLE : SEONYUDO_WEEKDAY_TIMETABLE;
       const rawH = now.getHours();
       const currentH = (rawH === 0) ? 24 : rawH;
       const currentMinutes = currentH * 60 + now.getMinutes();
@@ -991,18 +991,18 @@
                 <div class="bus-arrival-block first-bus-block">
                   <div class="arr-main-info">
                     <span class="arr-badge arr-first">다음</span>
+                    ${plate1 ? `<span class="arr-plate-no ${badgeClass === 'badge-green' ? 'arr-plate-green' : ''}">${plate1}</span>` : ''}
                     ${targetTime1 ? `
                       <span class="live-bus-sec" data-target-time="${targetTime1}">
                         ${this.formatSecondsHtml(tra1)}
                       </span>
-                      <span class="arr-eta-time">도착 예정: <strong class="eta-clock">${this.formatEtaTime(targetTime1)}</strong></span>
                     ` : `
                       <span class="arr-text-raw ${isTerm1 ? 'arr-status-ended' : ''}">${this.cleanArrivalMsg(busMsg1)}</span>
                     `}
                   </div>
                   <div class="arr-sub-info">
-                    ${this.extractStationCount(busMsg1) ? `<span class="arr-stops-cnt">${this.extractStationCount(busMsg1)}</span>` : ''}
-                    ${plate1 ? `<span class="arr-plate-no">${plate1}</span>` : ''}
+                    <span class="arr-stops-cnt">${this.extractStationCount(busMsg1) || '정류소 진입/운행중'}</span>
+                    ${targetTime1 ? `<span class="arr-eta-time">도착 예정: <strong class="eta-clock">${this.formatEtaTime(targetTime1)}</strong></span>` : ''}
                     ${bus.reride_Num1 === '1' || bus.busType1 === '1' ? `<span class="badge-low-bus">저상</span>` : ''}
                   </div>
                 </div>
@@ -1011,18 +1011,18 @@
                 <div class="bus-arrival-block second-bus-block">
                   <div class="arr-main-info">
                     <span class="arr-badge arr-second">다다음</span>
+                    ${plate2 ? `<span class="arr-plate-no ${badgeClass === 'badge-green' ? 'arr-plate-green' : ''}">${plate2}</span>` : ''}
                     ${targetTime2 ? `
                       <span class="live-bus-sec" data-target-time="${targetTime2}">
                         ${this.formatSecondsHtml(tra2)}
                       </span>
-                      <span class="arr-eta-time">도착 예정: <strong class="eta-clock">${this.formatEtaTime(targetTime2)}</strong></span>
                     ` : `
                       <span class="arr-text-raw secondary">${this.cleanArrivalMsg(busMsg2)}</span>
                     `}
                   </div>
                   <div class="arr-sub-info">
-                    ${this.extractStationCount(busMsg2) ? `<span class="arr-stops-cnt">${this.extractStationCount(busMsg2)}</span>` : ''}
-                    ${plate2 ? `<span class="arr-plate-no">${plate2}</span>` : ''}
+                    <span class="arr-stops-cnt">${this.extractStationCount(busMsg2) || '차기 순번 운행중'}</span>
+                    ${targetTime2 ? `<span class="arr-eta-time">도착 예정: <strong class="eta-clock">${this.formatEtaTime(targetTime2)}</strong></span>` : ''}
                   </div>
                 </div>
               </div>
@@ -1035,9 +1035,8 @@
 
       const boardHtml = `
         <div class="lookup-board-wrap">
-          <!-- 6637 전용 정류소 최상위 빠른 전환 탭 (15158 양정고 ↔ 15156 경인초교) -->
+          <!-- 양정고 ↔ 경인초교 최상위 빠른 전환 탭 -->
           <div class="dedicated-6637-switch-bar">
-            <span class="dedicated-tag">🚌 6637 전용</span>
             <div class="dedicated-tab-group">
               <button type="button" class="btn-6637-tab ${cleanArs === '15158' ? 'active' : ''}" data-ars="15158" data-name="양정고등학교">
                 <span class="tab-ars-num">15158</span> 양정고교 (당산방면)
@@ -1048,14 +1047,13 @@
             </div>
           </div>
 
-          <!-- 상단 정류소 정보 헤더 (두번째 이미지처럼 파란색 알약 뱃지 적용) -->
+          <!-- 상단 정류소 정보 헤더 (파란색 알약 뱃지 적용) -->
           <div class="lookup-board-header">
             <div class="station-meta-info">
               <div class="station-name-row">
                 <span class="station-icon">🚏</span>
                 <span class="station-ars-badge station-ars-badge-blue">ARS ${formattedArs}</span>
                 <h4 class="station-title">${this.escapeHtml(stationName)}</h4>
-                ${cleanArs === '15158' || cleanArs === '15156' ? `<span class="badge-only-6637">6637 전용 정류소</span>` : ''}
               </div>
               <div class="station-sub-row">
                 <span class="station-route-count">정차 노선 <strong>${busList.length}개</strong></span>
@@ -1212,7 +1210,7 @@
         }
 
         // 전체 시간표 테이블 생성
-        const scheduleData = isHoliday ? SEONYUDO_WEEKEND_TIMETABLE : SEONYUDO_WEEKDAY;
+        const scheduleData = isHoliday ? SEONYUDO_WEEKEND_TIMETABLE : SEONYUDO_WEEKDAY_TIMETABLE;
         const currentHour = new Date().getHours();
         const fullRowsHtml = Object.keys(scheduleData).map(hStr => {
           const h = Number(hStr);
@@ -1352,20 +1350,20 @@
           id: '15158',
           name: '양정고등학교',
           badgeText: '🚏 15158',
-          badgeClass: 'badge-green',
+          badgeClass: 'badge-blue',
           titleText: '양정고등학교',
           routeTag: '6637 당산방면',
-          statusText: '단독 정차'
+          statusText: '당산방면'
         },
         {
           type: 'bus',
           id: '15156',
           name: '경인초교',
           badgeText: '🚏 15156',
-          badgeClass: 'badge-green',
+          badgeClass: 'badge-blue',
           titleText: '경인초교 · 목동5·6단지',
           routeTag: '6637 목동방면',
-          statusText: '단독 정차'
+          statusText: '목동방면'
         },
         {
           type: 'subway',
@@ -1380,16 +1378,20 @@
         }
       ];
 
-      // 3대 핵심 거점 수직 스택 카드 HTML
+      // 3대 핵심 거점 수직 스택 카드 HTML (양정고·경인초교·선유도역 모두 깔끔하게 2줄 통일)
       const priorityStackHtml = topPriorityCards.map(p => {
         const isActive = (this.currentId === p.id);
         return `
           <button type="button" class="quick-priority-card ${p.type === 'bus' ? 'chip-prio-bus' : 'chip-prio-subway'} ${isActive ? 'is-active-target' : ''}"
                   data-type="${p.type}" data-id="${p.id}" data-name="${this.escapeHtml(p.name)}">
             <div class="prio-card-left">
-              <span class="prio-tag-badge ${p.badgeClass}">${p.badgeText}</span>
-              <span class="prio-name">${p.titleText}</span>
-              <span class="${p.type === 'bus' ? 'prio-route-tag' : 'prio-subway-tag'}">${p.routeTag}</span>
+              <div class="prio-line-1">
+                <span class="prio-tag-badge ${p.badgeClass}">${p.badgeText}</span>
+                <strong class="prio-name">${p.titleText}</strong>
+              </div>
+              <div class="prio-line-2">
+                <span class="${p.type === 'bus' ? 'prio-route-tag' : 'prio-subway-tag'}">${p.routeTag}</span>
+              </div>
             </div>
             <div class="prio-card-right">
               <span class="prio-status-text ${p.isSubwayAccent ? 'prio-text-accent' : ''}">${p.statusText}</span>
@@ -1707,14 +1709,32 @@
     }
 
     getBusBadgeClass(routeType, rtNm) {
-      const t = routeType || '';
-      const n = rtNm || '';
-      if (t.includes('마을') || n.startsWith('양천') || n.includes('마을')) return 'badge-town';
-      if (t.includes('간선') || (!t && n.length === 3 && (n.startsWith('1') || n.startsWith('2') || n.startsWith('3') || n.startsWith('4') || n.startsWith('5') || n.startsWith('6') || n.startsWith('7')))) return 'badge-blue';
-      if (t.includes('지선') || (!t && n.length === 4)) return 'badge-green';
-      if (t.includes('광역') || t.includes('직행') || (!t && n.length === 4 && n.startsWith('9'))) return 'badge-red';
-      if (t.includes('공항') || n.startsWith('60')) return 'badge-sky';
-      return 'badge-blue';
+      const t = String(routeType || '').trim();
+      const n = String(rtNm || '').trim();
+
+      // 지선버스: 6637, 6620, 7612 등 4자리 지선버스 또는 routeType 4
+      if (t === '4' || t.includes('지선') || /^[1-7]\d{3}$/.test(n) || n === '6637') {
+        return 'badge-green';
+      }
+      // 마을버스: 양천01 등 또는 routeType 2
+      if (t === '2' || t.includes('마을') || n.startsWith('양천') || n.includes('마을')) {
+        return 'badge-town';
+      }
+      // 간선버스: 603 등 3자리 버스 또는 routeType 3
+      if (t === '3' || t.includes('간선') || /^\d{3}$/.test(n)) {
+        return 'badge-blue';
+      }
+      // 광역버스: 9로 시작하는 4자리 또는 routeType 6
+      if (t === '6' || t.includes('광역') || t.includes('직행') || /^9\d{3}$/.test(n)) {
+        return 'badge-red';
+      }
+      // 공항버스: 60으로 시작하는 공항버스 또는 routeType 1
+      if (t === '1' || t.includes('공항') || n.startsWith('60')) {
+        return 'badge-sky';
+      }
+
+      if (n.length === 4) return 'badge-green';
+      return 'badge-green';
     }
 
     guessRouteType(rtNm) {
