@@ -6981,11 +6981,124 @@ body:not([data-theme="obsidian"]):not([data-theme="midnight"]):not([data-theme="
   border: 1px solid #cbd5e1 !important;
 }
 
+/* ==========================================================================
+   🚏 실시간 버스·지하철 도착정보 - 프리미엄 섹터 배경 분위기 및 시인성 글씨 확대 (v1.2.51)
+   ========================================================================== */
+.transit-lookup-card {
+  padding: 22px 18px !important;
+  border-radius: 24px !important;
+  margin-top: 20px !important;
+  margin-bottom: 28px !important;
+}
+
 body[data-theme="apple-light"] .transit-lookup-card,
 body:not([data-theme="obsidian"]):not([data-theme="midnight"]):not([data-theme="noble-gold"]):not(.dark-theme):not(.dark-mode) .transit-lookup-card {
-  background: #ffffff !important;
-  border: 1px solid #e2e8f0 !important;
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05) !important;
+  background: linear-gradient(165deg, #f1f5f9 0%, #f8fafc 45%, #e0f2fe 100%) !important;
+  border: 1.5px solid #cbd5e1 !important;
+  box-shadow: 0 10px 30px -4px rgba(15, 23, 42, 0.08), 0 4px 8px rgba(15, 23, 42, 0.04) !important;
+  position: relative;
+}
+
+body[data-theme="obsidian"] .transit-lookup-card,
+body.dark-theme .transit-lookup-card,
+body.dark-mode .transit-lookup-card {
+  background: linear-gradient(165deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.98) 100%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* 헤더 타이틀 및 부제목 시원하게 확대 */
+.transit-lookup-title-row .transit-lookup-title,
+.transit-lookup-title {
+  font-size: 19.5px !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.4px !important;
+  line-height: 1.3 !important;
+}
+
+.transit-lookup-header-icon {
+  font-size: 26px !important;
+  line-height: 1 !important;
+}
+
+.transit-lookup-subtitle {
+  font-size: 13px !important;
+  color: #64748b !important;
+  font-weight: 600 !important;
+  margin-top: 3px !important;
+}
+
+body[data-theme="apple-light"] .transit-lookup-subtitle {
+  color: #475569 !important;
+}
+
+/* 빠른선택 라벨 및 버튼 글씨 확대 */
+.quick-chips-label {
+  font-size: 13.5px !important;
+  font-weight: 800 !important;
+}
+
+.quick-chip-btn {
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  padding: 6px 12px !important;
+  border-radius: 20px !important;
+}
+
+.quick-chip-btn .chip-name {
+  font-size: 14px !important;
+  font-weight: 800 !important;
+}
+
+.quick-chip-btn .chip-desc {
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+}
+
+/* 검색 입력창 및 버튼 글씨 확대 */
+.lookup-input {
+  font-size: 15.5px !important;
+  padding: 12px 42px 12px 42px !important;
+}
+
+.btn-lookup-search {
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  padding: 8px 16px !important;
+}
+
+/* 안내 박스 텍스트 가독성 확대 */
+.lookup-guide-box .guide-title {
+  font-size: 15.5px !important;
+  font-weight: 800 !important;
+}
+
+.lookup-guide-box .guide-desc {
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+}
+
+/* 전광판 내부 타이틀 및 정류소 이름 글씨 확대 */
+.lookup-board-wrap .station-title,
+.search-results-header .station-title {
+  font-size: 19px !important;
+  font-weight: 900 !important;
+}
+
+.lookup-bus-card .bus-rt-nm {
+  font-size: 21px !important;
+  font-weight: 900 !important;
+}
+
+.lookup-bus-card .bus-next-dir {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
+.lookup-bus-card .arrival-countdown-text,
+.lookup-bus-card .arrival-badge {
+  font-size: 16px !important;
+  font-weight: 900 !important;
 }
 
 /* ==========================================================================
@@ -7319,3 +7432,149 @@ body:not([data-theme="apple-light"]) .lookup-bus-station-header {
 .suggestion-route {
   background: rgba(2, 132, 199, 0.04);
 }
+
+/* ==========================================================================
+   🚏 당산역 603·6620 전체보기 토글 버튼 & 버스 노선 정류소 팝업 모달 스타일
+   ========================================================================== */
+
+/* 당산역 전체보기 토글 버튼 */
+.btn-dangsan-view-toggle {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: #ffffff !important;
+  font-size: 11.5px !important;
+  font-weight: 800 !important;
+  padding: 4px 10px !important;
+  border-radius: 9999px !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.35);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-dangsan-view-toggle:active {
+  transform: scale(0.97);
+}
+
+.btn-dangsan-view-toggle.active {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: none !important;
+}
+
+body[data-theme="obsidian"] .btn-dangsan-view-toggle.active,
+body.dark-theme .btn-dangsan-view-toggle.active {
+  background: #334155 !important;
+  color: #f8fafc !important;
+  border: 1px solid #475569 !important;
+}
+
+/* 버스 노선 팝업 모달 타임라인 정류소 아이템 */
+.route-stop-timeline-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #ffffff;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.route-stop-timeline-item:active {
+  transform: translateY(1px);
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+
+.route-stop-timeline-item.stop-highlight {
+  background: #eff6ff;
+  border-color: #93c5fd;
+}
+
+.stop-node-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stop-node-seq {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #0284c7;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stop-highlight .stop-node-seq {
+  background: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+.stop-info-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.stop-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.stop-name-row .stop-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stop-ars-pill {
+  font-size: 10.5px;
+  font-weight: 800;
+  background: #e0f2fe;
+  color: #0284c7;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.stop-dir-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+.stop-action-btn {
+  font-size: 11px;
+  font-weight: 700;
+  color: #0284c7;
+}
+
+.modal-bus-route-badge {
+  font-size: 13px;
+  font-weight: 900;
+  padding: 3px 8px;
+  border-radius: 6px;
+  color: #ffffff;
+}
+

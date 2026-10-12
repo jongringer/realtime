@@ -623,23 +623,11 @@ class ShiftApp {
       if (this._isClosingFromPopstate) {
         return;
       }
-      const activeModals = Array.from(document.querySelectorAll('.modal-overlay.active'));
-      if (activeModals.length > 0) {
-        this._isClosingFromPopstate = true;
-        let targetModal = null;
-        if (this._modalHistoryStack && this._modalHistoryStack.length > 0) {
-          targetModal = this._modalHistoryStack.pop();
-        }
-        if (!targetModal || !targetModal.classList.contains('active')) {
-          targetModal = activeModals[activeModals.length - 1];
-        }
-        if (targetModal) {
-          targetModal.classList.remove('active');
-        }
-        setTimeout(() => {
-          this._isClosingFromPopstate = false;
-        }, 150);
-      }
+      this._isClosingFromPopstate = true;
+      this.handleBackButton();
+      setTimeout(() => {
+        this._isClosingFromPopstate = false;
+      }, 150);
     });
 
     // Android 네이티브 JavascriptInterface에서 호출할 수 있는 전역 뒤로가기 핸들러 등록
@@ -794,8 +782,39 @@ class ShiftApp {
   }
 
   handleBackButton() {
-    // 1. 현재 열려 있는 모달 목록 검색
-    const activeModals = Array.from(document.querySelectorAll('.modal-overlay.active'));
+    // 1. 버스 노선 정류장 전체보기 팝업 모달이 열려있는 경우
+    const busRouteModal = document.getElementById('modalBusRouteStops');
+    if (busRouteModal && (busRouteModal.classList.contains('active') || busRouteModal.style.display !== 'none')) {
+      if (window.transitLookupInstance && typeof window.transitLookupInstance.closeBusRouteModal === 'function') {
+        window.transitLookupInstance.closeBusRouteModal();
+      } else {
+        busRouteModal.style.display = 'none';
+        busRouteModal.classList.remove('active');
+      }
+      return true;
+    }
+
+    // 2. transit 정류소 전체 실시간 버스도착 모달이 열려있는 경우
+    const stationModal = document.getElementById('stationBusesModal');
+    if (stationModal && (stationModal.classList.contains('active') || stationModal.style.display !== 'none')) {
+      if (typeof window.closeStationBusesModal === 'function') {
+        window.closeStationBusesModal();
+      } else {
+        stationModal.style.display = 'none';
+        stationModal.classList.remove('active');
+      }
+      return true;
+    }
+
+    // 3. 실시간 검색 추천 드롭다운이 열려있는 경우
+    const searchDropdown = document.getElementById('lookupSuggestionsDropdown');
+    if (searchDropdown && searchDropdown.style.display === 'block') {
+      searchDropdown.style.display = 'none';
+      return true;
+    }
+
+    // 4. 앱 내의 모든 .modal-overlay.active 모달 목록 검색 및 닫기
+    const activeModals = Array.from(document.querySelectorAll('.modal-overlay.active, .modal-backdrop.active'));
     if (activeModals.length > 0) {
       let targetModal = null;
       if (this._modalHistoryStack && this._modalHistoryStack.length > 0) {
@@ -805,15 +824,7 @@ class ShiftApp {
         targetModal = activeModals[activeModals.length - 1];
       }
       if (targetModal) {
-        targetModal.classList.remove('active');
-        // 브라우저 history 상태와 동기화
-        if (window.history.state && window.history.state.modalOpen) {
-          this._isClosingFromPopstate = true;
-          window.history.back();
-          setTimeout(() => {
-            this._isClosingFromPopstate = false;
-          }, 150);
-        }
+        this.closeModal(targetModal);
         return true; // 팝업을 닫았으므로 뒤로가기 소비 (앱 홈 튕김/종료 방지)
       }
     }
@@ -1426,6 +1437,18 @@ class ShiftApp {
         btn.classList.remove('active');
       }
     });
+    // 네이티브 Android 상태바 및 하단 내비게이션바 시인성 테마 동기화 (낮모드: 검은 글씨/아이콘)
+    const isDark = (themeName !== 'apple-light');
+    try {
+      if (window.AndroidAlarm && typeof window.AndroidAlarm.setSystemBarTheme === 'function') {
+        window.AndroidAlarm.setSystemBarTheme(isDark);
+      }
+      const metaTheme = document.querySelector('meta[name="theme-color"]');
+      if (metaTheme) {
+        metaTheme.setAttribute('content', isDark ? '#0f172a' : '#ffffff');
+      }
+    } catch (e) {}
+
     this.renderTodayCard();
   }
 

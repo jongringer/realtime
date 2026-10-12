@@ -10,7 +10,9 @@ import android.util.Log;
 import android.webkit.JavascriptInterface;
 import android.widget.Toast;
 
+import android.view.Window;
 import androidx.activity.OnBackPressedCallback;
+import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.getcapacitor.BridgeActivity;
 
@@ -24,9 +26,12 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // 안드로이드 상태바(SKT, LTE, 배터리, 시간) 및 하단 내비게이션바(홈/뒤로가기) 기본 낮모드 가시성 최적화
+        applySystemBarTheme(false);
+
         try {
             if (this.bridge != null && this.bridge.getWebView() != null) {
-                this.bridge.getWebView().addJavascriptInterface(new NativeAlarmInterface(this), "AndroidAlarm");
+                this.bridge.getWebView().addJavascriptInterface(new NativeAlarmInterface(this, this), "AndroidAlarm");
                 Log.d(TAG, "Native AndroidAlarm JavascriptInterface registered successfully.");
 
                 // 앱 열자마자 화면 어디서나 핀치 줌인/줌아웃 100% 즉시 활성화
@@ -93,11 +98,47 @@ public class MainActivity extends BridgeActivity {
         }
     }
 
+    public void applySystemBarTheme(boolean isDark) {
+        new Handler(Looper.getMainLooper()).post(() -> {
+            try {
+                Window window = getWindow();
+                if (window != null && window.getDecorView() != null) {
+                    WindowInsetsControllerCompat controller = new WindowInsetsControllerCompat(window, window.getDecorView());
+                    if (isDark) {
+                        // 밤모드: 흰색 글씨/아이콘 + 어두운 상태바/네비게이션바 배경
+                        controller.setAppearanceLightStatusBars(false);
+                        controller.setAppearanceLightNavigationBars(false);
+                        window.setStatusBarColor(android.graphics.Color.parseColor("#0f172a"));
+                        window.setNavigationBarColor(android.graphics.Color.parseColor("#0f172a"));
+                    } else {
+                        // 낮모드: 짙은 검은색 글씨/아이콘 (SKT LTE, 배터리, 시계, 하단 홈/뒤로가기 선명화!)
+                        controller.setAppearanceLightStatusBars(true);
+                        controller.setAppearanceLightNavigationBars(true);
+                        window.setStatusBarColor(android.graphics.Color.parseColor("#ffffff"));
+                        window.setNavigationBarColor(android.graphics.Color.parseColor("#f8fafc"));
+                    }
+                    Log.d(TAG, "applySystemBarTheme applied: isDark=" + isDark);
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error applying system bar theme", e);
+            }
+        });
+    }
+
     public static class NativeAlarmInterface {
         private final Context context;
+        private final MainActivity activity;
 
-        public NativeAlarmInterface(Context context) {
+        public NativeAlarmInterface(Context context, MainActivity activity) {
             this.context = context;
+            this.activity = activity;
+        }
+
+        @JavascriptInterface
+        public void setSystemBarTheme(boolean isDark) {
+            if (activity != null) {
+                activity.applySystemBarTheme(isDark);
+            }
         }
 
         @JavascriptInterface

@@ -114,40 +114,73 @@
   ];
 
   // 주요 버스 노선 데이터베이스 (버스 번호 검색 지원)
+  // 주요 버스 노선 데이터베이스 (버스 번호 검색 시 전체 정류소 스크롤 팝업 지원)
   const POPULAR_BUS_ROUTES = [
     {
       routeNo: '603',
       routeType: '간선버스',
       badgeClass: 'badge-blue',
-      summary: '신월동 ↔ 당산역 ↔ 서울역/시청',
+      summary: '신월동 ↔ 목동역 ↔ 당산역 ↔ 서울역/시청',
       stops: [
-        { arsId: '19176', stNm: '당산역삼성래미안아파트 (당산역버스정류장)', dir: '귀가/신월동 방면' },
-        { arsId: '15154', stNm: '이대목동병원.목동6단지앞', dir: '당산역 방면' },
+        { arsId: '15383', stNm: '신월동기점', dir: '기점 출발' },
+        { arsId: '15150', stNm: '양천보건소', dir: '목동역 방면' },
+        { arsId: '15162', stNm: '목동역.홍익병원', dir: '목동역 7번출구' },
+        { arsId: '15152', stNm: '목동5단지C상가', dir: '이대목동병원 방면' },
+        { arsId: '15153', stNm: '목동6단지앞', dir: '이대목동병원 방면' },
+        { arsId: '15154', stNm: '이대목동병원.목동6단지앞', dir: '선유도/당산역 방면' },
         { arsId: '19210', stNm: '선유도역1번출구', dir: '당산역 방면' },
-        { arsId: '15160', stNm: '신목초등학교입구', dir: '서울역 방면' }
+        { arsId: '19176', stNm: '당산역삼성래미안아파트 (당산역버스정류장)', dir: '귀가/신월동 방면' },
+        { arsId: '19175', stNm: '당산역 (2호선·9호선)', dir: '영등포시장 방면' },
+        { arsId: '19208', stNm: '영등포시장역', dir: '영등포 방면' },
+        { arsId: '19102', stNm: '영등포역 (1호선)', dir: '신길역 방면' },
+        { arsId: '19230', stNm: '신길역', dir: '여의도/마포 방면' },
+        { arsId: '14167', stNm: '마포역 (5호선)', dir: '공덕역 방면' },
+        { arsId: '14169', stNm: '공덕역 (5·6호선)', dir: '충정로 방면' },
+        { arsId: '13140', stNm: '충정로역 (2·5호선)', dir: '서울역 방면' },
+        { arsId: '02007', stNm: '서울역버스환승센터 (1·4호선)', dir: '시청/종로 방면' },
+        { arsId: '02128', stNm: '시청앞.덕수궁 (회차)', dir: '회차 지점' }
       ]
     },
     {
       routeNo: '6620',
       routeType: '지선버스',
       badgeClass: 'badge-green',
-      summary: '양천공영차고지 ↔ 당산역 ↔ 영등포구청',
+      summary: '양천공영차고지 ↔ 목동 ↔ 당산역 ↔ 영등포구청',
       stops: [
-        { arsId: '19176', stNm: '당산역삼성래미안아파트 (당산역버스정류장)', dir: '귀가/양천차고지 방면' },
+        { arsId: '15385', stNm: '양천공영차고지', dir: '기점 출발' },
+        { arsId: '15217', stNm: '신정현대아파트', dir: '신정동 방면' },
+        { arsId: '15161', stNm: '목동역 (5호선)', dir: '오목교/목동단지 방면' },
+        { arsId: '15152', stNm: '목동5단지C상가', dir: '이대병원 방면' },
+        { arsId: '15153', stNm: '목동6단지앞', dir: '양천차고지/당산 방면' },
         { arsId: '15154', stNm: '이대목동병원.목동6단지앞', dir: '당산역 방면' },
-        { arsId: '15153', stNm: '목동6단지앞', dir: '양천공영차고지 방면' }
+        { arsId: '15160', stNm: '신목초등학교입구', dir: '선유도 방면' },
+        { arsId: '19210', stNm: '선유도역1번출구', dir: '당산역 방면' },
+        { arsId: '19176', stNm: '당산역삼성래미안아파트 (당산역버스정류장)', dir: '귀가/양천차고지 방면' },
+        { arsId: '19175', stNm: '당산역 (2호선·9호선)', dir: '영등포구청 방면' },
+        { arsId: '19225', stNm: '영등포구청역 (2·5호선)', dir: '영등포구청 방면' },
+        { arsId: '19729', stNm: '영등포구청.우리은행', dir: '문래역 방면' },
+        { arsId: '19194', stNm: '문래역 (2호선)', dir: '회차 지점' }
       ]
     },
     {
       routeNo: '6637',
       routeType: '지선버스',
       badgeClass: 'badge-green',
-      summary: '광명시 ↔ 목동 ↔ 영등포구청역',
+      summary: '광명시 ↔ 개봉역 ↔ 목동단지 ↔ 영등포구청역',
       stops: [
-        { arsId: '19729', stNm: '영등포구청.우리은행 (영등포구청6637버스)', dir: '목동·광명 방면' },
-        { arsId: '15158', stNm: '양정고등학교', dir: '영등포구청역 방면' },
+        { arsId: '38001', stNm: '노온사동차고지 (광명)', dir: '광명시 기점' },
+        { arsId: '38054', stNm: '광명사거리역 (7호선)', dir: '개봉역 방면' },
+        { arsId: '17172', stNm: '개봉역 (1호선)', dir: '고척동 방면' },
+        { arsId: '17180', stNm: '고척시장', dir: '목동역 방면' },
+        { arsId: '15161', stNm: '목동역 (5호선)', dir: '오목교 방면' },
+        { arsId: '15155', stNm: '오목교역.청학스포츠타운', dir: '목동단지 방면' },
         { arsId: '15156', stNm: '경인초교.목동5·6단지사잇길', dir: '오목교·광명 방면' },
-        { arsId: '15154', stNm: '이대목동병원.목동6단지앞', dir: '영등포 방면' }
+        { arsId: '15158', stNm: '양정고등학교', dir: '영등포구청역 방면' },
+        { arsId: '15153', stNm: '목동6단지앞', dir: '이대목동병원 방면' },
+        { arsId: '15154', stNm: '이대목동병원.목동6단지앞', dir: '영등포 방면' },
+        { arsId: '19170', stNm: '당산동진로아파트', dir: '영등포구청 방면' },
+        { arsId: '19729', stNm: '영등포구청.우리은행 (영등포구청6637버스)', dir: '목동·광명 방면' },
+        { arsId: '19225', stNm: '영등포구청역 (2·5호선)', dir: '회차 지점' }
       ]
     },
     {
@@ -156,19 +189,30 @@
       badgeClass: 'badge-town',
       summary: '당산역 ↔ 선유도역 ↔ 이대목동병원 ↔ 목동역',
       stops: [
-        { arsId: '19176', stNm: '당산역삼성래미안아파트', dir: '목동역 방면' },
-        { arsId: '15154', stNm: '이대목동병원.목동6단지앞', dir: '당산역 방면' },
-        { arsId: '19210', stNm: '선유도역1번출구', dir: '당산역 방면' }
+        { arsId: '19176', stNm: '당산역삼성래미안아파트 (당산역버스정류장)', dir: '목동역 방면' },
+        { arsId: '19210', stNm: '선유도역1번출구', dir: '목동 방면' },
+        { arsId: '19215', stNm: '안양천입구', dir: '이대목동병원 방면' },
+        { arsId: '15154', stNm: '이대목동병원.목동6단지앞', dir: '당산역/목동 방면' },
+        { arsId: '15153', stNm: '목동6단지아파트', dir: '파리공원 방면' },
+        { arsId: '15152', stNm: '목동5단지아파트', dir: '파리공원 방면' },
+        { arsId: '15157', stNm: '파리공원', dir: '목동이대병원입구 방면' },
+        { arsId: '15165', stNm: '목동이대병원입구', dir: '오목교역 방면' },
+        { arsId: '15155', stNm: '오목교역 (5호선)', dir: '목동역 방면' },
+        { arsId: '15161', stNm: '목동역 (5호선)', dir: '종점' }
       ]
     },
     {
       routeNo: '양천02',
       routeType: '마을버스',
       badgeClass: 'badge-town',
-      summary: '오목교역 ↔ 목동단지',
+      summary: '오목교역 ↔ 경인초교 ↔ 양정고 ↔ 이대목동병원',
       stops: [
-        { arsId: '15156', stNm: '경인초교', dir: '오목교역 방면' },
-        { arsId: '15158', stNm: '양정고등학교', dir: '목동단지 방면' }
+        { arsId: '15155', stNm: '오목교역 (5호선)', dir: '기점' },
+        { arsId: '15168', stNm: '현대백화점목동점', dir: '경인초교 방면' },
+        { arsId: '15156', stNm: '경인초교.목동5·6단지사잇길', dir: '오목교역 방면' },
+        { arsId: '15158', stNm: '양정고등학교', dir: '목동단지 방면' },
+        { arsId: '15159', stNm: '목동6단지후문', dir: '이대목동병원 방면' },
+        { arsId: '15154', stNm: '이대목동병원.목동6단지앞', dir: '종점' }
       ]
     }
   ];
@@ -282,6 +326,8 @@
         bus: {},
         subway: {}
       };
+      this.showAllDangsanRoutes = false; // 당산역(19176) 기본 603·6620 2개 표출 및 전체보기 토글 플래그
+      window.transitLookupInstance = this;
 
       this.initDom();
       this.initEvents();
@@ -403,6 +449,145 @@
       }, 30);
     }
 
+    // ==========================================
+    // 버스 노선 정류장 전체보기 팝업 모달 관리 (사용자 요청)
+    // ==========================================
+    ensureBusRouteModal() {
+      if (document.getElementById('modalBusRouteStops')) return;
+
+      const modalHtml = `
+        <div class="modal-overlay modal-bus-route-overlay" id="modalBusRouteStops" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.75); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); z-index:100000; justify-content:center; align-items:center; padding:12px;">
+          <div class="modal-container bus-route-stops-modal" style="background:#ffffff; width:100%; max-width:480px; max-height:85vh; border-radius:22px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.4); display:flex; flex-direction:column; overflow:hidden; border:1px solid #cbd5e1;">
+            
+            <div class="modal-header" style="background:linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color:#ffffff; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
+              <div style="min-width:0; flex:1;">
+                <h4 id="modalBusRouteTitle" style="font-size:16px; font-weight:900; margin:0; display:flex; align-items:center; gap:8px;">
+                  <span class="modal-bus-route-badge badge-blue">603번</span> 간선버스
+                </h4>
+                <p id="modalBusRouteSummary" style="font-size:11.5px; color:#94a3b8; margin:4px 0 0 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                  신월동 ↔ 당산역 ↔ 서울역
+                </p>
+              </div>
+              <button type="button" class="modal-close-btn" onclick="window.transitLookupInstance.closeBusRouteModal()" style="background:rgba(255,255,255,0.15); border:none; color:#ffffff; font-size:16px; width:32px; height:32px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0;">✕</button>
+            </div>
+
+            <div style="padding:9px 14px; background:#f1f5f9; border-bottom:1px solid #e2e8f0; font-size:12px; color:#334155; font-weight:700; display:flex; align-items:center; gap:6px;">
+              <span>💡</span>
+              <span>정류장을 선택하면 해당 정류장의 실시간 도착정보가 열립니다.</span>
+            </div>
+
+            <div class="modal-body" id="modalBusRouteStopsList" style="padding:14px; overflow-y:auto; flex:1; max-height:55vh; display:flex; flex-direction:column; gap:8px; background:#f8fafc;">
+            </div>
+
+            <div class="modal-footer" style="padding:10px 16px; background:#ffffff; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:11px; color:#64748b;">서울시 TOPIS 실시간 연동</span>
+              <button type="button" class="btn-primary" onclick="window.transitLookupInstance.closeBusRouteModal()" style="background:#0284c7; color:#ffffff; border:none; padding:7px 18px; border-radius:10px; font-weight:800; font-size:13px; cursor:pointer;">닫기</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+      const modalEl = document.getElementById('modalBusRouteStops');
+      if (modalEl) {
+        modalEl.addEventListener('click', (e) => {
+          if (e.target === modalEl) this.closeBusRouteModal();
+        });
+      }
+    }
+
+    openBusRouteModal(routeNo) {
+      const cleanNo = String(routeNo || '').replace(/번$|버스$/, '').trim();
+      const route = POPULAR_BUS_ROUTES.find(r => r.routeNo === cleanNo || r.routeNo === routeNo);
+      if (!route) {
+        this.searchByNameAndShowResults(routeNo);
+        return;
+      }
+
+      this.ensureBusRouteModal();
+      const modal = document.getElementById('modalBusRouteStops');
+      if (!modal) return;
+
+      const headerTitle = document.getElementById('modalBusRouteTitle');
+      const headerSummary = document.getElementById('modalBusRouteSummary');
+      const stopsContainer = document.getElementById('modalBusRouteStopsList');
+
+      if (headerTitle) {
+        headerTitle.innerHTML = `<span class="modal-bus-route-badge ${route.badgeClass}">${route.routeNo}번</span> ${route.routeType} 전체 정류장`;
+      }
+      if (headerSummary) {
+        headerSummary.textContent = `${route.summary} (총 ${route.stops.length}개 정류소)`;
+      }
+
+      if (stopsContainer) {
+        const stopsHtml = route.stops.map((stop, idx) => {
+          const isDangsan = String(stop.arsId).includes('19176');
+          const isGuchung = String(stop.arsId).includes('19729');
+          const isHighlight = isDangsan || isGuchung;
+          return `
+            <div class="route-stop-timeline-item ${isHighlight ? 'stop-highlight' : ''}" 
+                 onclick="window.transitLookupInstance.selectStopFromModal('${stop.arsId}', '${this.escapeHtml(stop.stNm)}')">
+              <div class="stop-node-wrap">
+                <span class="stop-node-seq">${idx + 1}</span>
+              </div>
+              <div class="stop-info-body">
+                <div class="stop-name-row">
+                  <strong class="stop-name">${this.escapeHtml(stop.stNm)}</strong>
+                  <span class="stop-ars-pill">ARS ${stop.arsId}</span>
+                </div>
+                <div class="stop-dir-row">
+                  <span class="stop-dir-tag">${this.escapeHtml(stop.dir || '운행 방면')}</span>
+                  <span class="stop-action-btn">도착정보 보기 ➔</span>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        stopsContainer.innerHTML = stopsHtml;
+      }
+
+      modal.style.display = 'flex';
+      modal.classList.add('active');
+
+      // 모바일/브라우저 뒤로가기 버튼 히스토리 연동
+      if (!this._isClosingModalFromPopstate) {
+        window.history.pushState({ modalOpen: true, modalId: 'modalBusRouteStops' }, '');
+      }
+    }
+
+    closeBusRouteModal() {
+      const modal = document.getElementById('modalBusRouteStops');
+      if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('active');
+      }
+      if (!this._isClosingModalFromPopstate && window.history.state && window.history.state.modalOpen) {
+        this._isClosingModalFromPopstate = true;
+        window.history.back();
+        setTimeout(() => {
+          this._isClosingModalFromPopstate = false;
+        }, 150);
+      }
+    }
+
+    selectStopFromModal(arsId, stNm) {
+      this.closeBusRouteModal();
+      this.userInitiatedScroll = true;
+      setTimeout(() => {
+        this.lookupBusByArs(arsId, stNm);
+        this.scrollToResult();
+      }, 50);
+    }
+
+    toggleDangsanRoutes() {
+      this.showAllDangsanRoutes = !this.showAllDangsanRoutes;
+      if (this.lastBusData && this.currentId) {
+        this.renderBusBoard(this.currentId, this.currentName, this.lastBusData);
+      }
+    }
+
     executeSearch() {
       const val = this.inputQuery.value.trim();
       if (!val) {
@@ -418,6 +603,14 @@
       if (cleanDigits.length === 5) {
         this.lookupBusByArs(cleanDigits);
         this.scrollToResult();
+        return;
+      }
+
+      // 1-1. 버스 번호 검색인 경우 (예: "603", "6620", "6637", "양천01", "603번" 등) -> 팝업 모달로 전 정류장 스크롤 노출!
+      const normalizedRouteNo = val.replace(/번$|버스$/, '').trim();
+      const matchedRoute = POPULAR_BUS_ROUTES.find(r => r.routeNo === val || r.routeNo === normalizedRouteNo);
+      if (matchedRoute) {
+        this.openBusRouteModal(matchedRoute.routeNo);
         return;
       }
 
@@ -540,13 +733,16 @@
       if (matchedRoutes && matchedRoutes.length > 0) {
         matchedRoutes.forEach(r => {
           html += `
-            <div class="search-item-card card-route-highlight">
+            <div class="search-item-card card-route-highlight" style="cursor:pointer;" onclick="window.transitLookupInstance.openBusRouteModal('${r.routeNo}')">
               <div class="card-left">
                 <span class="card-type-badge ${r.badgeClass}">🚍 ${r.routeNo}번</span>
                 <div class="card-title-group">
                   <span class="card-title"><strong>${r.routeNo}번 ${r.routeType}</strong></span>
                   <span class="badge-sub-highlight">${r.summary}</span>
                 </div>
+              </div>
+              <div class="card-right">
+                <button type="button" class="btn-primary" style="background:#0284c7; color:#fff; border:none; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:800; pointer-events:none;">정류장 전체보기 ➔</button>
               </div>
             </div>
           `;
@@ -771,7 +967,8 @@
             const routeNo = item.getAttribute('data-route');
             this.inputQuery.value = routeNo;
             this.hideSuggestions();
-            this.searchByNameAndShowResults(routeNo);
+            this.openBusRouteModal(routeNo);
+            return;
           } else if (type === 'subway') {
             const name = item.getAttribute('data-name');
             this.inputQuery.value = name + '역';
@@ -1095,8 +1292,17 @@
         }
       }
 
-      // 정렬 적용: 당산역(19176) 정류소 조회 시 귀가 핵심 노선인 603, 6620을 최상단 우선 노출
+      // 정렬 및 필터 적용: 당산역(19176) 정류소 조회 시 기본 603, 6620 2개만 표출 (사용자 요청)
       const isDangsanTarget = (String(arsId).includes('19176') || String(stationName).includes('당산'));
+      let dangsanHiddenCount = 0;
+      if (isDangsanTarget) {
+        if (!this.showAllDangsanRoutes) {
+          const onlyPriority = filtered.filter(b => b.rtNm === '603' || b.rtNm === '6620');
+          dangsanHiddenCount = filtered.length - onlyPriority.length;
+          filtered = onlyPriority;
+        }
+      }
+
       const getDangsanPriorityRank = (rtNm) => {
         const clean = String(rtNm || '').trim();
         if (clean === '603') return 1;
@@ -1223,7 +1429,13 @@
               <h3 class="station-name-text">${this.escapeHtml(stationName)}</h3>
             </div>
             <div class="station-meta-right">
-              <span class="station-route-count"><strong>${busList.length}개</strong> 노선</span>
+              ${isDangsanTarget ? `
+                <button type="button" id="btnToggleDangsanRoutes" class="btn-dangsan-view-toggle ${this.showAllDangsanRoutes ? 'active' : ''}">
+                  ${this.showAllDangsanRoutes ? '603·6620만 보기 ▲' : `전체보기 (+${dangsanHiddenCount}) ▼`}
+                </button>
+              ` : `
+                <span class="station-route-count"><strong>${busList.length}개</strong> 노선</span>
+              `}
               <span class="station-auto-ticker">🔄 <strong id="lookupAutoRefreshCountdown">${this.refreshCountdown}초</strong></span>
             </div>
           </div>
@@ -1239,6 +1451,14 @@
       if (this.userInitiatedScroll) {
         this.scrollToResult();
         this.userInitiatedScroll = false;
+      }
+
+      // 당산역 전체보기 토글 버튼 이벤트 바인딩
+      const btnDangsanToggle = document.getElementById('btnToggleDangsanRoutes');
+      if (btnDangsanToggle) {
+        btnDangsanToggle.addEventListener('click', () => {
+          this.toggleDangsanRoutes();
+        });
       }
 
       // 필터 버튼 이벤트 바인딩

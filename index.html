@@ -14,7 +14,8 @@
   <meta property=og:image content=https://kbs-4shift-5855.surge.sh/icons/og-image.png?v=202610_icon>
   <meta property=og:url content=https://kbs-4shift-5855.surge.sh>
   <meta name=twitter:card content=summary_large_image>
-  <link rel=stylesheet href=css/style.css?v=20261012_v1.2.50>
+  <meta name="theme-color" content="#ffffff">
+  <link rel=stylesheet href=css/style.css?v=20261012_v1.2.51>
   <script src=https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js></script>
   <script>if(typeof pdfjsLib!=='undefined'){pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';}</script>
   <script src=https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js></script>
@@ -23,6 +24,12 @@
       try {
         var savedTheme = localStorage.getItem('kbs_shift_theme') || 'apple-light';
         document.documentElement.setAttribute('data-theme', savedTheme);
+        var isDark = (savedTheme !== 'apple-light');
+        var metaTheme = document.querySelector('meta[name="theme-color"]');
+        if (metaTheme) metaTheme.setAttribute('content', isDark ? '#0f172a' : '#ffffff');
+        if (window.AndroidAlarm && typeof window.AndroidAlarm.setSystemBarTheme === 'function') {
+          window.AndroidAlarm.setSystemBarTheme(isDark);
+        }
       } catch(e) {}
     })();
   </script>
@@ -439,9 +446,9 @@
   <script src=js/shift-engine.js?v=20260927_v25></script>
   <script src=js/storage.js?v=20260927_v25></script>
   <script src=js/ocr-parser.js?v=20260927_v25></script>
-  <script src=js/app.js?v=20261009_v1></script>
+  <script src=js/app.js?v=20261012_v1.2.51></script>
   <script src=js/timetable-15154.js?v=20260929_tt></script>
-  <script src=js/transit.js?v=20261012_v1.2.50></script>
-  <script src=js/transit-lookup.js?v=20261012_v1.2.50></script>
+  <script src=js/transit.js?v=20261012_v1.2.51></script>
+  <script src=js/transit-lookup.js?v=20261012_v1.2.51></script>
 </body>
 </html>
