@@ -5658,6 +5658,7 @@ body[data-theme="apple-light"] .sugg-badge-ars {
   justify-content: space-between;
   align-items: center;
   width: 100%;
+  max-width: 100%;
   padding: 10px 12px;
   border-radius: 13px;
   border: 1.5px solid var(--card-border);
@@ -5667,6 +5668,7 @@ body[data-theme="apple-light"] .sugg-badge-ars {
   transition: all 0.2s ease;
   box-sizing: border-box;
   text-align: left;
+  overflow: hidden;
 }
 
 body[data-theme="apple-light"] .quick-priority-card {
@@ -5708,20 +5710,23 @@ body:not([data-theme="apple-light"]) .quick-priority-card.is-active-target {
   flex-direction: column;
   gap: 3.5px;
   min-width: 0;
-  flex: 1;
+  flex: 1 1 auto;
 }
 
 .prio-line-1 {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 .prio-line-2 {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .prio-tag-badge {
@@ -5743,10 +5748,12 @@ body:not([data-theme="apple-light"]) .quick-priority-card.is-active-target {
 }
 
 .prio-name {
-  font-size: 16.5px !important; /* 양정고, 경인초교, 선유도역 폰트 대폭 확대 */
+  font-size: clamp(14px, 4.3vw, 16.5px) !important; /* 갤럭시 최대 글씨 크기 모드에서도 화면 안에 쏙 들어가도록 적응 */
   font-weight: 800 !important;
   color: var(--text-main);
   letter-spacing: -0.2px;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .prio-route-tag {
@@ -5772,9 +5779,6 @@ body[data-theme="apple-light"] .prio-route-tag {
   border-radius: 6px;
   white-space: nowrap;
 }
-  border-radius: 6px;
-  white-space: nowrap;
-}
 
 body[data-theme="apple-light"] .prio-subway-tag {
   background: #fef3c7;
@@ -5783,9 +5787,10 @@ body[data-theme="apple-light"] .prio-subway-tag {
 .prio-card-right {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   flex-shrink: 0;
-  margin-left: 8px;
+  margin-left: 6px;
+  white-space: nowrap;
 }
 
 .prio-status-text {

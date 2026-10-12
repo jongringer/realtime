@@ -1350,8 +1350,8 @@
           badgeText: '🚏 15156',
           badgeClass: 'badge-blue',
           titleText: '경인초교 · 목동5·6단지',
-          routeTag: '6637 목동방면',
-          statusText: '목동방면'
+          routeTag: '6637 오목교방면',
+          statusText: '오목교방면'
         },
         {
           type: 'subway',
