@@ -318,20 +318,28 @@
     }
 
     // ==========================================
-    // 화면 자동 스크롤: 도착정보 전광판으로 즉시 이동
+    // 화면 자동 스크롤: 도착정보 전광판으로 즉시 이동 (1회 터치 즉시 스크롤 보장)
     // ==========================================
     scrollToResult(smooth = true) {
-      setTimeout(() => {
-        const target = document.getElementById('lookupResultContainer') || document.getElementById('transitLookupSection');
+      const performScroll = () => {
+        const target = document.querySelector('.lookup-board-wrap') ||
+                       document.querySelector('.subway-board-wrap') ||
+                       document.querySelector('.lookup-board-header') ||
+                       document.getElementById('lookupResultContainer');
         if (target) {
           const rect = target.getBoundingClientRect();
-          const targetY = window.pageYOffset + rect.top - 16;
+          const targetY = window.pageYOffset + rect.top - 18;
           window.scrollTo({
             top: Math.max(0, targetY),
             behavior: smooth ? 'smooth' : 'auto'
           });
         }
-      }, 70);
+      };
+
+      // 1차: 즉시 반응 (10ms)
+      setTimeout(performScroll, 10);
+      // 2차: DOM 및 폰트 렌더링 안정화 후 미세 보정 (150ms)
+      setTimeout(performScroll, 150);
     }
 
     executeSearch() {
@@ -1035,18 +1043,6 @@
 
       const boardHtml = `
         <div class="lookup-board-wrap">
-          <!-- 양정고 ↔ 경인초교 최상위 빠른 전환 탭 -->
-          <div class="dedicated-6637-switch-bar">
-            <div class="dedicated-tab-group">
-              <button type="button" class="btn-6637-tab ${cleanArs === '15158' ? 'active' : ''}" data-ars="15158" data-name="양정고등학교">
-                <span class="tab-ars-num">15158</span> 양정고교 (당산방면)
-              </button>
-              <button type="button" class="btn-6637-tab ${cleanArs === '15156' ? 'active' : ''}" data-ars="15156" data-name="경인초교.목동아파트5.6단지">
-                <span class="tab-ars-num">15156</span> 경인초교 (목동방면)
-              </button>
-            </div>
-          </div>
-
           <!-- 상단 정류소 정보 헤더 (파란색 알약 뱃지 적용) -->
           <div class="lookup-board-header">
             <div class="station-meta-info">
@@ -1087,17 +1083,7 @@
       `;
 
       this.resultContainer.innerHTML = boardHtml;
-
-      // 6637 전용 정류소 탭 클릭 이벤트
-      this.resultContainer.querySelectorAll('.btn-6637-tab').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const targetArs = btn.getAttribute('data-ars');
-          const targetName = btn.getAttribute('data-name');
-          if (this.inputQuery) this.inputQuery.value = targetArs;
-          this.lookupBusByArs(targetArs, targetName);
-          this.scrollToResult();
-        });
-      });
+      this.scrollToResult();
 
       // 필터 버튼 이벤트 바인딩
       this.resultContainer.querySelectorAll('.btn-filter').forEach(btn => {
@@ -1287,6 +1273,7 @@
         `;
 
         this.resultContainer.innerHTML = boardHtml;
+        this.scrollToResult();
 
         // 토글 버튼 이벤트 바인딩
         const btnToggle = document.getElementById('btnToggleSeonyudoTimetable');
@@ -1330,6 +1317,7 @@
       `;
 
       this.resultContainer.innerHTML = boardHtml;
+      this.scrollToResult();
     }
 
     // ==========================================
@@ -1341,7 +1329,7 @@
       const history = this.getRecentHistory();
       
       // 최상위 3대 핵심 거점 (각 항목이 독립된 1행을 차지하는 와이드 카드)
-      // 1: 15158 양정고 (6637 당산방면)
+      // 1: 15158 양정고 (6637 영등포구청역 방면)
       // 2: 15156 경인초교 (6637 목동방면)
       // 3: 9호선 선유도역 (당산방면 일반열차 시간표)
       const topPriorityCards = [
@@ -1352,8 +1340,8 @@
           badgeText: '🚏 15158',
           badgeClass: 'badge-blue',
           titleText: '양정고등학교',
-          routeTag: '6637 당산방면',
-          statusText: '당산방면'
+          routeTag: '6637 영등포구청역 방면',
+          statusText: '영등포구청역 방향'
         },
         {
           type: 'bus',
@@ -1444,9 +1432,12 @@
         </div>
       `;
 
-      // 1. 상위 3대 핵심 카드 클릭 이벤트
+      // 1. 상위 3대 핵심 카드 클릭 이벤트 (클릭 즉시 하이라이트 & 스크롤)
       this.chipsContainer.querySelectorAll('.quick-priority-card').forEach(card => {
         card.addEventListener('click', () => {
+          this.chipsContainer.querySelectorAll('.quick-priority-card').forEach(c => c.classList.remove('is-active-target'));
+          card.classList.add('is-active-target');
+
           const type = card.getAttribute('data-type');
           const id = card.getAttribute('data-id');
           const name = card.getAttribute('data-name');
@@ -1648,6 +1639,7 @@
           <div class="lookup-state-text">현재 운행 중인 버스가 없거나 정류장 번호를 다시 확인해 주세요.</div>
         </div>
       `;
+      this.scrollToResult();
     }
 
     showEmptySubway(stationName) {
@@ -1659,6 +1651,7 @@
           <div class="lookup-state-text">현재 실시간 운행 중인 열차 도착 정보를 수신할 수 없습니다 (심야 시간 등).</div>
         </div>
       `;
+      this.scrollToResult();
     }
 
     // ==========================================

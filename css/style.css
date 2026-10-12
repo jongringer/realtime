@@ -6530,22 +6530,9 @@ body:not([data-theme="apple-light"]) .train-msg.status-imminent {
 .badge-line-airport { background: #0891b2; }
 .badge-line-default { background: #475569; }
 
-/* --- 6637 전용 정류소 (15158 양정고교 ↔ 15156 경인초교) 최상위 스위처 & 하이라이트 --- */
+/* --- 6637 전용 정류소 스위처 완전 제거 --- */
 .dedicated-6637-switch-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(5, 150, 105, 0.08);
-  border: 1px solid rgba(5, 150, 105, 0.25);
-  border-radius: 12px;
-  padding: 8px 10px;
-  margin-bottom: 2px;
-  flex-wrap: wrap;
-}
-
-body[data-theme="apple-light"] .dedicated-6637-switch-bar {
-  background: #ecfdf5;
-  border-color: #a7f3d0;
+  display: none !important;
 }
 
 .dedicated-tag {
