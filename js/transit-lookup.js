@@ -113,6 +113,41 @@
     { name: '도림천', lines: ['2호선'] }
   ];
 
+  // 수도권 및 출퇴근 핵심 지역 주요 버스 정류소 데이터베이스 (오프라인/즉시 검색 지원)
+  const LOCAL_POPULAR_STATIONS = [
+    // [선유도 일대 정류소]
+    { arsId: '19210', stNm: '선유도역1번출구', keywords: ['선유', '선유도', '선유도역', '19210', '양천01', '603'] },
+    { arsId: '19212', stNm: '선유도역.롯데홈쇼핑', keywords: ['선유', '선유도', '선유도역', '19212', '롯데홈쇼핑', '당산방면'] },
+    { arsId: '19211', stNm: '선유도역', keywords: ['선유', '선유도', '선유도역', '19211', '염창방면'] },
+    { arsId: '19141', stNm: '양평한신아파트.선유도역', keywords: ['선유', '선유도', '선유도역', '19141', '양평한신'] },
+    { arsId: '19213', stNm: '선유고등학교', keywords: ['선유', '선유고', '선유고등학교', '19213'] },
+    { arsId: '19214', stNm: '선유중학교', keywords: ['선유', '선유중', '선유중학교', '19214'] },
+    { arsId: '19284', stNm: '선유도공원입구', keywords: ['선유', '선유도', '선유도공원', '19284'] },
+
+    // [목동 / 양천 / 경인 일대 정류소]
+    { arsId: '15158', stNm: '양정고등학교', keywords: ['양정', '양정고', '15158', '6637', '목동'] },
+    { arsId: '15156', stNm: '경인초교.목동아파트5.6단지사잇길', keywords: ['경인', '경인초', '15156', '6637', '목동'] },
+    { arsId: '15154', stNm: '이대목동병원.목동6단지앞', keywords: ['이대', '이대목동병원', '15154', '목동6단지', '양천01', '603', '6620'] },
+    { arsId: '15153', stNm: '목동6단지앞', keywords: ['목동', '목동6단지', '15153', '양천01'] },
+    { arsId: '15155', stNm: '목동5단지C상가.목동운동장', keywords: ['목동', '목동5단지', '15155', '목동운동장'] },
+    { arsId: '15160', stNm: '신목초등학교입구', keywords: ['신목', '신목초', '15160', '목동'] },
+    { arsId: '15161', stNm: '월촌중학교', keywords: ['월촌', '월촌중', '15161', '목동'] },
+    { arsId: '15282', stNm: '목동운동장남문.야구장.아이스링크', keywords: ['목동', '목동운동장', '15282'] },
+    { arsId: '15283', stNm: '목동아파트5단지', keywords: ['목동', '목동5단지', '15283'] },
+
+    // [당산 일대 정류소]
+    { arsId: '19175', stNm: '당산역', keywords: ['당산', '당산역', '19175', '2호선', '9호선'] },
+    { arsId: '19176', stNm: '당산역삼성래미안아파트', keywords: ['당산', '당산역', '19176', '삼성래미안'] },
+    { arsId: '19173', stNm: '당산역1번출구', keywords: ['당산', '당산역', '19173', '1번출구'] },
+    { arsId: '19218', stNm: '당산역2번출구', keywords: ['당산', '당산역', '19218', '2번출구'] },
+
+    // [여의도 / 국회 일대 정류소]
+    { arsId: '19143', stNm: '국회의사당역', keywords: ['국회', '국회의사당', '19143', '9호선'] },
+    { arsId: '19144', stNm: '여의도순복음교회', keywords: ['여의도', '순복음교회', '19144'] },
+    { arsId: '19145', stNm: '국회의사당', keywords: ['국회', '국회의사당', '19145'] },
+    { arsId: '19156', stNm: '여의도역', keywords: ['여의도', '여의도역', '19156', '5호선', '9호선'] }
+  ];
+
   // 9호선 선유도역 공식 시간표 데이터 (당산·여의도·중앙보훈병원 방면 일반열차)
   const SEONYUDO_WEEKDAY_TIMETABLE = {
     5: [34, 48, 59],
@@ -282,6 +317,23 @@
       });
     }
 
+    // ==========================================
+    // 화면 자동 스크롤: 도착정보 전광판으로 즉시 이동
+    // ==========================================
+    scrollToResult(smooth = true) {
+      setTimeout(() => {
+        const target = document.getElementById('lookupResultContainer') || document.getElementById('transitLookupSection');
+        if (target) {
+          const rect = target.getBoundingClientRect();
+          const targetY = window.pageYOffset + rect.top - 16;
+          window.scrollTo({
+            top: Math.max(0, targetY),
+            behavior: smooth ? 'smooth' : 'auto'
+          });
+        }
+      }, 70);
+    }
+
     executeSearch() {
       const val = this.inputQuery.value.trim();
       if (!val) {
@@ -291,55 +343,182 @@
 
       this.hideSuggestions();
 
-      // 1. 숫자 5자리인 경우 -> 버스 ARS 조회
+      // 1. 숫자 5자리인 경우 -> 버스 ARS 즉시 조회
       const cleanDigits = val.replace(/[^0-9]/g, '');
       if (cleanDigits.length === 5) {
         this.lookupBusByArs(cleanDigits);
+        this.scrollToResult();
         return;
       }
 
-      // 2. 지하철역 매칭 우선 검사
+      // 2. 지하철역 단독 정확 매칭 검사
       const cleanSubwayName = val.replace(/역$/, '').trim();
-      const matchedSubway = SUBWAY_STATIONS.find(s => s.name === cleanSubwayName || s.name === val);
-      if (matchedSubway) {
-        this.lookupSubway(matchedSubway.name);
+      const exactSubway = SUBWAY_STATIONS.find(s => s.name === cleanSubwayName || s.name === val);
+      if (exactSubway && (val.endsWith('역') || val === exactSubway.name)) {
+        this.lookupSubway(exactSubway.name);
+        this.scrollToResult();
         return;
       }
 
-      // 3. 일반 검색어인 경우 버스 정류소명 검색 또는 지하철 검색 수행
-      this.searchByNameAndLoadFirst(val);
+      // 3. 문자열 키워드 검색 ("선유", "당산", "목동" 등 다중 매칭 지원)
+      this.searchByNameAndShowResults(val);
     }
 
-    async searchByNameAndLoadFirst(query) {
-      this.showLoading(`'${query}' 검색 중...`);
+    async searchByNameAndShowResults(query) {
+      this.showLoading(`'${query}' 관련 지하철역 및 정류소 검색 중...`);
+      this.scrollToResult();
+
       try {
-        const cleanSubway = query.replace(/역$/, '').trim();
-        const subwayMatches = SUBWAY_STATIONS.filter(s => s.name.includes(cleanSubway));
-        if (subwayMatches.length > 0 && (query.endsWith('역') || subwayMatches.some(s => s.name === cleanSubway))) {
-          const target = subwayMatches.find(s => s.name === cleanSubway) || subwayMatches[0];
-          await this.lookupSubway(target.name);
-          return;
-        }
+        const cleanQuery = query.trim();
+        const cleanSubway = cleanQuery.replace(/역$/, '').trim();
 
-        // 버스 정류소명 검색
-        const stations = await this.fetchStationsByName(query);
-        if (stations && stations.length > 0) {
-          const first = stations[0];
-          if (first.arsId && first.arsId !== '0') {
-            await this.lookupBusByArs(first.arsId, first.stNm);
-            return;
+        // 1. 지하철역 매칭
+        const subwayMatches = SUBWAY_STATIONS.filter(s => 
+          s.name.includes(cleanSubway) || cleanSubway.includes(s.name)
+        );
+
+        // 2. 내장 인기 정류소 DB 매칭 (오프라인 100% 보장: 선유, 당산, 목동 등)
+        const localMatches = LOCAL_POPULAR_STATIONS.filter(p => 
+          p.keywords.some(k => k.includes(cleanQuery) || cleanQuery.includes(k)) ||
+          p.stNm.includes(cleanQuery) || p.arsId.includes(cleanQuery)
+        );
+
+        // 3. 공공 TOPIS API 정류소 검색 (실시간 온라인 보완)
+        let onlineBusMatches = [];
+        try {
+          const fetched = await this.fetchStationsByName(cleanQuery);
+          if (Array.isArray(fetched)) {
+            onlineBusMatches = fetched.filter(b => b.arsId && b.arsId !== '0');
           }
-        }
+        } catch (e) {}
 
-        if (subwayMatches.length > 0) {
-          await this.lookupSubway(subwayMatches[0].name);
+        // 중복 제거 및 병합 (로컬 DB 우선)
+        const mergedBusList = [...localMatches];
+        onlineBusMatches.forEach(ob => {
+          if (!mergedBusList.some(m => m.arsId === ob.arsId)) {
+            mergedBusList.push({ arsId: ob.arsId, stNm: ob.stNm });
+          }
+        });
+
+        const totalResultsCount = subwayMatches.length + mergedBusList.length;
+
+        if (totalResultsCount === 0) {
+          this.showError(`'${query}'에 해당하는 지하철역이나 정류소를 찾을 수 없습니다. 정류장 5자리 번호나 정확한 이름을 확인해 주세요.`);
           return;
         }
 
-        this.showError(`'${query}'에 해당하는 버스 정류소나 지하철역을 찾을 수 없습니다. 정류장 5자리 번호나 정확한 역명을 입력해 주세요.`);
+        // 결과가 단 1개만 있는 경우 -> 즉시 상세 전광판으로 진입
+        if (subwayMatches.length === 1 && mergedBusList.length === 0) {
+          await this.lookupSubway(subwayMatches[0].name);
+          this.scrollToResult();
+          return;
+        }
+        if (subwayMatches.length === 0 && mergedBusList.length === 1) {
+          const single = mergedBusList[0];
+          await this.lookupBusByArs(single.arsId, single.stNm);
+          this.scrollToResult();
+          return;
+        }
+
+        // 결과가 여러 개인 경우 (예: "선유" 검색 시 선유도역 9호선 + 선유도 관련 정류소 7개)
+        // -> 사용자가 직접 원하는 역/정류소를 선택할 수 있는 직관적인 선택 리스트 렌더링!
+        this.renderSearchResultsList(query, subwayMatches, mergedBusList);
+        this.scrollToResult();
       } catch (err) {
         this.showError('검색 중 오류가 발생했습니다: ' + err.message);
       }
+    }
+
+    // ==========================================
+    // 검색 결과 목록 카드 렌더링 (다중 검색 시)
+    // ==========================================
+    renderSearchResultsList(query, subways, busStations) {
+      if (!this.resultContainer) return;
+
+      let html = `
+        <div class="lookup-board-wrap">
+          <div class="lookup-board-header search-results-header">
+            <div class="station-meta-info">
+              <div class="station-name-row">
+                <span class="station-icon">🔍</span>
+                <h4 class="station-title">'${this.escapeHtml(query)}' 검색 결과</h4>
+                <span class="station-ars-badge station-ars-badge-blue">${subways.length + busStations.length}곳 발견</span>
+              </div>
+              <p class="search-result-desc">확인하고 싶은 지하철역 또는 정류소를 누르면 즉시 실시간 전광판이 열립니다.</p>
+            </div>
+          </div>
+          <div class="search-results-grid">
+      `;
+
+      // 1. 지하철역 결과
+      if (subways.length > 0) {
+        subways.forEach(s => {
+          const lineBadges = s.lines.map(line => `<span class="badge-subway-line badge-${this.getSubwayLineClass(line)}">${line}</span>`).join(' ');
+          const isSeonyu = (s.name === '선유도');
+          html += `
+            <button type="button" class="search-item-card card-subway-type" data-type="subway" data-name="${s.name}">
+              <div class="card-left">
+                <span class="card-type-badge badge-subway">🚇 지하철</span>
+                <div class="card-title-group">
+                  <span class="card-title"><strong>${s.name}역</strong></span>
+                  ${isSeonyu ? `<span class="badge-sub-highlight">당산방면 시간표 직결</span>` : ''}
+                </div>
+              </div>
+              <div class="card-right">
+                ${lineBadges}
+                <span class="card-arrow">›</span>
+              </div>
+            </button>
+          `;
+        });
+      }
+
+      // 2. 버스 정류소 결과
+      if (busStations.length > 0) {
+        busStations.forEach(b => {
+          const formattedArs = this.formatArsId(b.arsId);
+          html += `
+            <button type="button" class="search-item-card card-bus-type" data-type="bus" data-ars="${b.arsId}" data-name="${this.escapeHtml(b.stNm)}">
+              <div class="card-left">
+                <span class="card-type-badge badge-bus">🚏 정류소</span>
+                <div class="card-title-group">
+                  <span class="card-title">${this.escapeHtml(b.stNm)}</span>
+                  <span class="card-ars-label">ARS ${formattedArs}</span>
+                </div>
+              </div>
+              <div class="card-right">
+                <span class="station-ars-badge station-ars-badge-blue">${b.arsId}</span>
+                <span class="card-arrow">›</span>
+              </div>
+            </button>
+          `;
+        });
+      }
+
+      html += `
+          </div>
+        </div>
+      `;
+
+      this.resultContainer.innerHTML = html;
+
+      // 카드 클릭 이벤트 바인딩
+      this.resultContainer.querySelectorAll('.search-item-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const type = card.getAttribute('data-type');
+          if (type === 'subway') {
+            const name = card.getAttribute('data-name');
+            this.inputQuery.value = name + '역';
+            this.lookupSubway(name);
+          } else {
+            const ars = card.getAttribute('data-ars');
+            const name = card.getAttribute('data-name');
+            this.inputQuery.value = ars;
+            this.lookupBusByArs(ars, name);
+          }
+          this.scrollToResult();
+        });
+      });
     }
 
     // ==========================================
@@ -347,35 +526,40 @@
     // ==========================================
     async handleAutocomplete(query) {
       if (!this.dropdown) return;
-      const cleanSubway = query.replace(/역$/, '').trim();
+      const cleanQuery = query.trim();
+      const cleanSubway = cleanQuery.replace(/역$/, '').trim();
 
       // 1. 지하철역 추천 필터링 (최대 4개)
-      const subways = SUBWAY_STATIONS.filter(s => s.name.includes(cleanSubway)).slice(0, 4);
+      const subways = SUBWAY_STATIONS.filter(s => 
+        s.name.includes(cleanSubway) || cleanSubway.includes(s.name)
+      ).slice(0, 4);
 
-      // 2. 6637 전용 정류소 (15158, 15156) 우선 매칭 검사
-      const priority6637Stops = [
-        { arsId: '15158', stNm: '양정고등학교 (6637 단독)', keywords: ['15158', '6637', '양정', '양정고', '목동'] },
-        { arsId: '15156', stNm: '경인초교.목동아파트5.6단지사잇길 (6637 단독)', keywords: ['15156', '6637', '경인', '경인초', '목동'] }
-      ];
-      const matchedPriority = priority6637Stops.filter(p => p.keywords.some(k => k.includes(query) || query.includes(k)));
+      // 2. 내장 핵심 정류소 DB에서 키워드 매칭 (선유, 당산, 목동, 양정, 경인 등 즉시 반응)
+      const localMatches = LOCAL_POPULAR_STATIONS.filter(p => 
+        p.keywords.some(k => k.includes(cleanQuery) || cleanQuery.includes(k)) ||
+        p.stNm.includes(cleanQuery) || p.arsId.includes(cleanQuery)
+      );
 
-      // 3. 버스 정류소명 실시간 API 검색 (비동기)
-      let busStations = [];
+      // 3. 온라인 버스 정류소 실시간 API 검색 (비동기)
+      let onlineBusStations = [];
       try {
-        const fetched = await this.fetchStationsByName(query);
-        busStations = fetched.filter(b => b.arsId && b.arsId !== '0');
-      } catch (e) {
-        // 네트워크 지연 시 조용히 스킵
-      }
+        const fetched = await this.fetchStationsByName(cleanQuery);
+        if (Array.isArray(fetched)) {
+          onlineBusStations = fetched.filter(b => b.arsId && b.arsId !== '0');
+        }
+      } catch (e) {}
 
-      // 최우선 6637 정류소를 맨 앞에 배치 (중복 제거)
-      matchedPriority.forEach(p => {
-        busStations = busStations.filter(b => b.arsId !== p.arsId);
-        busStations.unshift({ arsId: p.arsId, stNm: p.stNm });
+      // 로컬 DB와 온라인 검색 병합 (로컬 DB 우선 순위)
+      const mergedBuses = [...localMatches];
+      onlineBusStations.forEach(ob => {
+        if (!mergedBuses.some(m => m.arsId === ob.arsId)) {
+          mergedBuses.push({ arsId: ob.arsId, stNm: ob.stNm });
+        }
       });
-      busStations = busStations.slice(0, 7);
 
-      if (subways.length === 0 && busStations.length === 0) {
+      const displayBuses = mergedBuses.slice(0, 8);
+
+      if (subways.length === 0 && displayBuses.length === 0) {
         this.hideSuggestions();
         return;
       }
@@ -387,11 +571,15 @@
         html += `<div class="suggestion-group-title">🚇 지하철역 (${subways.length})</div>`;
         subways.forEach(s => {
           const lineBadges = s.lines.map(line => `<span class="badge-subway-line badge-${this.getSubwayLineClass(line)}">${line}</span>`).join(' ');
+          const isSeonyu = (s.name === '선유도');
           html += `
             <div class="suggestion-item suggestion-subway" data-type="subway" data-name="${s.name}">
               <div class="sugg-left">
                 <span class="sugg-icon">🚇</span>
-                <span class="sugg-name"><strong>${s.name}역</strong></span>
+                <div class="sugg-subway-info">
+                  <span class="sugg-name"><strong>${s.name}역</strong></span>
+                  ${isSeonyu ? `<span class="sugg-tag-highlight">당산방면 시간표 직결</span>` : ''}
+                </div>
               </div>
               <div class="sugg-right">${lineBadges}</div>
             </div>
@@ -400,9 +588,9 @@
       }
 
       // 버스 정류소 섹션
-      if (busStations.length > 0) {
-        html += `<div class="suggestion-group-title">🚏 버스 정류소 (${busStations.length})</div>`;
-        busStations.forEach(b => {
+      if (displayBuses.length > 0) {
+        html += `<div class="suggestion-group-title">🚏 버스 정류소 (${displayBuses.length})</div>`;
+        displayBuses.forEach(b => {
           const formattedArs = this.formatArsId(b.arsId);
           html += `
             <div class="suggestion-item suggestion-bus" data-type="bus" data-ars="${b.arsId}" data-name="${this.escapeHtml(b.stNm)}">
@@ -440,6 +628,7 @@
             this.hideSuggestions();
             this.lookupBusByArs(ars, name);
           }
+          this.scrollToResult();
         });
       });
     }
@@ -806,6 +995,7 @@
                       <span class="live-bus-sec" data-target-time="${targetTime1}">
                         ${this.formatSecondsHtml(tra1)}
                       </span>
+                      <span class="arr-eta-time">도착 예정: <strong class="eta-clock">${this.formatEtaTime(targetTime1)}</strong></span>
                     ` : `
                       <span class="arr-text-raw ${isTerm1 ? 'arr-status-ended' : ''}">${this.cleanArrivalMsg(busMsg1)}</span>
                     `}
@@ -825,6 +1015,7 @@
                       <span class="live-bus-sec" data-target-time="${targetTime2}">
                         ${this.formatSecondsHtml(tra2)}
                       </span>
+                      <span class="arr-eta-time">도착 예정: <strong class="eta-clock">${this.formatEtaTime(targetTime2)}</strong></span>
                     ` : `
                       <span class="arr-text-raw secondary">${this.cleanArrivalMsg(busMsg2)}</span>
                     `}
@@ -857,13 +1048,13 @@
             </div>
           </div>
 
-          <!-- 상단 정류소 정보 헤더 -->
+          <!-- 상단 정류소 정보 헤더 (두번째 이미지처럼 파란색 알약 뱃지 적용) -->
           <div class="lookup-board-header">
             <div class="station-meta-info">
               <div class="station-name-row">
                 <span class="station-icon">🚏</span>
+                <span class="station-ars-badge station-ars-badge-blue">ARS ${formattedArs}</span>
                 <h4 class="station-title">${this.escapeHtml(stationName)}</h4>
-                <span class="station-ars-badge">ARS ${formattedArs}</span>
                 ${cleanArs === '15158' || cleanArs === '15156' ? `<span class="badge-only-6637">6637 전용 정류소</span>` : ''}
               </div>
               <div class="station-sub-row">
@@ -906,6 +1097,7 @@
           const targetName = btn.getAttribute('data-name');
           if (this.inputQuery) this.inputQuery.value = targetArs;
           this.lookupBusByArs(targetArs, targetName);
+          this.scrollToResult();
         });
       });
 
@@ -1265,6 +1457,7 @@
             if (this.btnClearQuery) this.btnClearQuery.style.display = 'flex';
             this.lookupSubway(id);
           }
+          this.scrollToResult();
         });
       });
 
@@ -1283,6 +1476,7 @@
             if (this.btnClearQuery) this.btnClearQuery.style.display = 'flex';
             this.lookupSubway(id);
           }
+          this.scrollToResult();
         });
       });
     }
@@ -1445,7 +1639,10 @@
       this.resultContainer.innerHTML = `
         <div class="lookup-state-box">
           <div class="state-icon">🚏</div>
-          <div class="lookup-state-title">ARS [${formattedArs}] 정류소 정보</div>
+          <div class="lookup-state-title">
+            <span class="station-ars-badge station-ars-badge-blue">ARS ${formattedArs}</span>
+            <span class="empty-station-name">${this.escapeHtml(customName || '정류소 정보')}</span>
+          </div>
           <div class="lookup-state-text">현재 운행 중인 버스가 없거나 정류장 번호를 다시 확인해 주세요.</div>
         </div>
       `;
@@ -1465,6 +1662,14 @@
     // ==========================================
     // 유틸리티 및 포맷터
     // ==========================================
+    formatEtaTime(ts) {
+      if (!ts) return '';
+      const d = new Date(ts);
+      const h = String(d.getHours()).padStart(2, '0');
+      const m = String(d.getMinutes()).padStart(2, '0');
+      return `${h}:${m}`;
+    }
+
     formatArsId(ars) {
       const s = String(ars).replace(/[^0-9]/g, '');
       if (s.length === 5) return `${s.slice(0, 2)}-${s.slice(2)}`;
