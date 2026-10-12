@@ -2642,12 +2642,12 @@ class TransitManager {
       <!-- Step 2: 6단지 버스정류장 -->
       <div class="est-timeline-step">
         <div class="est-step-node">🚌</div>
-        <div class="est-step-content">
+        <div class="est-step-content est-step-bus">
           <div>
             <div class="est-step-name">6단지 버스정류장 ➔ ${busLabelBadge}</div>
             <div class="est-step-detail">🚌 버스 승차${busPlateStr} (대기 약 ${est.busWaitMin}분 / 3분 이동)</div>
           </div>
-          <span class="est-step-clock">${fmtTime(est.t_bus_board)} 탑승</span>
+          <span class="est-step-clock est-clock-bus">${fmtTime(est.t_bus_board)} 탑승</span>
         </div>
       </div>
       <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 선유도역 하차 ${fmtTime(est.t_drop_bus)} ➔ 환승 도보 3분 (승강장 도착: ${fmtTime(est.t_reach_sub)})</span></div>
@@ -2655,12 +2655,12 @@ class TransitManager {
       <!-- Step 3: 선유도역 9호선 탑승 -->
       <div class="est-timeline-step">
         <div class="est-step-node">🚇</div>
-        <div class="est-step-content">
+        <div class="est-step-content est-step-subway">
           <div>
             <div class="est-step-name">선유도역 승강장 ➔ ${trainLabelBadge}</div>
             <div class="est-step-detail">🚇 9호선 일반 (대기 약 ${est.subWaitMin}분 / 두 정거장 4분 이동)</div>
           </div>
-          <span class="est-step-clock">${fmtTime(est.t_sub_board)} 탑승</span>
+          <span class="est-step-clock est-clock-subway">${fmtTime(est.t_sub_board)} 탑승</span>
         </div>
       </div>
       <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 국회의사당역 하차 ${fmtTime(est.t_drop_sub)} ➔ 회사 도보 9분 이동</span></div>
@@ -2687,12 +2687,12 @@ class TransitManager {
       <!-- Step 2: 국회의사당역 탑승 -->
       <div class="est-timeline-step">
         <div class="est-step-node">🚇</div>
-        <div class="est-step-content">
+        <div class="est-step-content est-step-subway">
           <div>
             <div class="est-step-name">국회의사당역 승강장 ➔ ${trainLabelBadge}</div>
             <div class="est-step-detail">🚇 9호선 일반 탑승 (대기 약 ${est.subWaitMin}분 / 두 정거장 4분 이동)</div>
           </div>
-          <span class="est-step-clock">${fmtTime(est.t_sub_board)} 탑승</span>
+          <span class="est-step-clock est-clock-subway">${fmtTime(est.t_sub_board)} 탑승</span>
         </div>
       </div>
       <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 선유도역 하차 ${fmtTime(est.t_drop_sub)} ➔ 환승 도보 3분 (정류장 도착: ${fmtTime(est.t_reach_bus)})</span></div>
@@ -2700,12 +2700,12 @@ class TransitManager {
       <!-- Step 3: 선유도역 버스정류장 탑승 -->
       <div class="est-timeline-step">
         <div class="est-step-node">🚌</div>
-        <div class="est-step-content">
+        <div class="est-step-content est-step-bus">
           <div>
             <div class="est-step-name">선유도역1번출구 ➔ ${busLabelBadge}</div>
             <div class="est-step-detail">🚌 버스 승차${busPlateStr} (대기 약 ${est.busWaitMin}분 / 3분 이동)</div>
           </div>
-          <span class="est-step-clock">${fmtTime(est.t_bus_board)} 탑승</span>
+          <span class="est-step-clock est-clock-bus">${fmtTime(est.t_bus_board)} 탑승</span>
         </div>
       </div>
       <div class="est-timeline-line"><span class="est-timeline-line-label">🚶 6단지 하차 ${fmtTime(est.t_drop_bus)} ➔ 집 도보 9분 이동</span></div>

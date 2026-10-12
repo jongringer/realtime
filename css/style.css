@@ -4781,6 +4781,58 @@ body[data-theme="noble-gold"] #editScheduleTimeBadge {
   text-align: center;
 }
 
+/* 🚌 [낮모드] 내가 선택한 버스 스텝: 산뜻하고 선명한 에메랄드 그린 배경 + 고대비 시각 뱃지 */
+.est-step-content.est-step-bus {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%) !important;
+  border: 1.8px solid #4ade80 !important;
+  box-shadow: 0 3px 10px rgba(22, 163, 74, 0.16) !important;
+}
+.est-step-content.est-step-bus .est-step-name {
+  color: #14532d !important;
+  font-weight: 900 !important;
+}
+.est-step-content.est-step-bus .est-step-detail {
+  color: #166534 !important;
+  font-weight: 700 !important;
+}
+.est-step-clock.est-clock-bus {
+  background: #15803d !important;
+  color: #ffffff !important;
+  padding: 4px 10px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.2px !important;
+  box-shadow: 0 2px 6px rgba(21, 128, 61, 0.35) !important;
+  white-space: nowrap !important;
+}
+
+/* 🚇 [낮모드] 내가 선택한 지하철 스텝: 품격 있는 골드 앰버 배경 + 고대비 시각 뱃지 */
+.est-step-content.est-step-subway {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%) !important;
+  border: 1.8px solid #facc15 !important;
+  box-shadow: 0 3px 10px rgba(217, 119, 6, 0.16) !important;
+}
+.est-step-content.est-step-subway .est-step-name {
+  color: #78350f !important;
+  font-weight: 900 !important;
+}
+.est-step-content.est-step-subway .est-step-detail {
+  color: #92400e !important;
+  font-weight: 700 !important;
+}
+.est-step-clock.est-clock-subway {
+  background: #d97706 !important;
+  color: #ffffff !important;
+  padding: 4px 10px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.2px !important;
+  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.35) !important;
+  white-space: nowrap !important;
+}
+
 /* --- 🌙 밤 모드 (Dark Theme) 전용 전광판 스타일 오버라이드 --- */
 [data-theme="obsidian"] .est-summary-card,
 [data-theme="midnight"] .est-summary-card,
@@ -4981,6 +5033,92 @@ body.dark-theme .est-breakdown-bar,
 body.dark-mode .est-breakdown-bar {
   border-top-color: rgba(255, 255, 255, 0.15) !important;
   color: #94a3b8 !important;
+}
+
+/* 🌙 [밤모드] 🚌 내가 선택한 버스 스텝: 네온 에메랄드 글로우 배경 + 고대비 그린 뱃지 */
+[data-theme="obsidian"] .est-step-content.est-step-bus,
+[data-theme="midnight"] .est-step-content.est-step-bus,
+[data-theme="noble-gold"] .est-step-content.est-step-bus,
+body.dark-theme .est-step-content.est-step-bus,
+body.dark-mode .est-step-content.est-step-bus,
+body:not([data-theme="apple-light"]) .est-step-content.est-step-bus {
+  background: linear-gradient(135deg, rgba(6, 78, 59, 0.6) 0%, rgba(6, 95, 70, 0.45) 100%) !important;
+  border: 1.8px solid #34d399 !important;
+  box-shadow: 0 0 16px rgba(52, 211, 153, 0.3) !important;
+}
+[data-theme="obsidian"] .est-step-content.est-step-bus .est-step-name,
+[data-theme="midnight"] .est-step-content.est-step-bus .est-step-name,
+[data-theme="noble-gold"] .est-step-content.est-step-bus .est-step-name,
+body.dark-theme .est-step-content.est-step-bus .est-step-name,
+body.dark-mode .est-step-content.est-step-bus .est-step-name,
+body:not([data-theme="apple-light"]) .est-step-content.est-step-bus .est-step-name {
+  color: #a7f3d0 !important;
+  font-weight: 900 !important;
+  text-shadow: 0 0 6px rgba(52, 211, 153, 0.35);
+}
+[data-theme="obsidian"] .est-step-content.est-step-bus .est-step-detail,
+[data-theme="midnight"] .est-step-content.est-step-bus .est-step-detail,
+[data-theme="noble-gold"] .est-step-content.est-step-bus .est-step-detail,
+body.dark-theme .est-step-content.est-step-bus .est-step-detail,
+body.dark-mode .est-step-content.est-step-bus .est-step-detail,
+body:not([data-theme="apple-light"]) .est-step-content.est-step-bus .est-step-detail {
+  color: #d1fae5 !important;
+  font-weight: 700 !important;
+}
+[data-theme="obsidian"] .est-step-clock.est-clock-bus,
+[data-theme="midnight"] .est-step-clock.est-clock-bus,
+[data-theme="noble-gold"] .est-step-clock.est-clock-bus,
+body.dark-theme .est-step-clock.est-clock-bus,
+body.dark-mode .est-step-clock.est-clock-bus,
+body:not([data-theme="apple-light"]) .est-step-clock.est-clock-bus {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border: 1px solid #6ee7b7 !important;
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.5) !important;
+  font-weight: 900 !important;
+}
+
+/* 🌙 [밤모드] 🚇 내가 선택한 지하철 스텝: 네온 골드 앰버 글로우 배경 + 고대비 앰버 뱃지 */
+[data-theme="obsidian"] .est-step-content.est-step-subway,
+[data-theme="midnight"] .est-step-content.est-step-subway,
+[data-theme="noble-gold"] .est-step-content.est-step-subway,
+body.dark-theme .est-step-content.est-step-subway,
+body.dark-mode .est-step-content.est-step-subway,
+body:not([data-theme="apple-light"]) .est-step-content.est-step-subway {
+  background: linear-gradient(135deg, rgba(120, 53, 15, 0.6) 0%, rgba(146, 64, 14, 0.45) 100%) !important;
+  border: 1.8px solid #fbbf24 !important;
+  box-shadow: 0 0 16px rgba(251, 191, 36, 0.3) !important;
+}
+[data-theme="obsidian"] .est-step-content.est-step-subway .est-step-name,
+[data-theme="midnight"] .est-step-content.est-step-subway .est-step-name,
+[data-theme="noble-gold"] .est-step-content.est-step-subway .est-step-name,
+body.dark-theme .est-step-content.est-step-subway .est-step-name,
+body.dark-mode .est-step-content.est-step-subway .est-step-name,
+body:not([data-theme="apple-light"]) .est-step-content.est-step-subway .est-step-name {
+  color: #fef08a !important;
+  font-weight: 900 !important;
+  text-shadow: 0 0 6px rgba(251, 191, 36, 0.35);
+}
+[data-theme="obsidian"] .est-step-content.est-step-subway .est-step-detail,
+[data-theme="midnight"] .est-step-content.est-step-subway .est-step-detail,
+[data-theme="noble-gold"] .est-step-content.est-step-subway .est-step-detail,
+body.dark-theme .est-step-content.est-step-subway .est-step-detail,
+body.dark-mode .est-step-content.est-step-subway .est-step-detail,
+body:not([data-theme="apple-light"]) .est-step-content.est-step-subway .est-step-detail {
+  color: #fef9c3 !important;
+  font-weight: 700 !important;
+}
+[data-theme="obsidian"] .est-step-clock.est-clock-subway,
+[data-theme="midnight"] .est-step-clock.est-clock-subway,
+[data-theme="noble-gold"] .est-step-clock.est-clock-subway,
+body.dark-theme .est-step-clock.est-clock-subway,
+body.dark-mode .est-step-clock.est-clock-subway,
+body:not([data-theme="apple-light"]) .est-step-clock.est-clock-subway {
+  background: #d97706 !important;
+  color: #ffffff !important;
+  border: 1px solid #fde047 !important;
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.5) !important;
+  font-weight: 900 !important;
 }
 
 /* 🔴 실시간 타게 될 버스 차량번호 / 지하철 열차번호 다크 레드 강조 스타일 */
