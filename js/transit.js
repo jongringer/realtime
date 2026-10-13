@@ -241,20 +241,28 @@ class TransitManager {
         const targetTime = parseInt(el.getAttribute('data-target-time'), 10);
         const prefix = el.getAttribute('data-prefix') || '';
         const suffix = el.getAttribute('data-suffix') || '';
+        const walkSecAttr = el.getAttribute('data-walk-sec');
+        const walkSec = walkSecAttr ? parseInt(walkSecAttr, 10) : null;
         if (!targetTime || isNaN(targetTime)) return;
 
         const diffSec = Math.max(0, Math.floor((targetTime - now) / 1000));
         let timeHtml = '';
+        let catchClass = '';
+        if (walkSec !== null && !isNaN(walkSec)) {
+          catchClass = (diffSec >= walkSec) ? 'transit-catchable' : 'transit-uncatchable';
+          el.classList.remove('transit-catchable', 'transit-uncatchable');
+          el.classList.add(catchClass);
+        }
 
         if (diffSec <= 0) {
-          timeHtml = `<span class="transit-time-arrive transit-time-arrive-big">⚡ 곧 도착 (진입)</span>`;
+          timeHtml = `<span class="transit-time-arrive transit-time-arrive-big ${catchClass}">⚡ 곧 도착 (진입)</span>`;
         } else if (diffSec < 60) {
-          timeHtml = `<span class="transit-time-imminent">${diffSec}초 후</span>`;
+          timeHtml = `<span class="transit-time-imminent ${catchClass}">${diffSec}초 후</span>`;
         } else {
           const m = Math.floor(diffSec / 60);
           const s = diffSec % 60;
           const sStr = s < 10 ? '0' + s : s;
-          timeHtml = `<span class="transit-time-min">${m}분</span> <span class="transit-time-sec">${sStr}초 후</span>`;
+          timeHtml = `<span class="${catchClass}"><span class="transit-time-min">${m}분</span> <span class="transit-time-sec">${sStr}초 후</span></span>`;
         }
 
         el.innerHTML = `${prefix ? prefix + ' ' : ''}${timeHtml} ${suffix ? `<span class="transit-countdown-suffix">${suffix}</span>` : ''}`;
@@ -385,13 +393,17 @@ class TransitManager {
     this.lastUpdated.innerHTML = `전광판 갱신: ${timeStr} <span style="color:#059669; font-weight:700;">(${busStatusText} · ${subwayStatusText})</span> <span style="margin-left:6px; color:#2563eb; font-weight:700;">🔄 ${this.REFRESH_INTERVAL}초 자동 갱신 (${this.refreshCountdown}초 전)</span>`;
   }
 
-  formatSec(sec) {
-    if (sec <= 0) return `<span class="transit-time-arrive transit-time-arrive-big">⚡ 곧 도착</span>`;
-    if (sec < 60) return `<span class="transit-time-imminent">${sec}초 후</span>`;
+  formatSec(sec, walkSec = null) {
+    let catchClass = '';
+    if (walkSec !== null && !isNaN(walkSec)) {
+      catchClass = (sec >= walkSec) ? 'transit-catchable' : 'transit-uncatchable';
+    }
+    if (sec <= 0) return `<span class="transit-time-arrive transit-time-arrive-big ${catchClass}">⚡ 곧 도착</span>`;
+    if (sec < 60) return `<span class="transit-time-imminent ${catchClass}">${sec}초 후</span>`;
     const m = Math.floor(sec / 60);
     const s = sec % 60;
     const sStr = s < 10 ? '0' + s : s;
-    return `<span class="transit-time-min">${m}분</span> <span class="transit-time-sec">${sStr}초 후</span>`;
+    return `<span class="${catchClass}"><span class="transit-time-min">${m}분</span> <span class="transit-time-sec">${sStr}초 후</span></span>`;
   }
 
   /**
@@ -1118,6 +1130,8 @@ class TransitManager {
       this.lastSubwayResults = subwayRawList;
     }
     const isCommute = (this.currentMode === 'commute');
+    const busWalkSec = isCommute ? 540 : 960;       // 출근 버스 9분(540초), 퇴근 버스 16분(960초)
+    const subwayWalkSec = isCommute ? 900 : 540;    // 출근 지하철 15분(900초), 퇴근 지하철 9분(540초)
     const now = new Date();
     const nowMs = now.getTime();
     const config = this.busConfigs[this.currentMode];
@@ -1143,15 +1157,15 @@ class TransitManager {
         nextTimeHtml = `<span class="transit-time-arrive" style="color:#64748b;">🚫 운행종료</span>`;
         nextSubLoc = `상태: <b>오늘 운행종료</b>`;
       } else if (next.isArrivingSoon || next.sec <= 30) {
-        nextTimeHtml = `<span class="transit-time-arrive">⚡ 곧 도착</span>`;
+        nextTimeHtml = `<span class="transit-time-arrive transit-uncatchable">⚡ 곧 도착</span>`;
         const loc = next.stopText ? `${next.stopText} · 진입 중` : '정류소 진입 중';
         nextSubLoc = `위치: <b>${loc}</b>`;
       } else if (next.targetTime) {
-        nextTimeHtml = `<span class="live-countdown" data-target-time="${next.targetTime}">${this.formatSec(next.sec)}</span>`;
+        nextTimeHtml = `<span class="live-countdown" data-target-time="${next.targetTime}" data-walk-sec="${busWalkSec}">${this.formatSec(next.sec, busWalkSec)}</span>`;
         const loc = next.stopText || '운행 중';
         nextSubLoc = `위치: <b>${loc}</b>`;
       } else {
-        nextTimeHtml = `<span class="transit-time-arrive">⚡ 곧 도착</span>`;
+        nextTimeHtml = `<span class="transit-time-arrive transit-uncatchable">⚡ 곧 도착</span>`;
         nextSubLoc = `위치: <b>운행 중</b>`;
       }
 
@@ -1204,15 +1218,15 @@ class TransitManager {
           next2TimeHtml = `<span class="transit-time-arrive" style="color:#64748b;">🚫 운행종료</span>`;
           next2SubLoc = `상태: <b>오늘 운행종료</b>`;
         } else if (next2.isArrivingSoon || next2.sec <= 30) {
-          next2TimeHtml = `<span class="transit-time-arrive transit-time-arrive-big">⚡ 곧 도착</span>`;
+          next2TimeHtml = `<span class="transit-time-arrive transit-time-arrive-big transit-uncatchable">⚡ 곧 도착</span>`;
           const loc = next2.stopText ? `${next2.stopText} · 진입 중` : '정류소 진입 중';
           next2SubLoc = `위치: <b>${loc}</b>`;
         } else if (next2.targetTime) {
-          next2TimeHtml = `<span class="live-countdown next2-countdown" data-target-time="${next2.targetTime}">${this.formatSec(next2.sec)}</span>`;
+          next2TimeHtml = `<span class="live-countdown next2-countdown" data-target-time="${next2.targetTime}" data-walk-sec="${busWalkSec}">${this.formatSec(next2.sec, busWalkSec)}</span>`;
           const loc = next2.stopText || '운행 중';
           next2SubLoc = `위치: <b>${loc}</b>`;
         } else {
-          next2TimeHtml = `<span class="transit-time-arrive transit-time-arrive-big">⚡ 곧 도착</span>`;
+          next2TimeHtml = `<span class="transit-time-arrive transit-time-arrive-big transit-uncatchable">⚡ 곧 도착</span>`;
           next2SubLoc = `위치: <b>운행 중</b>`;
         }
 
@@ -1272,7 +1286,7 @@ class TransitManager {
                 <span class="badge-regular-service">정규배차</span>
               </span>
               <span class="next-time-big next3-time-big">
-                <span class="live-countdown next2-countdown next3-countdown" data-target-time="${next3TargetMs}">${this.formatSec(next3Sec)}</span>
+                <span class="live-countdown next2-countdown next3-countdown" data-target-time="${next3TargetMs}" data-walk-sec="${busWalkSec}">${this.formatSec(next3Sec, busWalkSec)}</span>
               </span>
             </div>
             <div class="next-transit-sub next3-transit-sub">
@@ -1428,8 +1442,8 @@ class TransitManager {
           ? `<span class="badge-bus-plate badge-train-plate" style="display:inline-flex; align-items:center; background:#eff6ff; color:#1e40af; font-size:11px; padding:2px 7px; border-radius:5px; font-weight:800; margin-left:6px; border:1.5px solid #bfdbfe;">${this.formatPlateWithBigDigits(t2.trainNo, '🚇')}</span>`
           : `<span class="badge-low-bus" style="background:#fef3c7; color:#b45309; border-color:#fde68a;">${isTimetableMode ? '🗓️ 정시시간표' : '역고정(공식)'}</span>`;
         const t2TimeHtml = (t2.isArrivingSoon || t2.sec <= 30)
-          ? `<span class="transit-time-arrive-big subway-arrive-imminent" style="font-weight:900; font-size:20px; letter-spacing:-0.3px;">⚡ 곧 도착</span>`
-          : `<span class="live-countdown next2-countdown" data-target-time="${t2.targetTime}">${this.formatSec(t2.sec)}</span>`;
+          ? `<span class="transit-time-arrive-big subway-arrive-imminent transit-uncatchable" style="font-weight:900; font-size:20px; letter-spacing:-0.3px;">⚡ 곧 도착</span>`
+          : `<span class="live-countdown next2-countdown" data-target-time="${t2.targetTime}" data-walk-sec="${subwayWalkSec}">${this.formatSec(t2.sec, subwayWalkSec)}</span>`;
 
         let t2SubLoc = '';
         if (isTimetableMode) {
@@ -1491,8 +1505,8 @@ class TransitManager {
       }
 
       const t1TimeHtml = (t1.isArrivingSoon || t1.sec <= 30)
-        ? `<span class="transit-time-arrive-big subway-arrive-imminent" style="font-weight:900; font-size:21.5px; letter-spacing:-0.3px;">⚡ 곧 도착</span>`
-        : `<span class="next-time-big live-countdown" data-target-time="${t1.targetTime}">${this.formatSec(t1.sec)}</span>`;
+        ? `<span class="transit-time-arrive-big subway-arrive-imminent transit-uncatchable" style="font-weight:900; font-size:21.5px; letter-spacing:-0.3px;">⚡ 곧 도착</span>`
+        : `<span class="next-time-big live-countdown" data-target-time="${t1.targetTime}" data-walk-sec="${subwayWalkSec}">${this.formatSec(t1.sec, subwayWalkSec)}</span>`;
 
       // 어디행 제거 및 시각 폰트 18.5px / 고대비 컬러로 크게 노출
       subwayTrainsHtml = `

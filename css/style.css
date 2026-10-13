@@ -2650,25 +2650,15 @@ body[data-theme="obsidian"] .bit-header-row {
   line-height: 1 !important;
 }
 
-/* ＋ 확대 버튼: 시인성 높은 블루/인디고 */
-.btn-time-zoom-plus {
-  background: #2563eb !important;
-  color: #ffffff !important;
-  border: 1.5px solid #1d4ed8 !important;
-}
-
-.btn-time-zoom-plus:active {
-  background: #1d4ed8 !important;
-  transform: scale(0.93) !important;
-}
-
-/* ↺ 원래대로 복귀 버튼: 둥근 화살표 역회전 아이콘 */
+/* ＋ 확대 & ↺ 원래대로 복귀 버튼: 정돈된 무채색 뉴트럴 스타일 (시각적 피로도 해소) */
+.btn-time-zoom-plus,
 .btn-time-zoom-reset {
   background: #f1f5f9 !important;
   color: #0f172a !important;
   border: 1.5px solid #94a3b8 !important;
 }
 
+.btn-time-zoom-plus:active,
 .btn-time-zoom-reset:active {
   background: #e2e8f0 !important;
   transform: scale(0.93) !important;
@@ -2682,16 +2672,17 @@ body[data-theme="obsidian"] .bit-header-row {
 }
 
 /* 다크 테마 대응 */
-body:not([data-theme="apple-light"]) .btn-time-zoom-plus {
-  background: #3b82f6 !important;
-  color: #ffffff !important;
-  border: 1.5px solid #60a5fa !important;
-}
-
+body:not([data-theme="apple-light"]) .btn-time-zoom-plus,
 body:not([data-theme="apple-light"]) .btn-time-zoom-reset {
   background: #1e293b !important;
   color: #f1f5f9 !important;
   border: 1.5px solid #475569 !important;
+}
+
+body:not([data-theme="apple-light"]) .btn-time-zoom-plus:active,
+body:not([data-theme="apple-light"]) .btn-time-zoom-reset:active {
+  background: #334155 !important;
+  transform: scale(0.93) !important;
 }
 
 /* 도착시간 조절 플로팅 토스트 피드백 */
@@ -2953,6 +2944,51 @@ body[data-theme="obsidian"] .transit-time-imminent {
 body:not([data-theme="apple-light"]) .next2-countdown .transit-time-sec,
 body[data-theme="obsidian"] .next2-countdown .transit-time-sec {
   color: #f8fafc !important;
+}
+
+/* 1. 타는 게 가능한 것 (도보 시간 이후 도착): 지금보다 좀더 크게 */
+.transit-catchable .transit-time-min {
+  font-size: calc(23px + var(--time-font-boost, 0px)) !important;
+  font-weight: 900 !important;
+  color: #dc2626 !important;
+  letter-spacing: -0.3px !important;
+}
+
+.transit-catchable .transit-time-sec {
+  font-size: calc(18px + var(--time-font-boost, 0px)) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.3px !important;
+}
+
+.transit-catchable.transit-time-arrive,
+.transit-catchable .transit-time-arrive,
+.transit-catchable .transit-time-imminent {
+  font-size: calc(21px + var(--time-font-boost, 0px)) !important;
+  font-weight: 900 !important;
+}
+
+/* 2. 탈 수 없는 것 (도보 시간 부족): 지금보다 사알짝 작게 */
+.transit-uncatchable .transit-time-min {
+  font-size: calc(16.5px + var(--time-font-boost, 0px)) !important;
+  font-weight: 800 !important;
+  color: #b91c1c !important;
+  opacity: 0.88 !important;
+  letter-spacing: -0.2px !important;
+}
+
+.transit-uncatchable .transit-time-sec {
+  font-size: calc(13.5px + var(--time-font-boost, 0px)) !important;
+  font-weight: 700 !important;
+  opacity: 0.85 !important;
+  letter-spacing: -0.2px !important;
+}
+
+.transit-uncatchable.transit-time-arrive,
+.transit-uncatchable .transit-time-arrive,
+.transit-uncatchable .transit-time-imminent {
+  font-size: calc(16px + var(--time-font-boost, 0px)) !important;
+  font-weight: 800 !important;
+  opacity: 0.85 !important;
 }
 
 .transit-countdown-suffix {
@@ -6836,7 +6872,7 @@ body:not([data-theme="apple-light"]) .time-sec {
 }
 
 .arr-eta-time .eta-clock {
-  font-size: 17.5px !important;
+  font-size: calc(17.5px + var(--time-font-boost, 0px)) !important;
   font-weight: 900 !important;
   color: #0284c7 !important;
   margin-left: 2px !important;
@@ -7651,9 +7687,9 @@ body[data-theme="apple-light"] .station-ars-badge-blue {
   color: var(--text-main);
 }
 
-/* 2. 버스 & 지하철 도착시각 대형 폰트 (시원하고 직관적인 가독성 보장) */
+/* 2. 버스 & 지하철 도착시각 대형 폰트 (시원하고 직관적인 가독성 보장 + 줌 조절 연동) */
 .live-bus-sec {
-  font-size: 18.5px !important;
+  font-size: calc(18.5px + var(--time-font-boost, 0px)) !important;
   font-weight: 900 !important;
   color: var(--text-main) !important;
   letter-spacing: -0.3px !important;
@@ -7663,7 +7699,7 @@ body[data-theme="apple-light"] .station-ars-badge-blue {
 }
 
 .live-bus-sec .time-min {
-  font-size: 21px !important;
+  font-size: calc(21px + var(--time-font-boost, 0px)) !important;
   font-weight: 900 !important;
   color: #dc2626 !important;
 }
@@ -7677,20 +7713,20 @@ body:not([data-theme="apple-light"]) .live-bus-sec .time-min {
 }
 
 .live-bus-sec .time-sec {
-  font-size: 15px !important;
+  font-size: calc(15px + var(--time-font-boost, 0px)) !important;
   font-weight: 800 !important;
   color: var(--text-main) !important;
 }
 
 .tag-arrive-now {
-  font-size: 19px !important;
+  font-size: calc(19px + var(--time-font-boost, 0px)) !important;
   font-weight: 900 !important;
   color: #ef4444 !important;
   animation: pulseArrive 0.9s infinite alternate;
 }
 
 .tag-arrive-imminent {
-  font-size: 19px !important;
+  font-size: calc(19px + var(--time-font-boost, 0px)) !important;
   font-weight: 900 !important;
   color: #dc2626 !important;
 }
@@ -8401,6 +8437,18 @@ body.dark-theme .btn-dangsan-view-toggle.active {
   .transit-time-sec {
     font-size: calc(14.5px + var(--time-font-boost, 0px)) !important;
   }
+  .transit-catchable .transit-time-min {
+    font-size: calc(20.5px + var(--time-font-boost, 0px)) !important;
+  }
+  .transit-catchable .transit-time-sec {
+    font-size: calc(16px + var(--time-font-boost, 0px)) !important;
+  }
+  .transit-uncatchable .transit-time-min {
+    font-size: calc(15px + var(--time-font-boost, 0px)) !important;
+  }
+  .transit-uncatchable .transit-time-sec {
+    font-size: calc(12.5px + var(--time-font-boost, 0px)) !important;
+  }
   .transit-clock-time {
     font-size: 17.5px !important;
   }
@@ -8473,17 +8521,17 @@ body.dark-theme .btn-dangsan-view-toggle.active {
     border-radius: 10px !important;
   }
   .live-bus-sec {
-    font-size: 16px !important;
+    font-size: calc(16px + var(--time-font-boost, 0px)) !important;
   }
   .live-bus-sec .time-min {
-    font-size: 18px !important;
+    font-size: calc(18px + var(--time-font-boost, 0px)) !important;
   }
   .live-bus-sec .time-sec {
-    font-size: 13.5px !important;
+    font-size: calc(13.5px + var(--time-font-boost, 0px)) !important;
   }
   .tag-arrive-now,
   .tag-arrive-imminent {
-    font-size: 16px !important;
+    font-size: calc(16px + var(--time-font-boost, 0px)) !important;
   }
   .arr-text-raw {
     font-size: 14.5px !important;
@@ -8661,14 +8709,14 @@ body.dark-theme .btn-dangsan-view-toggle.active {
     padding: 7px 7px !important;
   }
   .live-bus-sec {
-    font-size: 14.5px !important;
+    font-size: calc(14.5px + var(--time-font-boost, 0px)) !important;
   }
   .live-bus-sec .time-min {
-    font-size: 16px !important;
+    font-size: calc(16px + var(--time-font-boost, 0px)) !important;
   }
   .tag-arrive-now,
   .tag-arrive-imminent {
-    font-size: 14.5px !important;
+    font-size: calc(14.5px + var(--time-font-boost, 0px)) !important;
   }
   .arr-text-raw {
     font-size: 13px !important;
@@ -8707,6 +8755,18 @@ body.dark-theme .btn-dangsan-view-toggle.active {
   }
   .transit-time-sec {
     font-size: calc(13px + var(--time-font-boost, 0px)) !important;
+  }
+  .transit-catchable .transit-time-min {
+    font-size: calc(18.5px + var(--time-font-boost, 0px)) !important;
+  }
+  .transit-catchable .transit-time-sec {
+    font-size: calc(14.5px + var(--time-font-boost, 0px)) !important;
+  }
+  .transit-uncatchable .transit-time-min {
+    font-size: calc(14px + var(--time-font-boost, 0px)) !important;
+  }
+  .transit-uncatchable .transit-time-sec {
+    font-size: calc(11.5px + var(--time-font-boost, 0px)) !important;
   }
   .transit-clock-time {
     font-size: 15.5px !important;
@@ -8792,10 +8852,10 @@ body.dark-theme .btn-dangsan-view-toggle.active {
     padding: 5px 5px !important;
   }
   .live-bus-sec {
-    font-size: 13px !important;
+    font-size: calc(13px + var(--time-font-boost, 0px)) !important;
   }
   .live-bus-sec .time-min {
-    font-size: 14.5px !important;
+    font-size: calc(14.5px + var(--time-font-boost, 0px)) !important;
   }
 
   /* 출퇴근 요약 헤더 및 티커 반응형 */
@@ -8827,6 +8887,18 @@ body.dark-theme .btn-dangsan-view-toggle.active {
   }
   .transit-time-sec {
     font-size: calc(12px + var(--time-font-boost, 0px)) !important;
+  }
+  .transit-catchable .transit-time-min {
+    font-size: calc(17px + var(--time-font-boost, 0px)) !important;
+  }
+  .transit-catchable .transit-time-sec {
+    font-size: calc(13.5px + var(--time-font-boost, 0px)) !important;
+  }
+  .transit-uncatchable .transit-time-min {
+    font-size: calc(13px + var(--time-font-boost, 0px)) !important;
+  }
+  .transit-uncatchable .transit-time-sec {
+    font-size: calc(11px + var(--time-font-boost, 0px)) !important;
   }
   .transit-clock-time {
     font-size: 14px !important;

@@ -469,20 +469,14 @@
       box-sizing: border-box !important;
       line-height: 1 !important;
     }
-    .btn-time-zoom-plus {
-      background: #2563eb !important;
-      color: #ffffff !important;
-      border: 1.5px solid #1d4ed8 !important;
-    }
-    .btn-time-zoom-plus:active {
-      background: #1d4ed8 !important;
-      transform: scale(0.93) !important;
-    }
+    /* ＋ 확대 & ↺ 원래대로 복귀 버튼: 정돈된 무채색 뉴트럴 스타일 (시각적 피로도 해소) */
+    .btn-time-zoom-plus,
     .btn-time-zoom-reset {
       background: #f1f5f9 !important;
       color: #0f172a !important;
       border: 1.5px solid #94a3b8 !important;
     }
+    .btn-time-zoom-plus:active,
     .btn-time-zoom-reset:active {
       background: #e2e8f0 !important;
       transform: scale(0.93) !important;
@@ -493,15 +487,38 @@
       line-height: 1 !important;
       display: inline-block !important;
     }
-    body:not([data-theme="apple-light"]) .btn-time-zoom-plus {
-      background: #3b82f6 !important;
-      color: #ffffff !important;
-      border: 1.5px solid #60a5fa !important;
-    }
+    body:not([data-theme="apple-light"]) .btn-time-zoom-plus,
     body:not([data-theme="apple-light"]) .btn-time-zoom-reset {
       background: #1e293b !important;
       color: #f1f5f9 !important;
       border: 1.5px solid #475569 !important;
+    }
+    body:not([data-theme="apple-light"]) .btn-time-zoom-plus:active,
+    body:not([data-theme="apple-light"]) .btn-time-zoom-reset:active {
+      background: #334155 !important;
+      transform: scale(0.93) !important;
+    }
+
+    /* 도보 이동 시간 고려 탑승 가능 여부 스타일 차등화 */
+    .transit-catchable .transit-time-min {
+      font-size: calc(23px + var(--time-font-boost, 0px)) !important;
+      font-weight: 900 !important;
+      color: #dc2626 !important;
+    }
+    .transit-catchable .transit-time-sec {
+      font-size: calc(18px + var(--time-font-boost, 0px)) !important;
+      font-weight: 800 !important;
+    }
+    .transit-uncatchable .transit-time-min {
+      font-size: calc(16.5px + var(--time-font-boost, 0px)) !important;
+      font-weight: 800 !important;
+      color: #b91c1c !important;
+      opacity: 0.88 !important;
+    }
+    .transit-uncatchable .transit-time-sec {
+      font-size: calc(13.5px + var(--time-font-boost, 0px)) !important;
+      font-weight: 700 !important;
+      opacity: 0.85 !important;
     }
     .transit-zoom-toast {
       position: fixed;
@@ -1744,13 +1761,17 @@
     const SEOUL_SUBWAY_KEY = '476a79484b6a6f6e3833504f4f6d4e';
     const subwayCache = {};
 
-    function formatSec(sec) {
-      if (sec <= 0) return '<span class="transit-time-arrive transit-time-arrive-big" style="color:#dc2626; font-weight:900;">⚡ 곧 도착</span>';
-      if (sec < 60) return `<span style="color:#dc2626; font-weight:900;">${sec}초 후</span>`;
+    function formatSec(sec, walkSec = null) {
+      let catchClass = '';
+      if (walkSec !== null && !isNaN(walkSec)) {
+        catchClass = (sec >= walkSec) ? 'transit-catchable' : 'transit-uncatchable';
+      }
+      if (sec <= 0) return `<span class="transit-time-arrive transit-time-arrive-big ${catchClass}" style="color:#dc2626; font-weight:900;">⚡ 곧 도착</span>`;
+      if (sec < 60) return `<span class="transit-time-imminent ${catchClass}" style="color:#dc2626; font-weight:900;">${sec}초 후</span>`;
       const m = Math.floor(sec / 60);
       const s = sec % 60;
       const sStr = s < 10 ? '0' + s : s;
-      return `<span class="transit-time-min">${m}분</span> <span class="transit-time-sec">${sStr}초 후</span>`;
+      return `<span class="${catchClass}"><span class="transit-time-min">${m}분</span> <span class="transit-time-sec">${sStr}초 후</span></span>`;
     }
 
     function formatPlateWithBigDigits(plate, icon = '🚌') {

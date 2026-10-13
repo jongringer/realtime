@@ -1377,13 +1377,20 @@
 
           return `
             <div class="lookup-bus-card">
-              <!-- 상단 헤더: 노선 번호 + 노선 유형 + 방면 안내 (가로 전체 활용) -->
+              <!-- 상단 헤더: 노선 번호 + 노선 유형 + 도착시간 줌 컨트롤 (+ / ↺) -->
               <div class="bus-card-top-header">
                 <div class="bus-route-main-info">
                   <span class="bus-badge ${badgeClass}">${bus.rtNm}</span>
                   <span class="bus-type-tag">${typeName}</span>
                 </div>
-                <div class="bus-direction-pill">${nextStop}</div>
+                <div class="bus-time-zoom-ctrl">
+                  <button type="button" class="btn-time-zoom-btn btn-time-zoom-plus" onclick="window.transitManager && window.transitManager.increaseTimeFontSize(event)" title="도착시간 글씨 확대" aria-label="도착시간 글씨 확대">
+                    <span class="zoom-btn-icon">＋</span>
+                  </button>
+                  <button type="button" class="btn-time-zoom-btn btn-time-zoom-reset" onclick="window.transitManager && window.transitManager.resetTimeFontSize(event)" title="도착시간 글씨 원래대로 복귀" aria-label="도착시간 글씨 원래대로 복귀">
+                    <span class="zoom-btn-icon">↺</span>
+                  </button>
+                </div>
               </div>
 
               <!-- 하단 도착 정보: 다음 버스 & 다다음 버스 와이드 블록 -->
@@ -1656,6 +1663,14 @@
                   <h4 class="station-title">9호선 선유도역</h4>
                   <span class="station-ars-badge" style="background:#c89d5c;">실시간 도착정보 우선</span>
                   <span class="badge-dangsan-target">당산역 방면 1정거장(2분)</span>
+                  <div class="bus-time-zoom-ctrl" style="margin-left:auto;">
+                    <button type="button" class="btn-time-zoom-btn btn-time-zoom-plus" onclick="window.transitManager && window.transitManager.increaseTimeFontSize(event)" title="도착시간 글씨 확대" aria-label="도착시간 글씨 확대">
+                      <span class="zoom-btn-icon">＋</span>
+                    </button>
+                    <button type="button" class="btn-time-zoom-btn btn-time-zoom-reset" onclick="window.transitManager && window.transitManager.resetTimeFontSize(event)" title="도착시간 글씨 원래대로 복귀" aria-label="도착시간 글씨 원래대로 복귀">
+                      <span class="zoom-btn-icon">↺</span>
+                    </button>
+                  </div>
                 </div>
                 <div class="station-sub-row">
                   <span class="station-route-count">실시간 열차 우선 매핑 (다음 2대 노출)</span>

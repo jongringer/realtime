@@ -15,7 +15,7 @@
   <meta property=og:url content=https://kbs-4shift-5855.surge.sh>
   <meta name=twitter:card content=summary_large_image>
   <meta name="theme-color" content="#ffffff">
-  <link rel=stylesheet href=css/style.css?v=20261013_v1.2.58>
+  <link rel=stylesheet href=css/style.css?v=20261013_v1.2.59>
   <script src=https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js></script>
   <script>if(typeof pdfjsLib!=='undefined'){pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';}</script>
   <script src=https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js></script>
@@ -29,6 +29,10 @@
         if (metaTheme) metaTheme.setAttribute('content', isDark ? '#0f172a' : '#ffffff');
         if (window.AndroidAlarm && typeof window.AndroidAlarm.setSystemBarTheme === 'function') {
           window.AndroidAlarm.setSystemBarTheme(isDark);
+        }
+        var savedBoost = parseInt(localStorage.getItem('transit_time_font_boost') || '0', 10);
+        if (!isNaN(savedBoost) && savedBoost >= 0 && savedBoost <= 10) {
+          document.documentElement.style.setProperty('--time-font-boost', savedBoost + 'px');
         }
       } catch(e) {}
     })();
@@ -161,8 +165,18 @@
       <div class="transit-lookup-header transit-lookup-header-stacked">
         <!-- 1행: 타이틀 한 줄로 시원하게 -->
         <div class="transit-lookup-title-row">
-          <span class="transit-lookup-header-icon">🚏🚇</span>
-          <h3 class="transit-lookup-title">실시간 버스 · 지하철 도착정보</h3>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span class="transit-lookup-header-icon">🚏🚇</span>
+            <h3 class="transit-lookup-title">실시간 버스 · 지하철 도착정보</h3>
+          </div>
+          <div class="bus-time-zoom-ctrl">
+            <button type="button" class="btn-time-zoom-btn btn-time-zoom-plus" onclick="window.transitManager && window.transitManager.increaseTimeFontSize(event)" title="도착시간 글씨 확대" aria-label="도착시간 글씨 확대">
+              <span class="zoom-btn-icon">＋</span>
+            </button>
+            <button type="button" class="btn-time-zoom-btn btn-time-zoom-reset" onclick="window.transitManager && window.transitManager.resetTimeFontSize(event)" title="도착시간 글씨 원래대로 복귀" aria-label="도착시간 글씨 원래대로 복귀">
+              <span class="zoom-btn-icon">↺</span>
+            </button>
+          </div>
         </div>
         <!-- 2행: 부제목(좌측) + TOPIS 직결 및 새로고침 버튼 (우측) -->
         <div class="transit-lookup-sub-row">
@@ -446,9 +460,9 @@
   <script src=js/shift-engine.js?v=20260927_v25></script>
   <script src=js/storage.js?v=20260927_v25></script>
   <script src=js/ocr-parser.js?v=20260927_v25></script>
-  <script src=js/app.js?v=20261013_v1.2.58></script>
+  <script src=js/app.js?v=20261013_v1.2.59></script>
   <script src=js/timetable-15154.js?v=20260929_tt></script>
-  <script src=js/transit.js?v=20261013_v1.2.58></script>
-  <script src=js/transit-lookup.js?v=20261013_v1.2.58></script>
+  <script src=js/transit.js?v=20261013_v1.2.59></script>
+  <script src=js/transit-lookup.js?v=20261013_v1.2.59></script>
 </body>
 </html>
