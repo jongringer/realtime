@@ -1108,7 +1108,7 @@ class TransitManager {
       }
 
       const vehicleBadge1 = next.plainNo
-        ? `<span class="badge-bus-plate" style="display:inline-flex; align-items:center; background:#f1f5f9; color:#334155; font-size:11px; padding:2px 7px; border-radius:5px; font-weight:700; margin-left:6px; border:1px solid #cbd5e1;">${this.formatPlateWithBigDigits(next.plainNo, '🚌')}</span>`
+        ? `<span class="badge-bus-plate">${this.formatPlateWithBigDigits(next.plainNo, '🚌')}</span>`
         : '';
 
       const nextHtml = `
@@ -1166,7 +1166,7 @@ class TransitManager {
         }
 
         const vehicleBadge2 = next2.plainNo
-          ? `<span class="badge-bus-plate" style="display:inline-flex; align-items:center; background:#eff6ff; color:#1e40af; font-size:11px; padding:2px 7px; border-radius:5px; font-weight:700; margin-left:6px; border:1px solid #bfdbfe;">${this.formatPlateWithBigDigits(next2.plainNo, '🚌')}</span>`
+          ? `<span class="badge-bus-plate badge-bus-plate-blue">${this.formatPlateWithBigDigits(next2.plainNo, '🚌')}</span>`
           : '';
 
         next2Html = `
@@ -1210,7 +1210,7 @@ class TransitManager {
               <span class="next3-tag-purple">
                 <span>🟣</span>
                 <span>다다다음</span>
-                <span class="badge-regular-service" style="display:inline-flex; align-items:center; background:#f5f3ff; color:#6d28d9; font-size:10px; padding:1px 5px; border-radius:4px; font-weight:700; margin-left:6px; border:1px solid #ddd6fe;">정규배차</span>
+                <span class="badge-regular-service">정규배차</span>
               </span>
               <span class="next-time-big next3-time-big">
                 <span class="live-countdown next2-countdown next3-countdown" data-target-time="${next3TargetMs}">${this.formatSec(next3Sec)}</span>

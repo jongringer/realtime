@@ -2145,6 +2145,18 @@
       const t = String(routeType || '').trim();
       const n = String(rtNm || '').trim();
 
+      // ✈️ 1. 공항버스: routeType 1 또는 6000번대(6008, 6018, 6005 등) 또는 '공항' 포함
+      // 서울 공항버스의 고유 원래 색상은 고급 브라운/골드버건디 리무진 컬러
+      if (t === '1' || t.includes('공항') || n.includes('공항') || /^6\d{3}$/.test(n) || n.startsWith('60')) {
+        return 'badge-airport';
+      }
+
+      // 🟢 2. 700번 부천버스 (소신여객 경기 일반 시내버스):
+      // 경기 시내일반버스의 공식 원래 색상은 G-Bus 초록색! (서울 간선 파란색이 아님)
+      if (n === '700' || n.includes('부천') || n === '부천700') {
+        return 'badge-gyeonggi-green';
+      }
+
       // 지선버스: 6637, 6620, 7612 등 4자리 지선버스 또는 routeType 4
       if (t === '4' || t.includes('지선') || /^[1-7]\d{3}$/.test(n) || n === '6637') {
         return 'badge-green';
@@ -2161,10 +2173,6 @@
       if (t === '6' || t.includes('광역') || t.includes('직행') || /^9\d{3}$/.test(n)) {
         return 'badge-red';
       }
-      // 공항버스: 60으로 시작하는 공항버스 또는 routeType 1
-      if (t === '1' || t.includes('공항') || n.startsWith('60')) {
-        return 'badge-sky';
-      }
 
       if (n.length === 4) return 'badge-green';
       return 'badge-green';
@@ -2172,10 +2180,12 @@
 
     guessRouteType(rtNm) {
       if (!rtNm) return '일반';
-      if (rtNm.startsWith('양천') || rtNm.includes('마을')) return '마을버스';
-      if (rtNm.length === 3) return '간선버스';
-      if (rtNm.length === 4) return '지선버스';
-      if (rtNm.startsWith('60')) return '공항버스';
+      const n = String(rtNm).trim();
+      if (n === '700' || n.includes('부천')) return '경기일반(부천)';
+      if (/^6\d{3}$/.test(n) || n.startsWith('60') || n.includes('공항')) return '공항버스';
+      if (n.startsWith('양천') || n.includes('마을')) return '마을버스';
+      if (n.length === 3) return '간선버스';
+      if (n.length === 4) return '지선버스';
       return '일반버스';
     }
 

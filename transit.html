@@ -514,100 +514,157 @@
       font-size: 11px;
     }
     
-    /* 🔴 다음 대중교통 박스 */
+    /* 🔴 다음 대중교통 박스 (글씨/화면 확대 시에도 테두리 안으로 100% 강제 격리) */
     .next-transit-box {
       background: #f0f9ff;
       border: 1.5px solid #0284c7;
-      border-radius: 10px;
-      padding: 8px 11px;
+      border-radius: 9px;
+      padding: 6px 8px !important;
       margin-top: 4px;
+      box-sizing: border-box !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      overflow: hidden !important;
     }
     .next-transit-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 3px;
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      margin-bottom: 2px;
+      white-space: nowrap !important;
+      gap: 4px !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+      min-width: 0 !important;
     }
     .next-tag-red {
       color: #b91c1c;
       font-weight: 900;
-      font-size: 12px;
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
+      font-size: clamp(10px, 3vw, 11px) !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 2px !important;
+      white-space: nowrap !important;
+      min-width: 0 !important;
+      flex-shrink: 1 !important;
     }
     .next-time-big {
-      font-size: 21.5px !important;
+      font-size: clamp(13px, 3.8vw, 17.5px) !important;
       font-weight: 900 !important;
       color: #0369a1;
       letter-spacing: -0.3px;
+      white-space: nowrap !important;
       line-height: 1.2;
+      flex-shrink: 0 !important;
+      text-align: right !important;
     }
     .next-time-big .live-countdown,
     .live-countdown {
-      font-size: 1.4rem !important;
+      font-size: clamp(12.5px, 3.6vw, 16px) !important;
       font-weight: 900 !important;
       letter-spacing: -0.3px;
     }
     .next-transit-sub {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 12.5px;
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      font-size: clamp(10px, 2.8vw, 11.5px) !important;
+      font-weight: 700;
       color: #0284c7;
-      border-top: 1px dashed #bae6fd;
-      padding-top: 4px;
-      margin-top: 4px;
+      border-top: 1px dashed #bae6fd !important;
+      padding-top: 4px !important;
+      margin-top: 4px !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+      gap: 4px !important;
+      overflow: hidden !important;
+    }
+    .transit-sub-pos {
+      min-width: 0 !important;
+      flex: 1 !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+    }
+    .transit-sub-time {
+      flex-shrink: 0 !important;
+      white-space: nowrap !important;
+      display: inline-flex !important;
+      align-items: baseline !important;
+      gap: 2px !important;
     }
     
     /* 🔵 다다음 대중교통 박스 */
     .next2-transit-box {
       background: #f8fafc;
       border: 1.5px solid #bfdbfe;
-      border-radius: 8px;
-      padding: 7px 10px;
+      border-radius: 9px;
+      padding: 6px 8px !important;
       margin-top: 5px;
+      box-sizing: border-box !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      overflow: hidden !important;
     }
     .next2-tag-blue {
       color: #1d4ed8;
       font-weight: 900;
-      font-size: 11px;
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
+      font-size: clamp(10px, 3vw, 11px) !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 2px !important;
+      white-space: nowrap !important;
+      min-width: 0 !important;
+      flex-shrink: 1 !important;
     }
     .next2-time-big {
-      font-size: 18.5px !important;
+      font-size: clamp(13px, 3.8vw, 17.5px) !important;
       font-weight: 900 !important;
       color: #0284c7;
       letter-spacing: -0.3px;
+      white-space: nowrap !important;
+      flex-shrink: 0 !important;
+      text-align: right !important;
     }
     .next3-transit-box {
       background: #faf5ff;
       border: 1.5px solid #d8b4fe;
-      border-radius: 8px;
-      padding: 7px 10px;
+      border-radius: 9px;
+      padding: 6px 8px !important;
       margin-top: 5px;
+      box-sizing: border-box !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      overflow: hidden !important;
     }
     .next3-tag-purple {
       color: #6b21a8;
       font-weight: 900;
-      font-size: 11px;
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
+      font-size: clamp(10px, 3vw, 11px) !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 2px !important;
+      white-space: nowrap !important;
+      min-width: 0 !important;
+      flex-shrink: 1 !important;
     }
     .next3-time-big {
-      font-size: 18.5px !important;
+      font-size: clamp(13px, 3.8vw, 17.5px) !important;
       font-weight: 900 !important;
       color: #7c3aed;
       letter-spacing: -0.3px;
+      white-space: nowrap !important;
+      flex-shrink: 0 !important;
+      text-align: right !important;
     }
     .transit-time-arrive-big {
-      font-size: 21.5px !important;
+      font-size: clamp(12.5px, 3.6vw, 15.5px) !important;
       font-weight: 900 !important;
       letter-spacing: -0.3px !important;
       color: #dc2626 !important;
+      white-space: nowrap !important;
     }
     
     .bit-footer-info {
@@ -3414,7 +3471,17 @@
 
     function getStationRouteBadgeStyle(routeType, rtNm) {
       const t = String(routeType);
-      if (t === '2' || rtNm.startsWith('양천')) {
+      const n = String(rtNm || '').trim();
+
+      // 🟢 700번 부천버스 (소신여객 경기 시내일반 G-Bus 초록색)
+      if (n === '700' || n.includes('부천') || n === '부천700') {
+        return { typeName: '경기일반', badgeBg: '#15803d', badgeColor: '#ffffff', pillBg: '#f0fdf4', pillText: '#15803d', pillBorder: '#bbf7d0' };
+      }
+      // ✈️ 공항버스 (고유 브라운 리무진 컬러)
+      if (t === '1' || n.startsWith('60') || n.includes('공항')) {
+        return { typeName: '공항', badgeBg: '#854d0e', badgeColor: '#ffffff', pillBg: '#fef3c7', pillText: '#854d0e', pillBorder: '#fde68a' };
+      }
+      if (t === '2' || n.startsWith('양천') || n.includes('마을')) {
         return { typeName: '마을', badgeBg: '#059669', badgeColor: '#ffffff', pillBg: '#ecfdf5', pillText: '#059669', pillBorder: '#a7f3d0' };
       }
       if (t === '3') {
@@ -3423,11 +3490,8 @@
       if (t === '4') {
         return { typeName: '지선', badgeBg: '#16a34a', badgeColor: '#ffffff', pillBg: '#f0fdf4', pillText: '#15803d', pillBorder: '#bbf7d0' };
       }
-      if (t === '1') {
-        return { typeName: '공항', badgeBg: '#b45309', badgeColor: '#ffffff', pillBg: '#fef3c7', pillText: '#b45309', pillBorder: '#fde68a' };
-      }
       if (t === '8') {
-        return { typeName: '경기', badgeBg: '#6366f1', badgeColor: '#ffffff', pillBg: '#eef2ff', pillText: '#4338ca', pillBorder: '#c7d2fe' };
+        return { typeName: '경기', badgeBg: '#15803d', badgeColor: '#ffffff', pillBg: '#f0fdf4', pillText: '#15803d', pillBorder: '#bbf7d0' };
       }
       if (t === '6') {
         return { typeName: '광역', badgeBg: '#dc2626', badgeColor: '#ffffff', pillBg: '#fef2f2', pillText: '#dc2626', pillBorder: '#fecaca' };
