@@ -6343,21 +6343,49 @@ body:not([data-theme="obsidian"]):not([data-theme="midnight"]):not([data-theme="
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
 }
 
-.bus-badge.badge-town { background: #10b981 !important; }
-.bus-badge.badge-blue { background: #1d4ed8 !important; } /* 출퇴근 딥 블루 (#1d4ed8) */
-.bus-badge.badge-green { background: #059669 !important; }
-.bus-badge.badge-red { background: #dc2626 !important; }
-.bus-badge.badge-sky { background: #0284c7 !important; }
-/* ✈️ 공항버스 고유 원래 색상: 고급 브라운/버건디 리무진 (#854d0e ~ #9a3412) */
-.bus-badge.badge-airport,
-.modal-bus-route-badge.badge-airport {
-  background: #854d0e !important;
+/* 버스 번호 뱃지 색상 체계 (사용자 지정 고유 규칙) */
+.bus-badge.badge-town,
+.modal-bus-route-badge.badge-town,
+.card-type-badge.badge-town {
+  background: #047857 !important; /* 짙은 초록색 (양천01 등 마을버스) */
   color: #ffffff !important;
 }
-/* 🟢 700번 부천버스 고유 원래 색상: 경기 시내일반 G-Bus 초록색 (#15803d) */
+
+.bus-badge.badge-green,
+.modal-bus-route-badge.badge-green,
+.card-type-badge.badge-green {
+  background: #22c55e !important; /* 옅은 초록색 (6637, 6620 등 지선버스) */
+  color: #ffffff !important;
+}
+
+.bus-badge.badge-blue,
+.modal-bus-route-badge.badge-blue,
+.card-type-badge.badge-blue {
+  background: #1d4ed8 !important; /* 파란색 (603 등 간선버스) */
+  color: #ffffff !important;
+}
+
+.bus-badge.badge-sky,
+.modal-bus-route-badge.badge-sky,
+.card-type-badge.badge-sky,
 .bus-badge.badge-gyeonggi-green,
 .modal-bus-route-badge.badge-gyeonggi-green {
-  background: #15803d !important;
+  background: #38bdf8 !important; /* 연한 하늘색 (700번 부천버스) */
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(15, 23, 42, 0.45) !important;
+}
+
+.bus-badge.badge-airport,
+.modal-bus-route-badge.badge-airport,
+.card-type-badge.badge-airport {
+  background: #854d0e !important; /* 브라운 색 (공항버스) */
+  color: #ffffff !important;
+}
+
+.bus-badge.badge-red,
+.modal-bus-route-badge.badge-red,
+.card-type-badge.badge-red {
+  background: #dc2626 !important; /* 빨간색 (광역버스) */
   color: #ffffff !important;
 }
 
@@ -7638,6 +7666,110 @@ body:not([data-theme="obsidian"]):not([data-theme="midnight"]):not([data-theme="
   color: var(--text-muted, #64748b);
 }
 
+/* ==========================================================================
+   🚏 특정 정류장 선택 시 정류장 + 버스 도착정보 통합 전용 섹터
+   - 특정 정류장과 도착정보를 하나의 독립된 섹터로 묶고 옅은 붉은색 계열 배경 적용
+   ========================================================================== */
+.lookup-selected-station-sector {
+  background: linear-gradient(150deg, #fff1f2 0%, #ffe4e6 45%, #fef2f2 100%) !important;
+  border: 2px solid #fda4af !important;
+  border-radius: 20px !important;
+  padding: 14px 12px !important;
+  margin-top: 14px !important;
+  margin-bottom: 8px !important;
+  box-shadow: 0 8px 24px -4px rgba(244, 63, 94, 0.16), 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+
+body[data-theme="apple-light"] .lookup-selected-station-sector,
+body:not([data-theme="obsidian"]):not([data-theme="midnight"]):not([data-theme="noble-gold"]):not(.dark-theme):not(.dark-mode) .lookup-selected-station-sector {
+  background: linear-gradient(150deg, #fff1f2 0%, #ffe4e6 50%, #fef2f2 100%) !important;
+  border: 2px solid #fda4af !important;
+  box-shadow: 0 8px 24px -4px rgba(244, 63, 94, 0.16), 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+}
+
+body[data-theme="obsidian"] .lookup-selected-station-sector,
+body.dark-theme .lookup-selected-station-sector,
+body.dark-mode .lookup-selected-station-sector {
+  background: linear-gradient(150deg, rgba(76, 20, 35, 0.72) 0%, rgba(45, 12, 24, 0.92) 100%) !important;
+  border: 2px solid rgba(244, 63, 94, 0.45) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 18px rgba(244, 63, 94, 0.22) !important;
+}
+
+/* 옅은 붉은색 섹터 내 정류장 헤더 */
+.lookup-selected-station-sector .lookup-bus-station-header {
+  background: linear-gradient(135deg, #ffe4e6 0%, #fff1f2 100%) !important;
+  border: 1.5px solid #fb7185 !important;
+  border-radius: 14px !important;
+  padding: 11px 13px !important;
+  margin-bottom: 2px !important;
+  box-shadow: 0 2px 8px rgba(244, 63, 94, 0.12) !important;
+}
+
+body[data-theme="obsidian"] .lookup-selected-station-sector .lookup-bus-station-header,
+body.dark-theme .lookup-selected-station-sector .lookup-bus-station-header,
+body.dark-mode .lookup-selected-station-sector .lookup-bus-station-header {
+  background: rgba(244, 63, 94, 0.22) !important;
+  border: 1.5px solid rgba(244, 63, 94, 0.5) !important;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* 정류장 ARS 뱃지 (선명한 로즈 레드 포인트) */
+.lookup-selected-station-sector .station-ars-badge {
+  background: #e11d48 !important;
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  padding: 2.5px 8px !important;
+  border-radius: 7px !important;
+  box-shadow: 0 2px 6px rgba(225, 29, 72, 0.35) !important;
+}
+
+/* 정류장 이름 텍스트: 높은 가독성의 짙은 로즈 레드 */
+.lookup-selected-station-sector .station-name-text {
+  font-size: 17.5px !important;
+  font-weight: 900 !important;
+  color: #881337 !important;
+  letter-spacing: -0.3px !important;
+}
+
+body[data-theme="obsidian"] .lookup-selected-station-sector .station-name-text,
+body.dark-theme .lookup-selected-station-sector .station-name-text,
+body.dark-mode .lookup-selected-station-sector .station-name-text {
+  color: #ffe4e6 !important;
+}
+
+/* 갱신 주기 텍스트 */
+.lookup-selected-station-sector .station-auto-ticker {
+  color: #e11d48 !important;
+  font-weight: 800 !important;
+}
+
+body[data-theme="obsidian"] .lookup-selected-station-sector .station-auto-ticker,
+body.dark-theme .lookup-selected-station-sector .station-auto-ticker,
+body.dark-mode .lookup-selected-station-sector .station-auto-ticker {
+  color: #fda4af !important;
+}
+
+/* 옅은 붉은색 섹터 내 버스 도착 카드들 */
+.lookup-selected-station-sector .lookup-bus-card {
+  background: #ffffff !important;
+  border: 1.5px solid #fecdd3 !important;
+  border-radius: 15px !important;
+  box-shadow: 0 3px 10px rgba(244, 63, 94, 0.08) !important;
+}
+
+body[data-theme="obsidian"] .lookup-selected-station-sector .lookup-bus-card,
+body.dark-theme .lookup-selected-station-sector .lookup-bus-card,
+body.dark-mode .lookup-selected-station-sector .lookup-bus-card {
+  background: rgba(28, 14, 21, 0.92) !important;
+  border: 1.5px solid rgba(244, 63, 94, 0.35) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45) !important;
+}
+
 /* 버스 노선 검색 결과 하이라이트 */
 .card-route-highlight {
   background: linear-gradient(135deg, rgba(2, 132, 199, 0.08) 0%, rgba(59, 130, 246, 0.04) 100%) !important;
@@ -7817,6 +7949,7 @@ body.dark-theme .btn-dangsan-view-toggle.active {
 .subway-direction-box,
 .lookup-search-container,
 .lookup-guide-box,
+.lookup-selected-station-sector,
 .modal-container {
   box-sizing: border-box !important;
   max-width: 100% !important;
@@ -8189,6 +8322,10 @@ body.dark-theme .btn-dangsan-view-toggle.active {
     font-size: 12.5px !important;
     padding: 6px 10px !important;
   }
+  .lookup-selected-station-sector {
+    padding: 10px 7px !important;
+    border-radius: 16px !important;
+  }
   .lookup-bus-station-header {
     padding: 8px 9px !important;
   }
@@ -8279,6 +8416,10 @@ body.dark-theme .btn-dangsan-view-toggle.active {
 
   .transit-lookup-card {
     padding: 10px 5px !important;
+  }
+  .lookup-selected-station-sector {
+    padding: 8px 5px !important;
+    border-radius: 14px !important;
   }
   .lookup-bus-station-header {
     padding: 6px 6px !important;

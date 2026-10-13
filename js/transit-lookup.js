@@ -214,6 +214,18 @@
         { arsId: '15159', stNm: '목동6단지후문', dir: '이대목동병원 방면' },
         { arsId: '15154', stNm: '이대목동병원.목동6단지앞', dir: '종점' }
       ]
+    },
+    {
+      routeNo: '700',
+      routeType: '부천버스',
+      badgeClass: 'badge-sky',
+      summary: '부천 상동 ↔ 부천역 ↔ 목동 ↔ 당산역 ↔ 여의도',
+      stops: [
+        { arsId: '15153', stNm: '목동6단지앞', dir: '당산역 방면' },
+        { arsId: '15154', stNm: '이대목동병원.목동6단지앞', dir: '당산역 방면' },
+        { arsId: '19176', stNm: '당산역삼성래미안아파트 (당산역버스정류장)', dir: '부천 방면' },
+        { arsId: '19175', stNm: '당산역 (2호선·9호선)', dir: '여의도 방면' }
+      ]
     }
   ];
 
@@ -1421,8 +1433,8 @@
       }
 
       const boardHtml = `
-        <div class="lookup-board-wrap">
-          <!-- 정류소명 헤더: 정류장 번호와 정류장 이름을 선명하게 노출 (사용자 요청) -->
+        <div class="lookup-board-wrap lookup-selected-station-sector">
+          <!-- 특정 정류장 헤더: 정류장 번호와 정류장 이름을 선명하게 노출 -->
           <div class="lookup-bus-station-header">
             <div class="station-meta-left">
               <span class="station-ars-badge">🚏 ${formattedArs}</span>
@@ -1440,7 +1452,7 @@
             </div>
           </div>
 
-          <!-- 버스 번호 및 도착 예정 시각 카드 -->
+          <!-- 버스 번호 및 도착 예정 시각 카드 (동일 섹터 내 통합) -->
           <div class="lookup-cards-container">
             ${cardsHtml}
           </div>
@@ -2145,45 +2157,48 @@
       const t = String(routeType || '').trim();
       const n = String(rtNm || '').trim();
 
-      // ✈️ 1. 공항버스: routeType 1 또는 6000번대(6008, 6018, 6005 등) 또는 '공항' 포함
-      // 서울 공항버스의 고유 원래 색상은 고급 브라운/골드버건디 리무진 컬러
-      if (t === '1' || t.includes('공항') || n.includes('공항') || /^6\d{3}$/.test(n) || n.startsWith('60')) {
+      // 1. 핵심 주요 버스 우선 매핑 (오분류 원천 방지)
+      // 🔵 603번: 파란색 (간선버스)
+      if (n === '603') return 'badge-blue';
+
+      // 🩵 700번 부천버스: 연한 하늘색
+      if (n === '700' || n.includes('부천') || n === '부천700') return 'badge-sky';
+
+      // 🌿 6637, 6620번: 옅은 초록색 (지선버스)
+      if (n === '6637' || n === '6620') return 'badge-green';
+
+      // 🌲 양천01 등 마을버스: 짙은 초록색
+      if (n.startsWith('양천') || t === '2' || t.includes('마을') || n.includes('마을')) return 'badge-town';
+
+      // ✈️ 공항버스: routeType 1 또는 6000번대 공항리무진 (6001~6030, 6100~6300 등 4자리) -> 브라운 색
+      if (t === '1' || t.includes('공항') || n.includes('공항') || /^60\d{2}$/.test(n) || /^61\d{2}$/.test(n) || /^62\d{2}$/.test(n) || /^63\d{2}$/.test(n)) {
         return 'badge-airport';
       }
 
-      // 🟢 2. 700번 부천버스 (소신여객 경기 일반 시내버스):
-      // 경기 시내일반버스의 공식 원래 색상은 G-Bus 초록색! (서울 간선 파란색이 아님)
-      if (n === '700' || n.includes('부천') || n === '부천700') {
-        return 'badge-gyeonggi-green';
-      }
+      // 마을버스 (기타 일반)
+      if (t === '2' || t.includes('마을')) return 'badge-town';
 
-      // 지선버스: 6637, 6620, 7612 등 4자리 지선버스 또는 routeType 4
-      if (t === '4' || t.includes('지선') || /^[1-7]\d{3}$/.test(n) || n === '6637') {
-        return 'badge-green';
-      }
-      // 마을버스: 양천01 등 또는 routeType 2
-      if (t === '2' || t.includes('마을') || n.startsWith('양천') || n.includes('마을')) {
-        return 'badge-town';
-      }
-      // 간선버스: 603 등 3자리 버스 또는 routeType 3
-      if (t === '3' || t.includes('간선') || /^\d{3}$/.test(n)) {
-        return 'badge-blue';
-      }
-      // 광역버스: 9로 시작하는 4자리 또는 routeType 6
-      if (t === '6' || t.includes('광역') || t.includes('직행') || /^9\d{3}$/.test(n)) {
-        return 'badge-red';
-      }
+      // 지선버스: 4자리 지선버스 또는 routeType 4 -> 옅은 초록색
+      if (t === '4' || t.includes('지선') || /^[1-7]\d{3}$/.test(n)) return 'badge-green';
 
-      if (n.length === 4) return 'badge-green';
-      return 'badge-green';
+      // 간선버스: 3자리 간선버스 또는 routeType 3 -> 파란색
+      if (t === '3' || t.includes('간선') || /^\d{3}$/.test(n)) return 'badge-blue';
+
+      // 광역버스: 9로 시작하는 4자리 또는 routeType 6 -> 빨간색
+      if (t === '6' || t.includes('광역') || t.includes('직행') || /^9\d{3}$/.test(n)) return 'badge-red';
+
+      return (n.length === 4) ? 'badge-green' : 'badge-green';
     }
 
     guessRouteType(rtNm) {
       if (!rtNm) return '일반';
       const n = String(rtNm).trim();
-      if (n === '700' || n.includes('부천')) return '경기일반(부천)';
-      if (/^6\d{3}$/.test(n) || n.startsWith('60') || n.includes('공항')) return '공항버스';
+      if (n === '603') return '간선버스';
+      if (n === '700' || n.includes('부천')) return '부천버스';
+      if (n === '6637' || n === '6620') return '지선버스';
       if (n.startsWith('양천') || n.includes('마을')) return '마을버스';
+      if (n.startsWith('60') && n.length === 4) return '공항버스';
+      if (n.includes('공항')) return '공항버스';
       if (n.length === 3) return '간선버스';
       if (n.length === 4) return '지선버스';
       return '일반버스';
