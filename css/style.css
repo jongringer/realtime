@@ -7,6 +7,7 @@
 
 :root {
   --font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+  --time-font-boost: 0px; /* 실시간 도착예정시간(+ 확대/↺ 복귀) 전역 동적 폰트 스케일 */
   
   /* ==========================================================================
      테마 1: [옵시디언 럭셔리 다크 (밤 모드)]
@@ -1076,7 +1077,7 @@ body:not([data-theme="apple-light"]) .today-shift-badge span {
   background: var(--cal-bg);
   border-radius: var(--border-radius-card);
   padding: 8px 6px 12px 6px;
-  margin-bottom: 50px; /* 갤럭시 S23 시작화면에서 하단 대중교통 정보가 절대 나오지 않게 밀어냄 */
+  margin-bottom: 100px; /* 기존 여백(50px)만큼 더 띄워(100px) 하단 홈버튼 간섭 완전 차단 */
   box-shadow: var(--card-shadow);
   border: var(--cal-border);
   color: var(--cal-text);
@@ -2619,6 +2620,105 @@ body[data-theme="obsidian"] .bit-header-row {
   margin-bottom: 6px;
 }
 
+/* 버스 번호 우측: 도착예정 시간 글씨 확대(+) 및 원래대로(↺) 조절 버튼 */
+.bus-time-zoom-ctrl {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 10px !important; /* 서로 넉넉하게 떨어져 편하게 터치 가능 */
+  margin-left: auto !important; /* 버스 번호 행 제일 우측 배치 */
+  flex-shrink: 0 !important;
+  padding-left: 6px !important;
+}
+
+.btn-time-zoom-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 38px !important;  /* 넉넉한 가로 터치 영역 */
+  height: 32px !important;      /* 넉넉한 세로 터치 영역 */
+  padding: 0 8px !important;
+  border-radius: 9px !important;
+  font-size: 16px !important;
+  font-weight: 900 !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+  touch-action: manipulation !important;
+  transition: all 0.15s ease !important;
+  box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.12) !important;
+  box-sizing: border-box !important;
+  line-height: 1 !important;
+}
+
+/* ＋ 확대 버튼: 시인성 높은 블루/인디고 */
+.btn-time-zoom-plus {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border: 1.5px solid #1d4ed8 !important;
+}
+
+.btn-time-zoom-plus:active {
+  background: #1d4ed8 !important;
+  transform: scale(0.93) !important;
+}
+
+/* ↺ 원래대로 복귀 버튼: 둥근 화살표 역회전 아이콘 */
+.btn-time-zoom-reset {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border: 1.5px solid #94a3b8 !important;
+}
+
+.btn-time-zoom-reset:active {
+  background: #e2e8f0 !important;
+  transform: scale(0.93) !important;
+}
+
+.zoom-btn-icon {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  display: inline-block !important;
+}
+
+/* 다크 테마 대응 */
+body:not([data-theme="apple-light"]) .btn-time-zoom-plus {
+  background: #3b82f6 !important;
+  color: #ffffff !important;
+  border: 1.5px solid #60a5fa !important;
+}
+
+body:not([data-theme="apple-light"]) .btn-time-zoom-reset {
+  background: #1e293b !important;
+  color: #f1f5f9 !important;
+  border: 1.5px solid #475569 !important;
+}
+
+/* 도착시간 조절 플로팅 토스트 피드백 */
+.transit-zoom-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(15, 23, 42, 0.94);
+  color: #ffffff;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 13.5px;
+  font-weight: 800;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+  z-index: 10000;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.transit-zoom-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
 .badge-seoul-town {
   background: #059669 !important; /* 스포이드 추출 짙은 초록색 */
   color: #ffffff !important;
@@ -2795,14 +2895,14 @@ body[data-theme="obsidian"] .next-tag-red {
 .transit-time-min {
   font-weight: 900 !important;
   color: #dc2626 !important; /* 낮/밤 공통 분은 빨간색 */
-  font-size: 20px !important;
+  font-size: calc(20px + var(--time-font-boost, 0px)) !important;
   letter-spacing: -0.3px;
 }
 
 .transit-time-sec {
   font-weight: 800 !important;
   color: #0f172a !important; /* 초는 낮 검은색 */
-  font-size: 16px !important;
+  font-size: calc(16px + var(--time-font-boost, 0px)) !important;
   letter-spacing: -0.3px;
 }
 
@@ -2815,7 +2915,7 @@ body[data-theme="midnight"] .transit-time-sec {
 .transit-time-arrive {
   color: #dc2626 !important;
   font-weight: 900 !important;
-  font-size: 19px !important;
+  font-size: calc(19px + var(--time-font-boost, 0px)) !important;
   letter-spacing: -0.3px;
   white-space: nowrap !important;
 }
@@ -2823,7 +2923,7 @@ body[data-theme="midnight"] .transit-time-sec {
 .transit-time-imminent {
   color: #0f172a !important;
   font-weight: 900 !important;
-  font-size: 19px !important;
+  font-size: calc(19px + var(--time-font-boost, 0px)) !important;
   letter-spacing: -0.3px;
   white-space: nowrap !important;
 }
@@ -2840,13 +2940,13 @@ body[data-theme="obsidian"] .transit-time-imminent {
 
 .next2-countdown .transit-time-min {
   color: #dc2626 !important;
-  font-size: 19px !important;
+  font-size: calc(19px + var(--time-font-boost, 0px)) !important;
   font-weight: 900 !important;
 }
 
 .next2-countdown .transit-time-sec {
   color: #0f172a !important;
-  font-size: 15.5px !important;
+  font-size: calc(15.5px + var(--time-font-boost, 0px)) !important;
   font-weight: 800 !important;
 }
 
@@ -6651,7 +6751,7 @@ body:not([data-theme="apple-light"]) .tag-arrive-imminent {
 .time-min {
   font-weight: 900 !important;
   color: #dc2626 !important;
-  font-size: 21px !important;
+  font-size: calc(21px + var(--time-font-boost, 0px)) !important;
 }
 
 body:not([data-theme="apple-light"]) .time-min {
@@ -6659,7 +6759,7 @@ body:not([data-theme="apple-light"]) .time-min {
 }
 
 .time-sec {
-  font-size: 16px !important;
+  font-size: calc(16px + var(--time-font-boost, 0px)) !important;
   font-weight: 800 !important;
   color: #0f172a !important;
 }
@@ -8296,10 +8396,10 @@ body.dark-theme .btn-dangsan-view-toggle.active {
     font-size: 18.5px !important;
   }
   .transit-time-min {
-    font-size: 18px !important;
+    font-size: calc(18px + var(--time-font-boost, 0px)) !important;
   }
   .transit-time-sec {
-    font-size: 14.5px !important;
+    font-size: calc(14.5px + var(--time-font-boost, 0px)) !important;
   }
   .transit-clock-time {
     font-size: 17.5px !important;
@@ -8603,10 +8703,10 @@ body.dark-theme .btn-dangsan-view-toggle.active {
     font-size: 16.5px !important;
   }
   .transit-time-min {
-    font-size: 16.5px !important;
+    font-size: calc(16.5px + var(--time-font-boost, 0px)) !important;
   }
   .transit-time-sec {
-    font-size: 13px !important;
+    font-size: calc(13px + var(--time-font-boost, 0px)) !important;
   }
   .transit-clock-time {
     font-size: 15.5px !important;
@@ -8723,10 +8823,10 @@ body.dark-theme .btn-dangsan-view-toggle.active {
     font-size: 15px !important;
   }
   .transit-time-min {
-    font-size: 15px !important;
+    font-size: calc(15px + var(--time-font-boost, 0px)) !important;
   }
   .transit-time-sec {
-    font-size: 12px !important;
+    font-size: calc(12px + var(--time-font-boost, 0px)) !important;
   }
   .transit-clock-time {
     font-size: 14px !important;

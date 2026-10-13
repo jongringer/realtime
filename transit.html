@@ -271,10 +271,12 @@
     .transit-time-min {
       font-weight: 900;
       color: #dc2626;
+      font-size: calc(20px + var(--time-font-boost, 0px)) !important;
     }
     .transit-time-sec {
       font-weight: 900;
       color: #0f172a;
+      font-size: calc(16px + var(--time-font-boost, 0px)) !important;
     }
     
     .transit-arr-label {
@@ -438,6 +440,90 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 5px;
+    }
+    /* 버스 번호 우측: 도착예정 시간 글씨 확대(+) 및 원래대로(↺) 조절 버튼 */
+    .bus-time-zoom-ctrl {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 10px !important;
+      margin-left: auto !important;
+      flex-shrink: 0 !important;
+      padding-left: 6px !important;
+    }
+    .btn-time-zoom-btn {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      min-width: 38px !important;
+      height: 32px !important;
+      padding: 0 8px !important;
+      border-radius: 9px !important;
+      font-size: 16px !important;
+      font-weight: 900 !important;
+      cursor: pointer !important;
+      user-select: none !important;
+      -webkit-tap-highlight-color: transparent !important;
+      touch-action: manipulation !important;
+      transition: all 0.15s ease !important;
+      box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.12) !important;
+      box-sizing: border-box !important;
+      line-height: 1 !important;
+    }
+    .btn-time-zoom-plus {
+      background: #2563eb !important;
+      color: #ffffff !important;
+      border: 1.5px solid #1d4ed8 !important;
+    }
+    .btn-time-zoom-plus:active {
+      background: #1d4ed8 !important;
+      transform: scale(0.93) !important;
+    }
+    .btn-time-zoom-reset {
+      background: #f1f5f9 !important;
+      color: #0f172a !important;
+      border: 1.5px solid #94a3b8 !important;
+    }
+    .btn-time-zoom-reset:active {
+      background: #e2e8f0 !important;
+      transform: scale(0.93) !important;
+    }
+    .zoom-btn-icon {
+      font-size: 18px !important;
+      font-weight: 900 !important;
+      line-height: 1 !important;
+      display: inline-block !important;
+    }
+    body:not([data-theme="apple-light"]) .btn-time-zoom-plus {
+      background: #3b82f6 !important;
+      color: #ffffff !important;
+      border: 1.5px solid #60a5fa !important;
+    }
+    body:not([data-theme="apple-light"]) .btn-time-zoom-reset {
+      background: #1e293b !important;
+      color: #f1f5f9 !important;
+      border: 1.5px solid #475569 !important;
+    }
+    .transit-zoom-toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(15, 23, 42, 0.94);
+      color: #ffffff;
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-size: 13.5px;
+      font-weight: 800;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+      z-index: 10000;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      white-space: nowrap;
+    }
+    .transit-zoom-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
     }
     .badge-seoul-town {
       background: #059669 !important;
@@ -1552,6 +1638,68 @@
     }
     window.setSubwaySourceMode = setSubwaySourceMode;
 
+    function increaseTimeFontSize(e) {
+      if (e) {
+        e.stopPropagation();
+        e.preventDefault();
+      }
+      const maxBoost = 10;
+      const step = 2;
+      let current = parseInt(localStorage.getItem('transit_time_font_boost') || '0', 10);
+      if (isNaN(current) || current < 0) current = 0;
+      let next = current + step;
+      if (next > maxBoost) {
+        showTimeZoomToast('도착시간 글씨가 최대 크기입니다');
+        return;
+      }
+      setTimeFontBoost(next);
+      showTimeZoomToast(`도착시간 글씨 확대 (+${next}px)`);
+    }
+    window.increaseTimeFontSize = increaseTimeFontSize;
+
+    function resetTimeFontSize(e) {
+      if (e) {
+        e.stopPropagation();
+        e.preventDefault();
+      }
+      setTimeFontBoost(0);
+      showTimeZoomToast('도착시간 글씨 기본 크기로 복귀');
+    }
+    window.resetTimeFontSize = resetTimeFontSize;
+
+    function setTimeFontBoost(boostPx) {
+      try {
+        localStorage.setItem('transit_time_font_boost', String(boostPx));
+      } catch (e) {}
+      document.documentElement.style.setProperty('--time-font-boost', `${boostPx}px`);
+    }
+
+    function initTimeFontBoost() {
+      try {
+        const saved = parseInt(localStorage.getItem('transit_time_font_boost') || '0', 10);
+        const boost = (!isNaN(saved) && saved >= 0 && saved <= 10) ? saved : 0;
+        document.documentElement.style.setProperty('--time-font-boost', `${boost}px`);
+      } catch (e) {}
+    }
+
+    let _zoomToastTimer = null;
+    function showTimeZoomToast(msg) {
+      let toast = document.getElementById('transit-zoom-toast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'transit-zoom-toast';
+        toast.className = 'transit-zoom-toast';
+        document.body.appendChild(toast);
+      }
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(_zoomToastTimer);
+      _zoomToastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 1200);
+    }
+    initTimeFontBoost();
+
     function getRouteHeadwaySec(routeNum, now) {
       const isHoliday = (typeof isWeekendOrHoliday === 'function') ? isWeekendOrHoliday(now) : false;
       if (routeNum === '양천01') {
@@ -2379,10 +2527,18 @@
         return `
           <div class="bit-route-item" style="padding:8px 10px;">
             <div class="bit-route-top" style="margin-bottom:4px;">
-              <div style="display:flex; align-items:center; gap:6px;">
+              <div style="display:flex; align-items:center; gap:6px; min-width:0; flex:1 1 auto; overflow:hidden;">
                 <span class="${r.badgeClass}">${r.routeNum}</span>
                 ${routeDescHtml}
                 ${nextScheduleBadge}
+              </div>
+              <div class="bus-time-zoom-ctrl">
+                <button type="button" class="btn-time-zoom-btn btn-time-zoom-plus" onclick="increaseTimeFontSize(event)" title="도착시간 글씨 확대" aria-label="도착시간 글씨 확대">
+                  <span class="zoom-btn-icon">＋</span>
+                </button>
+                <button type="button" class="btn-time-zoom-btn btn-time-zoom-reset" onclick="resetTimeFontSize(event)" title="도착시간 글씨 원래대로 복귀" aria-label="도착시간 글씨 원래대로 복귀">
+                  <span class="zoom-btn-icon">↺</span>
+                </button>
               </div>
             </div>
             ${nextHtml}

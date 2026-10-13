@@ -163,6 +163,7 @@ class TransitManager {
     this.lastUpdated = document.getElementById('lastUpdated');
     this.btnHeaderReload = document.getElementById('btnHeaderReload');
     this.btnReloadTransit = document.getElementById('btnReloadTransit');
+    this.initTimeFontBoost();
   }
 
   initEvents() {
@@ -311,6 +312,64 @@ class TransitManager {
       void summaryCard.offsetWidth;
       summaryCard.classList.add('est-value-updated');
     }
+  }
+
+  increaseTimeFontSize(e) {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    const maxBoost = 10;
+    const step = 2;
+    let current = parseInt(localStorage.getItem('transit_time_font_boost') || '0', 10);
+    if (isNaN(current) || current < 0) current = 0;
+    let next = current + step;
+    if (next > maxBoost) {
+      this.showTimeZoomToast('도착시간 글씨가 최대 크기입니다');
+      return;
+    }
+    this.setTimeFontBoost(next);
+    this.showTimeZoomToast(`도착시간 글씨 확대 (+${next}px)`);
+  }
+
+  resetTimeFontSize(e) {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    this.setTimeFontBoost(0);
+    this.showTimeZoomToast('도착시간 글씨 기본 크기로 복귀');
+  }
+
+  setTimeFontBoost(boostPx) {
+    try {
+      localStorage.setItem('transit_time_font_boost', String(boostPx));
+    } catch (e) {}
+    document.documentElement.style.setProperty('--time-font-boost', `${boostPx}px`);
+  }
+
+  initTimeFontBoost() {
+    try {
+      const saved = parseInt(localStorage.getItem('transit_time_font_boost') || '0', 10);
+      const boost = (!isNaN(saved) && saved >= 0 && saved <= 10) ? saved : 0;
+      document.documentElement.style.setProperty('--time-font-boost', `${boost}px`);
+    } catch (e) {}
+  }
+
+  showTimeZoomToast(msg) {
+    let toast = document.getElementById('transit-zoom-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'transit-zoom-toast';
+      toast.className = 'transit-zoom-toast';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(this._zoomToastTimer);
+    this._zoomToastTimer = setTimeout(() => {
+      toast.classList.remove('show');
+    }, 1200);
   }
 
   updateRefreshStatus() {
@@ -1233,10 +1292,18 @@ class TransitManager {
       return `
         <div class="bit-route-item">
           <div class="bit-route-top">
-            <div style="display:flex; align-items:center; gap:6px;">
+            <div style="display:flex; align-items:center; gap:6px; min-width:0; flex:1 1 auto; overflow:hidden;">
               <span class="${r.badgeClass}">${r.routeNum}</span>
               ${routeDescHtml}
               ${nextScheduleBadge}
+            </div>
+            <div class="bus-time-zoom-ctrl">
+              <button type="button" class="btn-time-zoom-btn btn-time-zoom-plus" onclick="window.transitManager && window.transitManager.increaseTimeFontSize(event)" title="도착시간 글씨 확대" aria-label="도착시간 글씨 확대">
+                <span class="zoom-btn-icon">＋</span>
+              </button>
+              <button type="button" class="btn-time-zoom-btn btn-time-zoom-reset" onclick="window.transitManager && window.transitManager.resetTimeFontSize(event)" title="도착시간 글씨 원래대로 복귀" aria-label="도착시간 글씨 원래대로 복귀">
+                <span class="zoom-btn-icon">↺</span>
+              </button>
             </div>
           </div>
           ${nextHtml}
