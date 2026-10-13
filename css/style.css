@@ -1343,8 +1343,8 @@ body:not([data-theme="apple-light"]) .calendar-day-cell.today {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12.5px;            /* 원상복구 (12.5px) */
-  font-weight: 800;
+  font-size: 14.5px !important;   /* 사용자 요청: 디폴트 근무 글씨(일근, 야근, 조근 등) 시원하게 확대 */
+  font-weight: 900 !important;
   padding: 3px 1px;
   border-radius: 6px;
   text-align: center;
@@ -1353,7 +1353,7 @@ body:not([data-theme="apple-light"]) .calendar-day-cell.today {
   white-space: nowrap !important; /* 휴대폰 화면에서 절대 두 줄로 줄바꿈되지 않음 */
   overflow: hidden;
   text-overflow: clip;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.4px;
   line-height: 1.25;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
@@ -1362,24 +1362,24 @@ body:not([data-theme="apple-light"]) .calendar-day-cell.today {
 
 /* 4글자 뱃지(일근대근, 야근대근, 조근대근, 일근휴가 등) 1줄 꽉 찬 크기 */
 .shift-badge.long-text {
-  font-size: 11px;              /* 원상복구 (11px) */
+  font-size: 11.5px !important; /* 4글자 뱃지 확대 (11px -> 11.5px) */
   letter-spacing: -0.8px;
-  font-weight: 800;
+  font-weight: 900 !important;
   padding: 2.5px 0;
 }
 
 @media (max-width: 400px) {
   .shift-badge {
-    font-size: 12px;            /* 원상복구 */
-    letter-spacing: -0.6px;
-    padding: 2px 1px;
-    font-weight: 800;
+    font-size: 14px !important;
+    letter-spacing: -0.5px;
+    padding: 2.5px 1px;
+    font-weight: 900 !important;
   }
   .shift-badge.long-text {
-    font-size: 10.8px;          /* 원상복구 */
+    font-size: 11.2px !important;
     letter-spacing: -0.85px;
     padding: 2px 0px;
-    font-weight: 800;
+    font-weight: 900 !important;
   }
 }
 
@@ -1439,11 +1439,23 @@ body:not([data-theme="apple-light"]) .calendar-day-cell.today {
 }
 
 /* --- [테마 2: 애플 퓨어 라이트 (낮 모드) - 스크린샷 1 완벽 일치] --- */
+body[data-theme="apple-light"] .shift-badge {
+  font-size: 14.5px !important; /* ☀️ 낮 모드 일근, 야근, 조근 글씨 크기 시원하게 확대 */
+  font-weight: 900 !important;
+  letter-spacing: -0.3px !important;
+}
+
+body[data-theme="apple-light"] .shift-badge.long-text {
+  font-size: 11.5px !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.8px !important;
+}
+
 body[data-theme="apple-light"] .shift-badge.shift-day {
   background: #e2ece5;
   border: 1px solid #c5ddce;
-  color: #1c5140;
-  font-weight: 800;
+  color: #15533e;
+  font-weight: 900 !important;
   box-shadow: 0 1px 3px rgba(28, 81, 64, 0.08);
   text-shadow: none;
 }
@@ -1451,8 +1463,8 @@ body[data-theme="apple-light"] .shift-badge.shift-day {
 body[data-theme="apple-light"] .shift-badge.shift-night {
   background: #f7eadc;
   border: 1px solid #edd3ba;
-  color: #713f19;
-  font-weight: 800;
+  color: #6b3710;
+  font-weight: 900 !important;
   box-shadow: 0 1px 3px rgba(113, 63, 25, 0.08);
   text-shadow: none;
 }
@@ -1460,8 +1472,8 @@ body[data-theme="apple-light"] .shift-badge.shift-night {
 body[data-theme="apple-light"] .shift-badge.shift-early {
   background: #ebe4f6;
   border: 1px solid #dacaf0;
-  color: #4d2f7b;
-  font-weight: 800;
+  color: #432470;
+  font-weight: 900 !important;
   box-shadow: 0 1px 3px rgba(77, 47, 123, 0.08);
   text-shadow: none;
 }
@@ -1470,7 +1482,7 @@ body[data-theme="apple-light"] .shift-badge.shift-off {
   background: #e2e8f0;
   border: 1px solid #cbd5e1;
   color: #334155;
-  font-weight: 700;
+  font-weight: 800;
   box-shadow: none;
   text-shadow: none;
 }
@@ -1479,7 +1491,7 @@ body[data-theme="apple-light"] .shift-badge.shift-overtime {
   background: #fde4e4;
   border: 1px solid #f8bebe;
   color: #9f1239;
-  font-weight: 800;
+  font-weight: 900 !important;
   box-shadow: 0 1px 3px rgba(159, 18, 57, 0.08);
   text-shadow: none;
 }
@@ -1488,7 +1500,7 @@ body[data-theme="apple-light"] .shift-badge.shift-vacation {
   background: #d1fae5;
   border: 1px solid #a7f3d0;
   color: #065f46;
-  font-weight: 800;
+  font-weight: 900 !important;
   box-shadow: 0 1px 3px rgba(6, 95, 70, 0.08);
   text-shadow: none;
 }
@@ -2607,16 +2619,52 @@ body[data-theme="obsidian"] .bit-header-row {
 }
 
 .badge-seoul-town {
-  background: #059669;
-  color: #ffffff;
+  background: #059669 !important; /* 스포이드 추출 짙은 초록색 */
+  color: #ffffff !important;
   font-weight: 900 !important;
   font-size: 16.5px !important;
-  padding: 4px 10px;
-  border-radius: 7px;
-  display: inline-flex;
-  align-items: center;
+  padding: 4px 10px !important;
+  border-radius: 7px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  white-space: nowrap !important; /* 🔥 한 줄 표시 강제 (양천/01 줄바꿈 원천 차단) */
+  flex-shrink: 0 !important;
   gap: 4px;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.3px !important;
+  line-height: 1.15 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* 버스 노선 2줄 설명 컬럼 스타일 */
+.bit-route-desc-col {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  line-height: 1.25 !important;
+  font-size: 11px !important;
+  color: #475569 !important;
+  font-weight: 700 !important;
+}
+.bit-route-desc-l1 {
+  white-space: nowrap !important;
+  color: #334155 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+.bit-route-desc-l2 {
+  white-space: nowrap !important;
+  color: #64748b !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+}
+[data-theme="obsidian"] .bit-route-desc-l1,
+body.dark-theme .bit-route-desc-l1 {
+  color: #cbd5e1 !important;
+}
+[data-theme="obsidian"] .bit-route-desc-l2,
+body.dark-theme .bit-route-desc-l2 {
+  color: #94a3b8 !important;
 }
 
 .badge-seoul-blue {
@@ -4604,100 +4652,107 @@ body[data-theme="noble-gold"] #editScheduleTimeBadge {
 }
 
 .est-main-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #e2e8f0;
-  margin-bottom: 14px;
-  gap: 10px;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding-bottom: 10px !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  margin-bottom: 12px !important;
+  gap: 6px !important;
   flex-wrap: nowrap !important;
-  width: 100%;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 .est-dest-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
-  min-width: 0;
-  white-space: nowrap;
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  white-space: nowrap !important;
 }
 
 .est-dest-icon {
-  font-size: 26px;
-  background: #f1f5f9;
-  padding: 6px 8px;
-  border-radius: 12px;
-  line-height: 1;
+  font-size: 22px !important;
+  background: #f1f5f9 !important;
+  padding: 4px 6px !important;
+  border-radius: 10px !important;
+  line-height: 1 !important;
+  flex-shrink: 0 !important;
 }
 
 .est-dest-text {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  min-width: 0 !important;
+  flex-shrink: 1 !important;
 }
 
 .est-dep-time {
-  display: block;
-  font-size: 11px;
-  color: #64748b;
-  font-weight: 800;
-  margin-bottom: 2px;
-  white-space: nowrap;
-  line-height: 1.2;
+  display: block !important;
+  font-size: 10.5px !important;
+  color: #64748b !important;
+  font-weight: 700 !important;
+  margin-bottom: 1px !important;
+  white-space: nowrap !important;
+  line-height: 1.2 !important;
 }
 
 .est-dest-label {
-  display: block;
-  font-size: 15px;
-  font-weight: 800;
-  color: #0f172a;
-  letter-spacing: -0.4px;
-  white-space: nowrap;
-  line-height: 1.15;
-  margin-top: 1px;
+  display: block !important;
+  font-size: 14.5px !important;
+  font-weight: 800 !important;
+  color: #0f172a !important;
+  letter-spacing: -0.4px !important;
+  white-space: nowrap !important;
+  line-height: 1.15 !important;
+  margin-top: 1px !important;
 }
 
 .est-total-min {
-  color: #0284c7;
-  font-size: 20px !important;
+  color: #0284c7 !important;
+  font-size: 19px !important;
   font-weight: 900 !important;
-  letter-spacing: -0.3px;
-  white-space: nowrap;
+  letter-spacing: -0.3px !important;
+  white-space: nowrap !important;
 }
 
-/* 📍 도착예정시각 박스 (가로 너비 여유 확보, 소요시간 글자 크기와 동일한 20px로 확대, 두 줄 꺾임 절대 방지) */
+/* 📍 도착예정시각 박스 (우측 밀착, 화면 밖 이탈 방지 max-width 및 여유 패딩 적용) */
 .est-arr-box {
-  background: #fef2f2;
-  border: 1.5px solid #fecaca;
-  padding: 8px 14px;
-  border-radius: 12px;
-  text-align: left;
+  background: #fef2f2 !important;
+  border: 1.5px solid #fecaca !important;
+  padding: 6px 10px !important;
+  border-radius: 12px !important;
+  text-align: right !important;
   flex-shrink: 0 !important;
   white-space: nowrap !important;
-  min-width: 108px;
-  box-sizing: border-box;
+  margin-left: auto !important; /* 🔥 우측으로 시원하게 밀착 */
+  max-width: 48% !important;    /* 화면 밖 이탈 절대 방지 */
+  box-sizing: border-box !important;
 }
 
 .est-arr-sub {
-  display: block;
-  font-size: 11px;
-  color: #991b1b;
-  font-weight: 800;
-  margin-bottom: 2px;
-  white-space: nowrap;
+  display: block !important;
+  font-size: 10.5px !important;
+  color: #991b1b !important;
+  font-weight: 800 !important;
+  margin-bottom: 2px !important;
+  white-space: nowrap !important;
+  text-align: right !important;
 }
 
 .est-arr-time {
-  display: block;
-  font-size: 20px !important; /* 🔥 몇분 소요예상(.est-total-min: 20px)과 완벽 동일 크기 */
+  display: block !important;
+  font-size: 17.5px !important;
   font-weight: 900 !important;
   color: #dc2626 !important; /* 도착시각 빨간색 강조 */
-  margin-top: 1px;
-  line-height: 1.15;
+  margin-top: 1px !important;
+  line-height: 1.15 !important;
   white-space: nowrap !important;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.3px !important;
+  text-align: right !important;
 }
 
 /* Timeline Flow Graphics (Light Mode) */
@@ -4954,12 +5009,13 @@ body.dark-mode .est-arr-box {
   background: #ffffff !important;
   border: 1.5px solid #fca5a5 !important;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), 0 0 10px rgba(239, 68, 68, 0.2) !important;
-  text-align: left !important;
-  padding: 8px 14px !important;
+  text-align: right !important;
+  padding: 6px 10px !important;
   border-radius: 12px !important;
-  min-width: 108px !important;
   white-space: nowrap !important;
   flex-shrink: 0 !important;
+  margin-left: auto !important;
+  max-width: 48% !important;
   box-sizing: border-box !important;
 }
 
@@ -4969,8 +5025,9 @@ body.dark-mode .est-arr-box {
 body.dark-theme .est-arr-sub,
 body.dark-mode .est-arr-sub {
   color: #991b1b !important;
+  text-align: right !important;
   font-weight: 800 !important;
-  font-size: 11px !important;
+  font-size: 10.5px !important;
   white-space: nowrap !important;
 }
 
@@ -4979,8 +5036,9 @@ body.dark-mode .est-arr-sub {
 [data-theme="noble-gold"] .est-arr-time,
 body.dark-theme .est-arr-time,
 body.dark-mode .est-arr-time {
-  color: #dc2626 !important; /* 🔥 밝은 화이트 배경 위에서 선명하게 돋보이는 20px 레드 볼드 */
-  font-size: 20px !important;
+  color: #dc2626 !important;
+  text-align: right !important;
+  font-size: 17.5px !important;
   font-weight: 900 !important;
   line-height: 1.15;
   white-space: nowrap !important;
@@ -6341,28 +6399,36 @@ body:not([data-theme="obsidian"]):not([data-theme="midnight"]):not([data-theme="
   display: inline-block !important;
   line-height: 1.15 !important;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+  white-space: nowrap !important; /* 한 줄 표시 강제 */
+  flex-shrink: 0 !important;
 }
 
-/* 버스 번호 뱃지 색상 체계 (사용자 지정 고유 규칙) */
+/* 버스 번호 뱃지 색상 체계 (첨부 이미지 스포이드 픽업 색상) */
 .bus-badge.badge-town,
 .modal-bus-route-badge.badge-town,
 .card-type-badge.badge-town {
-  background: #047857 !important; /* 짙은 초록색 (양천01 등 마을버스) */
+  background: #059669 !important; /* 스포이드 픽업: 짙은 초록색 (양천01 등 마을버스) */
   color: #ffffff !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
 }
 
 .bus-badge.badge-green,
 .modal-bus-route-badge.badge-green,
 .card-type-badge.badge-green {
-  background: #22c55e !important; /* 옅은 초록색 (6637, 6620 등 지선버스) */
+  background: #16a34a !important; /* 스포이드 픽업: 옅은 초록색 (6637, 6620 등 지선버스) */
   color: #ffffff !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
 }
 
 .bus-badge.badge-blue,
 .modal-bus-route-badge.badge-blue,
 .card-type-badge.badge-blue {
-  background: #1d4ed8 !important; /* 파란색 (603 등 간선버스) */
+  background: #1d4ed8 !important; /* 스포이드 픽업: 파란색 (603 등 간선버스) */
   color: #ffffff !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
 }
 
 .bus-badge.badge-sky,
@@ -6373,6 +6439,8 @@ body:not([data-theme="obsidian"]):not([data-theme="midnight"]):not([data-theme="
   background: #38bdf8 !important; /* 연한 하늘색 (700번 부천버스) */
   color: #ffffff !important;
   text-shadow: 0 1px 2px rgba(15, 23, 42, 0.45) !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
 }
 
 .bus-badge.badge-airport,
@@ -6380,6 +6448,8 @@ body:not([data-theme="obsidian"]):not([data-theme="midnight"]):not([data-theme="
 .card-type-badge.badge-airport {
   background: #854d0e !important; /* 브라운 색 (공항버스) */
   color: #ffffff !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
 }
 
 .bus-badge.badge-red,
@@ -6387,6 +6457,8 @@ body:not([data-theme="obsidian"]):not([data-theme="midnight"]):not([data-theme="
 .card-type-badge.badge-red {
   background: #dc2626 !important; /* 빨간색 (광역버스) */
   color: #ffffff !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
 }
 
 .bus-type-tag {
@@ -8073,14 +8145,16 @@ body.dark-theme .btn-dangsan-view-toggle.active {
     font-size: 16px !important;
   }
   .shift-badge {
-    font-size: 11px !important;
-    letter-spacing: -0.6px !important;
+    font-size: 13.5px !important;
+    letter-spacing: -0.5px !important;
     padding: 2px 0 !important;
+    font-weight: 900 !important;
   }
   .shift-badge.long-text {
-    font-size: 9.8px !important;
+    font-size: 10.8px !important;
     letter-spacing: -0.9px !important;
     padding: 2px 0 !important;
+    font-weight: 900 !important;
   }
 
   /* 실시간 대중교통 위젯 */
@@ -8286,14 +8360,16 @@ body.dark-theme .btn-dangsan-view-toggle.active {
     font-size: 14px !important;
   }
   .shift-badge {
-    font-size: 10px !important;
-    letter-spacing: -0.7px !important;
-    padding: 1.5px 0 !important;
+    font-size: 13px !important;
+    letter-spacing: -0.6px !important;
+    padding: 2px 0 !important;
+    font-weight: 900 !important;
   }
   .shift-badge.long-text {
-    font-size: 8.8px !important;
+    font-size: 10.2px !important;
     letter-spacing: -1px !important;
     padding: 1.5px 0 !important;
+    font-weight: 900 !important;
   }
 
   /* 실시간 대중교통 위젯 */
@@ -8406,12 +8482,14 @@ body.dark-theme .btn-dangsan-view-toggle.active {
     font-size: 12.5px !important;
   }
   .shift-badge {
-    font-size: 9.2px !important;
-    letter-spacing: -0.8px !important;
+    font-size: 12px !important;
+    letter-spacing: -0.6px !important;
+    font-weight: 900 !important;
   }
   .shift-badge.long-text {
-    font-size: 8px !important;
+    font-size: 9.5px !important;
     letter-spacing: -1.1px !important;
+    font-weight: 900 !important;
   }
 
   .transit-lookup-card {

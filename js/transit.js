@@ -1224,12 +1224,18 @@ class TransitManager {
         `;
       }
 
+      let routeDescHtml = `<span class="bit-route-type-label">${r.typeText}</span>`;
+      if (r.typeText && r.typeText.includes(' / ')) {
+        const parts = r.typeText.split(' / ');
+        routeDescHtml = `<div class="bit-route-desc-col"><span class="bit-route-desc-l1">${parts[0]}</span><span class="bit-route-desc-l2">${parts[1]}</span></div>`;
+      }
+
       return `
         <div class="bit-route-item">
           <div class="bit-route-top">
             <div style="display:flex; align-items:center; gap:6px;">
               <span class="${r.badgeClass}">${r.routeNum}</span>
-              <span class="bit-route-type-label">${r.typeText}</span>
+              ${routeDescHtml}
               ${nextScheduleBadge}
             </div>
           </div>

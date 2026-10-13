@@ -440,12 +440,50 @@
       margin-bottom: 5px;
     }
     .badge-seoul-town {
-      background: #059669;
-      color: #ffffff;
-      font-weight: 800;
-      font-size: 12px;
-      padding: 2.5px 7px;
-      border-radius: 5px;
+      background: #059669 !important;
+      color: #ffffff !important;
+      font-weight: 900 !important;
+      font-size: 16.5px !important;
+      padding: 4px 10px !important;
+      border-radius: 7px !important;
+      letter-spacing: 0.3px !important;
+      white-space: nowrap !important; /* 🔥 한 줄 표시 강제 */
+      flex-shrink: 0 !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      line-height: 1.15 !important;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+    }
+    /* 버스 노선 2줄 설명 컬럼 */
+    .bit-route-desc-col {
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: center !important;
+      line-height: 1.25 !important;
+      font-size: 11px !important;
+      color: #475569 !important;
+      font-weight: 700 !important;
+    }
+    .bit-route-desc-l1 {
+      white-space: nowrap !important;
+      color: #334155 !important;
+      font-size: 11px !important;
+      font-weight: 700 !important;
+    }
+    .bit-route-desc-l2 {
+      white-space: nowrap !important;
+      color: #64748b !important;
+      font-size: 10px !important;
+      font-weight: 600 !important;
+    }
+    [data-theme="obsidian"] .bit-route-desc-l1,
+    body:not([data-theme="apple-light"]) .bit-route-desc-l1 {
+      color: #cbd5e1 !important;
+    }
+    [data-theme="obsidian"] .bit-route-desc-l2,
+    body:not([data-theme="apple-light"]) .bit-route-desc-l2 {
+      color: #94a3b8 !important;
     }
     .badge-seoul-blue {
       background: #1d4ed8;
@@ -750,87 +788,98 @@
       padding-bottom: 0;
     }
     .est-main-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      padding-bottom: 10px !important;
+      border-bottom: 1px solid #e2e8f0 !important;
+      margin-bottom: 12px !important;
+      gap: 6px !important;
       flex-wrap: nowrap !important;
-      width: 100%;
+      width: 100% !important;
+      box-sizing: border-box !important;
     }
     .est-dest-title {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex: 1;
-      min-width: 0;
-      white-space: nowrap;
+      display: flex !important;
+      align-items: center !important;
+      gap: 7px !important;
+      flex: 1 1 auto !important;
+      min-width: 0 !important;
+      white-space: nowrap !important;
     }
     .est-dest-icon {
-      font-size: 26px;
-      background: #f1f5f9;
-      padding: 6px 8px;
-      border-radius: 12px;
-      line-height: 1;
+      font-size: 22px !important;
+      background: #f1f5f9 !important;
+      padding: 4px 6px !important;
+      border-radius: 10px !important;
+      line-height: 1 !important;
+      flex-shrink: 0 !important;
     }
     .est-dest-text {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: center !important;
+      min-width: 0 !important;
+      flex-shrink: 1 !important;
     }
     .est-dep-time {
-      display: block;
-      font-size: 11px;
-      color: #64748b;
-      font-weight: 800;
-      margin-bottom: 2px;
-      white-space: nowrap;
-      line-height: 1.2;
+      display: block !important;
+      font-size: 10.5px !important;
+      color: #64748b !important;
+      font-weight: 700 !important;
+      margin-bottom: 1px !important;
+      white-space: nowrap !important;
+      line-height: 1.2 !important;
     }
     .est-dest-label {
-      display: block;
-      font-size: 15px;
-      font-weight: 800;
-      color: #0f172a;
-      letter-spacing: -0.4px;
-      white-space: nowrap;
-      line-height: 1.15;
-      margin-top: 1px;
+      display: block !important;
+      font-size: 14.5px !important;
+      font-weight: 800 !important;
+      color: #0f172a !important;
+      letter-spacing: -0.4px !important;
+      white-space: nowrap !important;
+      line-height: 1.15 !important;
+      margin-top: 1px !important;
     }
     .est-total-min {
-      color: #0284c7;
-      font-size: 20px !important;
+      color: #0284c7 !important;
+      font-size: 19px !important;
       font-weight: 900 !important;
-      letter-spacing: -0.3px;
-      white-space: nowrap;
+      letter-spacing: -0.3px !important;
+      white-space: nowrap !important;
     }
+    /* 📍 도착예정시각 박스 (우측 밀착, 화면 밖 이탈 방지) */
     .est-arr-box {
-      background: #fef2f2;
-      border: 1.5px solid #fecaca;
-      padding: 8px 14px;
-      border-radius: 12px;
-      text-align: left;
+      background: #fef2f2 !important;
+      border: 1.5px solid #fecaca !important;
+      padding: 6px 10px !important;
+      border-radius: 12px !important;
+      text-align: right !important;
       flex-shrink: 0 !important;
       white-space: nowrap !important;
-      min-width: 108px;
-      box-sizing: border-box;
+      margin-left: auto !important; /* 🔥 우측 밀착 */
+      max-width: 48% !important;    /* 화면 밖 이탈 방지 */
+      box-sizing: border-box !important;
     }
     .est-arr-sub {
-      display: block;
-      font-size: 11px;
-      color: #991b1b;
-      font-weight: 800;
-      margin-bottom: 2px;
-      white-space: nowrap;
+      display: block !important;
+      font-size: 10.5px !important;
+      color: #991b1b !important;
+      font-weight: 800 !important;
+      margin-bottom: 2px !important;
+      white-space: nowrap !important;
+      text-align: right !important;
     }
     .est-arr-time {
-      display: block;
-      font-size: 20px !important;
+      display: block !important;
+      font-size: 17.5px !important;
       font-weight: 900 !important;
       color: #dc2626 !important;
-      margin-top: 1px;
-      line-height: 1.15;
+      margin-top: 1px !important;
+      line-height: 1.15 !important;
       white-space: nowrap !important;
-      letter-spacing: -0.3px;
+      letter-spacing: -0.3px !important;
+      text-align: right !important;
     }
 
     /* 🧭 하단 이동 경로 순차표 카드 및 타임라인 그래픽스 */
@@ -2321,12 +2370,18 @@
           `;
         }
 
+        let routeDescHtml = `<span style="font-size:10.5px; color:#64748b; font-weight:600;">${r.typeText}</span>`;
+        if (r.typeText && r.typeText.includes(' / ')) {
+          const parts = r.typeText.split(' / ');
+          routeDescHtml = `<div class="bit-route-desc-col"><span class="bit-route-desc-l1">${parts[0]}</span><span class="bit-route-desc-l2">${parts[1]}</span></div>`;
+        }
+
         return `
           <div class="bit-route-item" style="padding:8px 10px;">
             <div class="bit-route-top" style="margin-bottom:4px;">
               <div style="display:flex; align-items:center; gap:6px;">
                 <span class="${r.badgeClass}">${r.routeNum}</span>
-                <span style="font-size:10.5px; color:#64748b; font-weight:600;">${r.typeText}</span>
+                ${routeDescHtml}
                 ${nextScheduleBadge}
               </div>
             </div>
