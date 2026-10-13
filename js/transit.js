@@ -322,13 +322,45 @@ class TransitManager {
     }
   }
 
-  increaseTimeFontSize(e) {
+  getFontBoostForKey(key) {
+    if (!key) return 0;
+    try {
+      const v = parseInt(localStorage.getItem('transit_time_boost_' + key) || '0', 10);
+      return (!isNaN(v) && v >= 0 && v <= 10) ? v : 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  increaseTimeFontSize(e, customKey = null) {
     if (e) {
       e.stopPropagation();
       e.preventDefault();
     }
     const maxBoost = 10;
     const step = 2;
+
+    const targetEl = e && e.target ? e.target.closest('[data-zoom-key]') : null;
+    const key = customKey || (targetEl ? targetEl.getAttribute('data-zoom-key') : null);
+    const targetName = targetEl ? (targetEl.getAttribute('data-zoom-name') || '') : '';
+
+    if (key) {
+      let current = this.getFontBoostForKey(key);
+      let next = current + step;
+      if (next > maxBoost) {
+        this.showTimeZoomToast(`${targetName ? targetName + ' ' : ''}도착시간 글씨가 최대 크기입니다`);
+        return;
+      }
+      try {
+        localStorage.setItem('transit_time_boost_' + key, String(next));
+      } catch (err) {}
+      if (targetEl) {
+        targetEl.style.setProperty('--time-font-boost', `${next}px`);
+      }
+      this.showTimeZoomToast(`${targetName ? targetName + ' ' : ''}도착시간 글씨 확대 (+${next}px)`);
+      return;
+    }
+
     let current = parseInt(localStorage.getItem('transit_time_font_boost') || '0', 10);
     if (isNaN(current) || current < 0) current = 0;
     let next = current + step;
@@ -340,11 +372,26 @@ class TransitManager {
     this.showTimeZoomToast(`도착시간 글씨 확대 (+${next}px)`);
   }
 
-  resetTimeFontSize(e) {
+  resetTimeFontSize(e, customKey = null) {
     if (e) {
       e.stopPropagation();
       e.preventDefault();
     }
+    const targetEl = e && e.target ? e.target.closest('[data-zoom-key]') : null;
+    const key = customKey || (targetEl ? targetEl.getAttribute('data-zoom-key') : null);
+    const targetName = targetEl ? (targetEl.getAttribute('data-zoom-name') || '') : '';
+
+    if (key) {
+      try {
+        localStorage.removeItem('transit_time_boost_' + key);
+      } catch (err) {}
+      if (targetEl) {
+        targetEl.style.setProperty('--time-font-boost', '0px');
+      }
+      this.showTimeZoomToast(`${targetName ? targetName + ' ' : ''}도착시간 원래대로 복귀`);
+      return;
+    }
+
     this.setTimeFontBoost(0);
     this.showTimeZoomToast('도착시간 글씨 기본 크기로 복귀');
   }
@@ -1130,8 +1177,9 @@ class TransitManager {
       this.lastSubwayResults = subwayRawList;
     }
     const isCommute = (this.currentMode === 'commute');
-    const busWalkSec = isCommute ? 540 : 960;       // 출근 버스 9분(540초), 퇴근 버스 16분(960초)
-    const subwayWalkSec = isCommute ? 900 : 540;    // 출근 지하철 15분(900초), 퇴근 지하철 9분(540초)
+    const defaultWalkSec = 300; // 도보 이동 5분(300초) 기준: 5분 미만(곧 도착/임박)만 사알짝 작게, 그 외는 버스 도착 정보 크기로 시원하게 표출
+    const busWalkSec = defaultWalkSec;
+    const subwayWalkSec = defaultWalkSec;
     const now = new Date();
     const nowMs = now.getTime();
     const config = this.busConfigs[this.currentMode];
@@ -1303,8 +1351,12 @@ class TransitManager {
         routeDescHtml = `<div class="bit-route-desc-col"><span class="bit-route-desc-l1">${parts[0]}</span><span class="bit-route-desc-l2">${parts[1]}</span></div>`;
       }
 
+      const zoomKey = 'top_bus_' + r.routeNum;
+      const savedBoost = this.getFontBoostForKey(zoomKey);
+      const styleBoost = (savedBoost > 0) ? `--time-font-boost:${savedBoost}px;` : '';
+
       return `
-        <div class="bit-route-item">
+        <div class="bit-route-item" data-zoom-key="${zoomKey}" data-zoom-name="${r.routeNum}번" style="${styleBoost}">
           <div class="bit-route-top">
             <div style="display:flex; align-items:center; gap:6px; min-width:0; flex:1 1 auto; overflow:hidden;">
               <span class="${r.badgeClass}">${r.routeNum}</span>
@@ -1312,10 +1364,10 @@ class TransitManager {
               ${nextScheduleBadge}
             </div>
             <div class="bus-time-zoom-ctrl">
-              <button type="button" class="btn-time-zoom-btn btn-time-zoom-plus" onclick="window.transitManager && window.transitManager.increaseTimeFontSize(event)" title="도착시간 글씨 확대" aria-label="도착시간 글씨 확대">
+              <button type="button" class="btn-time-zoom-btn btn-time-zoom-plus" onclick="window.transitManager && window.transitManager.increaseTimeFontSize(event, '${zoomKey}')" title="${r.routeNum}번 도착시간 글씨 확대" aria-label="${r.routeNum}번 도착시간 글씨 확대">
                 <span class="zoom-btn-icon">＋</span>
               </button>
-              <button type="button" class="btn-time-zoom-btn btn-time-zoom-reset" onclick="window.transitManager && window.transitManager.resetTimeFontSize(event)" title="도착시간 글씨 원래대로 복귀" aria-label="도착시간 글씨 원래대로 복귀">
+              <button type="button" class="btn-time-zoom-btn btn-time-zoom-reset" onclick="window.transitManager && window.transitManager.resetTimeFontSize(event, '${zoomKey}')" title="${r.routeNum}번 도착시간 글씨 원래대로 복귀" aria-label="${r.routeNum}번 도착시간 글씨 원래대로 복귀">
                 <span class="zoom-btn-icon">↺</span>
               </button>
             </div>
@@ -1538,8 +1590,12 @@ class TransitManager {
       ? '💡 <b>[시간표 모드]</b> 9호선 공식 역사 시간표 기준으로 도착시각 및 남은 시간을 계산합니다. 실시간 열차번호를 보시려면 상단 [⚡ 서울시 실시간]을 누르세요.'
       : '💡 <b>[실시간 모드]</b> 서울시 공식 지하철 공공API로 열차번호 및 실시간 위치를 연동합니다. 시간표 시각으로 계산하시려면 상단 [🗓️ 시간표]를 누르세요.';
 
+    const subwayZoomKey = 'top_subway_9';
+    const subwayBoost = this.getFontBoostForKey(subwayZoomKey);
+    const subwayStyleBoost = (subwayBoost > 0) ? `--time-font-boost:${subwayBoost}px;` : '';
+
     subwayHtml = `
-      <div class="bit-board-card subway-9-card">
+      <div class="bit-board-card subway-9-card" data-zoom-key="${subwayZoomKey}" data-zoom-name="9호선" style="${subwayStyleBoost}">
         <div class="bit-header-row">
           <div class="bit-title-group">
             <span class="badge-seoul-subway">9호선</span>
@@ -1567,6 +1623,14 @@ class TransitManager {
                     title="9호선 전체 운행 시간표 조회">
               <span>📋 전체</span>
             </button>
+            <div class="bus-time-zoom-ctrl" style="margin-left:4px;">
+              <button type="button" class="btn-time-zoom-btn btn-time-zoom-plus" onclick="window.transitManager && window.transitManager.increaseTimeFontSize(event, '${subwayZoomKey}')" title="9호선 도착시간 글씨 확대" aria-label="9호선 도착시간 글씨 확대">
+                <span class="zoom-btn-icon">＋</span>
+              </button>
+              <button type="button" class="btn-time-zoom-btn btn-time-zoom-reset" onclick="window.transitManager && window.transitManager.resetTimeFontSize(event, '${subwayZoomKey}')" title="9호선 도착시간 글씨 원래대로 복귀" aria-label="9호선 도착시간 글씨 원래대로 복귀">
+                <span class="zoom-btn-icon">↺</span>
+              </button>
+            </div>
           </div>
         </div>
 

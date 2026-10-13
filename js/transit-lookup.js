@@ -1223,15 +1223,17 @@
         if (!targetTime || isNaN(targetTime)) return;
 
         const remainSec = Math.max(0, Math.floor((targetTime - now) / 1000));
+        const walkSec = 300;
+        const catchClass = (remainSec >= walkSec) ? 'transit-catchable' : 'transit-uncatchable';
         if (remainSec <= 0) {
-          el.innerHTML = `<span class="tag-arrive-now">⚡ 곧 도착</span>`;
+          el.innerHTML = `<span class="tag-arrive-now transit-uncatchable">⚡ 곧 도착</span>`;
         } else if (remainSec < 60) {
-          el.innerHTML = `<span class="tag-arrive-imminent">${remainSec}초 후</span>`;
+          el.innerHTML = `<span class="tag-arrive-imminent ${catchClass}">${remainSec}초 후</span>`;
         } else {
           const m = Math.floor(remainSec / 60);
           const s = remainSec % 60;
           const sStr = s < 10 ? '0' + s : s;
-          el.innerHTML = `<span class="time-min">${m}분</span> <span class="time-sec">${sStr}초 후</span>`;
+          el.innerHTML = `<span class="${catchClass}"><span class="transit-time-min">${m}분</span> <span class="transit-time-sec">${sStr}초 후</span></span>`;
         }
       });
 
@@ -1375,8 +1377,14 @@
           const busMsg2 = bus.arrmsg2 || '도착 예정 없음';
           const plate2 = this.formatPlateHighlight(bus.plainNo2);
 
+          const busZoomKey = 'lookup_bus_' + bus.rtNm;
+          const savedBoost = (typeof window !== 'undefined' && window.transitManager)
+            ? window.transitManager.getFontBoostForKey(busZoomKey)
+            : parseInt(localStorage.getItem('transit_time_boost_' + busZoomKey) || '0', 10);
+          const styleBoost = (savedBoost > 0) ? `--time-font-boost:${savedBoost}px;` : '';
+
           return `
-            <div class="lookup-bus-card">
+            <div class="lookup-bus-card" data-zoom-key="${busZoomKey}" data-zoom-name="${bus.rtNm}번" style="${styleBoost}">
               <!-- 상단 헤더: 노선 번호 + 노선 유형 + 도착시간 줌 컨트롤 (+ / ↺) -->
               <div class="bus-card-top-header">
                 <div class="bus-route-main-info">
@@ -1384,10 +1392,10 @@
                   <span class="bus-type-tag">${typeName}</span>
                 </div>
                 <div class="bus-time-zoom-ctrl">
-                  <button type="button" class="btn-time-zoom-btn btn-time-zoom-plus" onclick="window.transitManager && window.transitManager.increaseTimeFontSize(event)" title="도착시간 글씨 확대" aria-label="도착시간 글씨 확대">
+                  <button type="button" class="btn-time-zoom-btn btn-time-zoom-plus" onclick="window.transitManager && window.transitManager.increaseTimeFontSize(event, '${busZoomKey}')" title="${bus.rtNm}번 도착시간 글씨 확대" aria-label="${bus.rtNm}번 도착시간 글씨 확대">
                     <span class="zoom-btn-icon">＋</span>
                   </button>
-                  <button type="button" class="btn-time-zoom-btn btn-time-zoom-reset" onclick="window.transitManager && window.transitManager.resetTimeFontSize(event)" title="도착시간 글씨 원래대로 복귀" aria-label="도착시간 글씨 원래대로 복귀">
+                  <button type="button" class="btn-time-zoom-btn btn-time-zoom-reset" onclick="window.transitManager && window.transitManager.resetTimeFontSize(event, '${busZoomKey}')" title="${bus.rtNm}번 도착시간 글씨 원래대로 복귀" aria-label="${bus.rtNm}번 도착시간 글씨 원래대로 복귀">
                     <span class="zoom-btn-icon">↺</span>
                   </button>
                 </div>
@@ -1653,8 +1661,14 @@
           `;
         }).join('');
 
+        const subwayZoomKey = 'lookup_subway_seonyudo';
+        const savedSubBoost = (typeof window !== 'undefined' && window.transitManager)
+          ? window.transitManager.getFontBoostForKey(subwayZoomKey)
+          : parseInt(localStorage.getItem('transit_time_boost_' + subwayZoomKey) || '0', 10);
+        const subStyleBoost = (savedSubBoost > 0) ? `--time-font-boost:${savedSubBoost}px;` : '';
+
         const boardHtml = `
-          <div class="lookup-board-wrap">
+          <div class="lookup-board-wrap" data-zoom-key="${subwayZoomKey}" data-zoom-name="선유도역" style="${subStyleBoost}">
             <!-- 선유도역 정보 헤더 -->
             <div class="lookup-board-header subway-theme-header">
               <div class="station-meta-info">
@@ -1664,10 +1678,10 @@
                   <span class="station-ars-badge" style="background:#c89d5c;">실시간 도착정보 우선</span>
                   <span class="badge-dangsan-target">당산역 방면 1정거장(2분)</span>
                   <div class="bus-time-zoom-ctrl" style="margin-left:auto;">
-                    <button type="button" class="btn-time-zoom-btn btn-time-zoom-plus" onclick="window.transitManager && window.transitManager.increaseTimeFontSize(event)" title="도착시간 글씨 확대" aria-label="도착시간 글씨 확대">
+                    <button type="button" class="btn-time-zoom-btn btn-time-zoom-plus" onclick="window.transitManager && window.transitManager.increaseTimeFontSize(event, '${subwayZoomKey}')" title="선유도역 도착시간 글씨 확대" aria-label="선유도역 도착시간 글씨 확대">
                       <span class="zoom-btn-icon">＋</span>
                     </button>
-                    <button type="button" class="btn-time-zoom-btn btn-time-zoom-reset" onclick="window.transitManager && window.transitManager.resetTimeFontSize(event)" title="도착시간 글씨 원래대로 복귀" aria-label="도착시간 글씨 원래대로 복귀">
+                    <button type="button" class="btn-time-zoom-btn btn-time-zoom-reset" onclick="window.transitManager && window.transitManager.resetTimeFontSize(event, '${subwayZoomKey}')" title="선유도역 도착시간 글씨 원래대로 복귀" aria-label="선유도역 도착시간 글씨 원래대로 복귀">
                       <span class="zoom-btn-icon">↺</span>
                     </button>
                   </div>
@@ -1736,8 +1750,14 @@
       }
 
       // 일반 지하철역 전광판 렌더링
+      const subwayStationKey = 'lookup_subway_' + stationName;
+      const savedStationBoost = (typeof window !== 'undefined' && window.transitManager)
+        ? window.transitManager.getFontBoostForKey(subwayStationKey)
+        : parseInt(localStorage.getItem('transit_time_boost_' + subwayStationKey) || '0', 10);
+      const stationStyleBoost = (savedStationBoost > 0) ? `--time-font-boost:${savedStationBoost}px;` : '';
+
       const boardHtml = `
-        <div class="lookup-board-wrap">
+        <div class="lookup-board-wrap" data-zoom-key="${subwayStationKey}" data-zoom-name="${this.escapeHtml(stationName)}역" style="${stationStyleBoost}">
           <!-- 지하철역 정보 헤더 -->
           <div class="lookup-board-header subway-theme-header">
             <div class="station-meta-info">
@@ -1745,6 +1765,14 @@
                 <span class="station-icon">🚇</span>
                 <h4 class="station-title">${this.escapeHtml(stationName)}역</h4>
                 <span class="station-ars-badge subway-badge-tag">실시간 열차 운행정보</span>
+                <div class="bus-time-zoom-ctrl" style="margin-left:auto;">
+                  <button type="button" class="btn-time-zoom-btn btn-time-zoom-plus" onclick="window.transitManager && window.transitManager.increaseTimeFontSize(event, '${subwayStationKey}')" title="${this.escapeHtml(stationName)}역 도착시간 글씨 확대" aria-label="${this.escapeHtml(stationName)}역 도착시간 글씨 확대">
+                    <span class="zoom-btn-icon">＋</span>
+                  </button>
+                  <button type="button" class="btn-time-zoom-btn btn-time-zoom-reset" onclick="window.transitManager && window.transitManager.resetTimeFontSize(event, '${subwayStationKey}')" title="${this.escapeHtml(stationName)}역 도착시간 글씨 원래대로 복귀" aria-label="${this.escapeHtml(stationName)}역 도착시간 글씨 원래대로 복귀">
+                    <span class="zoom-btn-icon">↺</span>
+                  </button>
+                </div>
               </div>
               <div class="station-sub-row">
                 <span class="station-route-count">실시간 열차 <strong>${safeArrivals.length}대 감지</strong></span>
@@ -2142,13 +2170,14 @@
       return s;
     }
 
-    formatSecondsHtml(sec) {
-      if (!sec || isNaN(sec) || sec <= 0) return `<span class="tag-arrive-now">⚡ 곧 도착</span>`;
-      if (sec < 60) return `<span class="tag-arrive-imminent">${sec}초 후</span>`;
+    formatSecondsHtml(sec, walkSec = 300) {
+      const catchClass = (sec >= walkSec) ? 'transit-catchable' : 'transit-uncatchable';
+      if (!sec || isNaN(sec) || sec <= 0) return `<span class="tag-arrive-now transit-uncatchable">⚡ 곧 도착</span>`;
+      if (sec < 60) return `<span class="tag-arrive-imminent ${catchClass}">${sec}초 후</span>`;
       const m = Math.floor(sec / 60);
       const s = sec % 60;
       const sStr = s < 10 ? '0' + s : s;
-      return `<span class="time-min">${m}분</span> <span class="time-sec">${sStr}초 후</span>`;
+      return `<span class="${catchClass}"><span class="transit-time-min">${m}분</span> <span class="transit-time-sec">${sStr}초 후</span></span>`;
     }
 
     formatPlateHighlight(plate) {

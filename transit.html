@@ -271,12 +271,12 @@
     .transit-time-min {
       font-weight: 900;
       color: #dc2626;
-      font-size: calc(20px + var(--time-font-boost, 0px)) !important;
+      font-size: calc(22px + var(--time-font-boost, 0px)) !important;
     }
     .transit-time-sec {
       font-weight: 900;
       color: #0f172a;
-      font-size: calc(16px + var(--time-font-boost, 0px)) !important;
+      font-size: calc(17px + var(--time-font-boost, 0px)) !important;
     }
     
     .transit-arr-label {
@@ -510,15 +510,15 @@
       font-weight: 800 !important;
     }
     .transit-uncatchable .transit-time-min {
-      font-size: calc(16.5px + var(--time-font-boost, 0px)) !important;
+      font-size: calc(18.5px + var(--time-font-boost, 0px)) !important;
       font-weight: 800 !important;
       color: #b91c1c !important;
-      opacity: 0.88 !important;
+      opacity: 0.92 !important;
     }
     .transit-uncatchable .transit-time-sec {
-      font-size: calc(13.5px + var(--time-font-boost, 0px)) !important;
+      font-size: calc(15px + var(--time-font-boost, 0px)) !important;
       font-weight: 700 !important;
-      opacity: 0.85 !important;
+      opacity: 0.88 !important;
     }
     .transit-zoom-toast {
       position: fixed;
@@ -1655,13 +1655,46 @@
     }
     window.setSubwaySourceMode = setSubwaySourceMode;
 
-    function increaseTimeFontSize(e) {
+    function getFontBoostForKey(key) {
+      if (!key) return 0;
+      try {
+        const v = parseInt(localStorage.getItem('transit_time_boost_' + key) || '0', 10);
+        return (!isNaN(v) && v >= 0 && v <= 10) ? v : 0;
+      } catch (e) {
+        return 0;
+      }
+    }
+    window.getFontBoostForKey = getFontBoostForKey;
+
+    function increaseTimeFontSize(e, customKey = null) {
       if (e) {
         e.stopPropagation();
         e.preventDefault();
       }
       const maxBoost = 10;
       const step = 2;
+
+      const targetEl = e && e.target ? e.target.closest('[data-zoom-key]') : null;
+      const key = customKey || (targetEl ? targetEl.getAttribute('data-zoom-key') : null);
+      const targetName = targetEl ? (targetEl.getAttribute('data-zoom-name') || '') : '';
+
+      if (key) {
+        let current = getFontBoostForKey(key);
+        let next = current + step;
+        if (next > maxBoost) {
+          showTimeZoomToast(`${targetName ? targetName + ' ' : ''}도착시간 글씨가 최대 크기입니다`);
+          return;
+        }
+        try {
+          localStorage.setItem('transit_time_boost_' + key, String(next));
+        } catch (err) {}
+        if (targetEl) {
+          targetEl.style.setProperty('--time-font-boost', `${next}px`);
+        }
+        showTimeZoomToast(`${targetName ? targetName + ' ' : ''}도착시간 글씨 확대 (+${next}px)`);
+        return;
+      }
+
       let current = parseInt(localStorage.getItem('transit_time_font_boost') || '0', 10);
       if (isNaN(current) || current < 0) current = 0;
       let next = current + step;
@@ -1674,11 +1707,26 @@
     }
     window.increaseTimeFontSize = increaseTimeFontSize;
 
-    function resetTimeFontSize(e) {
+    function resetTimeFontSize(e, customKey = null) {
       if (e) {
         e.stopPropagation();
         e.preventDefault();
       }
+      const targetEl = e && e.target ? e.target.closest('[data-zoom-key]') : null;
+      const key = customKey || (targetEl ? targetEl.getAttribute('data-zoom-key') : null);
+      const targetName = targetEl ? (targetEl.getAttribute('data-zoom-name') || '') : '';
+
+      if (key) {
+        try {
+          localStorage.removeItem('transit_time_boost_' + key);
+        } catch (err) {}
+        if (targetEl) {
+          targetEl.style.setProperty('--time-font-boost', '0px');
+        }
+        showTimeZoomToast(`${targetName ? targetName + ' ' : ''}도착시간 원래대로 복귀`);
+        return;
+      }
+
       setTimeFontBoost(0);
       showTimeZoomToast('도착시간 글씨 기본 크기로 복귀');
     }
@@ -2419,7 +2467,7 @@
           const loc = next.stopText ? `${next.stopText} · 진입 중` : '정류소 진입 중';
           nextSubLoc = `위치: <b>${loc}</b>`;
         } else if (next.targetTime) {
-          nextTimeHtml = `<span class="live-cd" data-time="${next.targetTime}" style="font-size:13.5px; font-weight:800; white-space:nowrap;">${formatSec(next.sec)}</span>`;
+          nextTimeHtml = `<span class="live-cd" data-time="${next.targetTime}" style="font-weight:900; white-space:nowrap;">${formatSec(next.sec, 300)}</span>`;
           nextSubLoc = `위치: <b>${next.stopText || '운행 중'}</b>`;
         } else {
           nextTimeHtml = `<span style="color:#dc2626; font-weight:900;">⚡ 곧 도착</span>`;
@@ -2476,7 +2524,7 @@
             const loc = next2.stopText ? `${next2.stopText} · 진입 중` : '정류소 진입 중';
             next2SubLoc = `위치: <b>${loc}</b>`;
           } else if (next2.targetTime) {
-            next2TimeHtml = `<span class="live-cd" data-time="${next2.targetTime}" style="font-weight:900; color:#1e40af; font-size:18.5px;">${formatSec(next2.sec)}</span>`;
+            next2TimeHtml = `<span class="live-cd" data-time="${next2.targetTime}" style="font-weight:900; color:#1e40af;">${formatSec(next2.sec, 300)}</span>`;
             const loc = next2.stopText || '운행 중';
             next2SubLoc = `위치: <b>${loc}</b>`;
           } else {
@@ -2659,7 +2707,7 @@
             : `<span class="badge-low-bus" style="background:#fef3c7; color:#b45309; border-color:#fde68a;">${isTimetableMode ? '🗓️ 정시시간표' : '역고정(공식)'}</span>`;
           const t2TimeHtml = (t2.isArrivingSoon || t2.sec <= 30)
             ? `<span class="transit-time-arrive transit-time-arrive-big" style="color:#dc2626; font-weight:900; font-size:20px;">⚡ 곧 도착</span>`
-            : `<span class="live-cd" data-time="${t2.targetTime}" style="font-weight:900; font-size:18.5px; color:#1e40af;">${formatSec(t2.sec)}</span>`;
+            : `<span class="live-cd" data-time="${t2.targetTime}" style="font-weight:900; color:#1e40af;">${formatSec(t2.sec, 300)}</span>`;
 
           let t2SubLoc = '';
           if (isTimetableMode) {
@@ -2722,7 +2770,7 @@
 
         const t1TimeHtml = (t1.isArrivingSoon || t1.sec <= 30)
           ? `<span class="transit-time-arrive transit-time-arrive-big" style="color:#dc2626; font-weight:900; font-size:21.5px; letter-spacing:-0.3px;">⚡ 곧 도착</span>`
-          : `<span class="next-time-big live-cd" data-time="${t1.targetTime}" style="font-size:21.5px; font-weight:900; white-space:nowrap;">${formatSec(t1.sec)}</span>`;
+          : `<span class="next-time-big live-cd" data-time="${t1.targetTime}" style="font-weight:900; white-space:nowrap;">${formatSec(t1.sec, 300)}</span>`;
 
         // 어디행 제거 및 시각 폰트 18.5px / 고대비 컬러로 크게 노출
         subScheduleHtml = `
