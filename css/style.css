@@ -617,7 +617,7 @@ body:not([data-theme="apple-light"]) .today-card {
 }
 
 .today-date-text {
-  font-size: 26px !important;
+  font-size: 27px !important;
   font-weight: 900 !important;
   color: var(--text-main);
   letter-spacing: -0.6px;
@@ -668,7 +668,7 @@ body:not([data-theme="apple-light"]) .today-date-text:not(.is-holiday):not(.is-s
 }
 
 .realtime-clock-pill {
-  font-size: 18px !important;
+  font-size: 19px !important;
   font-weight: 900 !important;
   padding: 6px 14px;
   border-radius: 12px;
@@ -701,12 +701,12 @@ body[data-theme="noble-gold"] .realtime-clock-pill {
 
 /* 실시간 날씨 정보 칩: 여의도 기준 & 진하고 또렷한 고대비 (터치 시 실시간 갱신 & 네이버 상세 링크) */
 .today-weather-pill {
-  font-size: 16px !important; /* 날씨 글자 크기 더욱 시원하게 확대 */
+  font-size: 17.5px !important; /* 날씨 글자 크기 더욱 시원하게 확대 */
   font-weight: 800;
   background: #ffffff;
   color: #0f172a !important;
   border: 1.5px solid #94a3b8;
-  padding: 5px 10px 5px 13px;
+  padding: 6px 12px;
   border-radius: 9999px;
   display: inline-flex;
   align-items: center;
@@ -734,12 +734,13 @@ body[data-theme="noble-gold"] .realtime-clock-pill {
 }
 
 .today-weather-pill .weather-icon {
-  font-size: 13px;
+  font-size: 18px !important;
   line-height: 1;
 }
 
 .today-weather-pill .weather-text {
   font-weight: 800;
+  font-size: 17px !important;
   color: inherit;
   letter-spacing: -0.2px;
 }
@@ -1098,7 +1099,7 @@ body:not([data-theme="apple-light"]) .today-shift-badge span {
 
 .weekday {
   color: var(--cal-text-dim, #cbd5e1);
-  font-size: 18.5px !important; /* 원상복구 (18.5px) */
+  font-size: 20px !important;
   font-weight: 900 !important;
 }
 
@@ -1309,7 +1310,7 @@ body:not([data-theme="apple-light"]) .calendar-day-cell.today {
 }
 
 .day-number {
-  font-size: 18.5px !important; /* 달력 날짜 숫자 원상복구 (18.5px) */
+  font-size: 20px !important;
   font-weight: 900 !important;
   color: var(--cal-text, #ffffff);
   text-align: center;
@@ -2792,33 +2793,44 @@ body[data-theme="obsidian"] .next-tag-red {
 
 /* 실시간 티커 시간/분/초 가독성 타이포그래피 (낮 모드: 분 빨간색, 초 검은색) */
 .transit-time-min {
-  font-weight: 900;
-  color: #dc2626; /* 낮/밤 공통 분은 빨간색 */
-  font-size: clamp(13px, 3.8vw, 16.5px) !important;
+  font-weight: 900 !important;
+  color: #dc2626 !important; /* 낮/밤 공통 분은 빨간색 */
+  font-size: 20px !important;
   letter-spacing: -0.3px;
 }
 
 .transit-time-sec {
-  font-weight: 900;
-  color: #0f172a; /* 초는 낮 검은색 */
-  font-size: clamp(13px, 3.8vw, 16.5px) !important;
+  font-weight: 800 !important;
+  color: #0f172a !important; /* 초는 낮 검은색 */
+  font-size: 16px !important;
   letter-spacing: -0.3px;
 }
 
+body:not([data-theme="apple-light"]) .transit-time-sec,
+body[data-theme="obsidian"] .transit-time-sec,
+body[data-theme="midnight"] .transit-time-sec {
+  color: #f8fafc !important;
+}
+
 .transit-time-arrive {
-  color: #dc2626;
-  font-weight: 900;
-  font-size: clamp(12.5px, 3.6vw, 15.5px) !important;
+  color: #dc2626 !important;
+  font-weight: 900 !important;
+  font-size: 19px !important;
   letter-spacing: -0.3px;
   white-space: nowrap !important;
 }
 
 .transit-time-imminent {
-  color: #0f172a;
-  font-weight: 900;
-  font-size: clamp(13px, 3.8vw, 16px) !important;
+  color: #0f172a !important;
+  font-weight: 900 !important;
+  font-size: 19px !important;
   letter-spacing: -0.3px;
   white-space: nowrap !important;
+}
+
+body:not([data-theme="apple-light"]) .transit-time-imminent,
+body[data-theme="obsidian"] .transit-time-imminent {
+  color: #f8fafc !important;
 }
 
 .next2-countdown {
@@ -2827,13 +2839,20 @@ body[data-theme="obsidian"] .next-tag-red {
 }
 
 .next2-countdown .transit-time-min {
-  color: #dc2626;
-  font-size: clamp(12px, 3.5vw, 15.5px) !important;
+  color: #dc2626 !important;
+  font-size: 19px !important;
+  font-weight: 900 !important;
 }
 
 .next2-countdown .transit-time-sec {
-  color: #0f172a;
-  font-size: clamp(12px, 3.5vw, 15.5px) !important;
+  color: #0f172a !important;
+  font-size: 15.5px !important;
+  font-weight: 800 !important;
+}
+
+body:not([data-theme="apple-light"]) .next2-countdown .transit-time-sec,
+body[data-theme="obsidian"] .next2-countdown .transit-time-sec {
+  color: #f8fafc !important;
 }
 
 .transit-countdown-suffix {
@@ -2856,9 +2875,9 @@ body[data-theme="obsidian"] .next-time-big {
 }
 
 .transit-clock-time {
-  font-size: clamp(11.5px, 3.2vw, 14.5px) !important;
+  font-size: 19.5px !important;
   font-weight: 900 !important;
-  color: #0284c7;
+  color: #0369a1 !important;
   letter-spacing: -0.3px;
   display: inline-block;
   vertical-align: baseline;
@@ -4702,7 +4721,7 @@ body[data-theme="noble-gold"] #editScheduleTimeBadge {
 
 .est-dest-label {
   display: block !important;
-  font-size: 14.5px !important;
+  font-size: 16px !important;
   font-weight: 800 !important;
   color: #0f172a !important;
   letter-spacing: -0.4px !important;
@@ -4713,7 +4732,7 @@ body[data-theme="noble-gold"] #editScheduleTimeBadge {
 
 .est-total-min {
   color: #0284c7 !important;
-  font-size: 19px !important;
+  font-size: 23px !important;
   font-weight: 900 !important;
   letter-spacing: -0.3px !important;
   white-space: nowrap !important;
@@ -4729,13 +4748,13 @@ body[data-theme="noble-gold"] #editScheduleTimeBadge {
   flex-shrink: 0 !important;
   white-space: nowrap !important;
   margin-left: auto !important; /* 🔥 우측으로 시원하게 밀착 */
-  max-width: 48% !important;    /* 화면 밖 이탈 절대 방지 */
+  max-width: 52% !important;    /* 화면 밖 이탈 절대 방지 */
   box-sizing: border-box !important;
 }
 
 .est-arr-sub {
   display: block !important;
-  font-size: 10.5px !important;
+  font-size: 12px !important;
   color: #991b1b !important;
   font-weight: 800 !important;
   margin-bottom: 2px !important;
@@ -4745,13 +4764,13 @@ body[data-theme="noble-gold"] #editScheduleTimeBadge {
 
 .est-arr-time {
   display: block !important;
-  font-size: 17.5px !important;
+  font-size: 21px !important;
   font-weight: 900 !important;
   color: #dc2626 !important; /* 도착시각 빨간색 강조 */
   margin-top: 1px !important;
   line-height: 1.15 !important;
   white-space: nowrap !important;
-  letter-spacing: -0.3px !important;
+  letter-spacing: -0.5px !important;
   text-align: right !important;
 }
 
@@ -4987,7 +5006,7 @@ body.dark-mode .est-dest-label {
 body.dark-theme .est-total-min,
 body.dark-mode .est-total-min {
   color: #38bdf8 !important;
-  font-size: 20px !important;
+  font-size: 23px !important;
   font-weight: 900 !important;
   letter-spacing: -0.3px;
 }
@@ -5015,7 +5034,7 @@ body.dark-mode .est-arr-box {
   white-space: nowrap !important;
   flex-shrink: 0 !important;
   margin-left: auto !important;
-  max-width: 48% !important;
+  max-width: 52% !important;
   box-sizing: border-box !important;
 }
 
@@ -5027,7 +5046,7 @@ body.dark-mode .est-arr-sub {
   color: #991b1b !important;
   text-align: right !important;
   font-weight: 800 !important;
-  font-size: 10.5px !important;
+  font-size: 12px !important;
   white-space: nowrap !important;
 }
 
@@ -5038,11 +5057,11 @@ body.dark-theme .est-arr-time,
 body.dark-mode .est-arr-time {
   color: #dc2626 !important;
   text-align: right !important;
-  font-size: 17.5px !important;
+  font-size: 21px !important;
   font-weight: 900 !important;
   line-height: 1.15;
   white-space: nowrap !important;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.5px;
 }
 
 [data-theme="obsidian"] .est-step-node,
@@ -6545,10 +6564,14 @@ body:not([data-theme="obsidian"]):not([data-theme="midnight"]):not([data-theme="
 }
 
 .arr-main-info {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+  gap: 8px !important;
+  flex-wrap: nowrap !important;
+  box-sizing: border-box !important;
+  margin-bottom: 4px !important;
 }
 
 /* 레거시 호환 클래스 유지 */
@@ -6578,30 +6601,35 @@ body:not([data-theme="obsidian"]):not([data-theme="midnight"]):not([data-theme="
 }
 
 .arr-badge {
-  font-size: 10px;
-  font-weight: 800;
-  padding: 1px 5px;
-  border-radius: 4px;
-  color: #ffffff;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  color: #ffffff !important;
+  flex-shrink: 0 !important;
 }
 
 .arr-badge.arr-first {
-  background: #dc2626;
+  background: #dc2626 !important;
 }
 
 .arr-badge.arr-second {
-  background: #64748b;
+  background: #2563eb !important;
 }
 
 .live-bus-sec {
-  font-size: 13.5px;
-  font-weight: 800;
-  color: var(--text-main);
+  font-size: 18.5px !important;
+  font-weight: 900 !important;
+  color: var(--text-main) !important;
+  white-space: nowrap !important;
+  margin-left: auto !important;
+  text-align: right !important;
 }
 
 .tag-arrive-now {
-  color: #ef4444;
-  font-weight: 900;
+  color: #ef4444 !important;
+  font-weight: 900 !important;
+  font-size: 20px !important;
   animation: pulseArrive 1s infinite alternate;
 }
 
@@ -6611,29 +6639,40 @@ body:not([data-theme="obsidian"]):not([data-theme="midnight"]):not([data-theme="
 }
 
 .tag-arrive-imminent {
-  color: #f59e0b;
-  font-weight: 800;
+  color: #dc2626 !important;
+  font-size: 20px !important;
+  font-weight: 900 !important;
+}
+
+body:not([data-theme="apple-light"]) .tag-arrive-imminent {
+  color: #ef4444 !important;
 }
 
 .time-min {
-  font-weight: 800;
-  color: #38bdf8;
+  font-weight: 900 !important;
+  color: #dc2626 !important;
+  font-size: 21px !important;
 }
 
-body[data-theme="apple-light"] .time-min {
-  color: #0284c7;
+body:not([data-theme="apple-light"]) .time-min {
+  color: #ef4444 !important;
 }
 
 .time-sec {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-muted);
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  color: #0f172a !important;
+}
+
+body:not([data-theme="apple-light"]) .time-sec {
+  color: #f8fafc !important;
 }
 
 .arr-text-raw {
-  font-size: 12.5px;
-  font-weight: 700;
+  font-size: 16px !important;
+  font-weight: 800 !important;
   color: var(--text-main);
+  white-space: nowrap !important;
 }
 
 .arr-text-raw.arr-status-ended {
@@ -6642,16 +6681,69 @@ body[data-theme="apple-light"] .time-min {
 
 .arr-text-raw.secondary {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 15px !important;
 }
 
 .arr-sub-info {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  color: var(--text-muted);
-  font-weight: 600;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  gap: 4px !important;
+  flex-wrap: nowrap !important;
+  box-sizing: border-box !important;
+  font-size: 12px !important;
+  color: var(--text-muted) !important;
+  font-weight: 700 !important;
+  border-top: 1px dashed rgba(148, 163, 184, 0.25) !important;
+  padding-top: 4px !important;
+  margin-top: 3px !important;
+}
+
+.arr-sub-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  min-width: 0 !important;
+  flex: 1 1 auto !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.arr-plate-no {
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  padding: 2px 6px !important;
+  border-radius: 5px !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+.arr-stops-cnt {
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+}
+
+.arr-eta-time {
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: var(--text-muted) !important;
+  margin-left: auto !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+.arr-eta-time .eta-clock {
+  font-size: 17.5px !important;
+  font-weight: 900 !important;
+  color: #0284c7 !important;
+  margin-left: 2px !important;
+}
+
+body:not([data-theme="apple-light"]) .arr-eta-time .eta-clock {
+  color: #38bdf8 !important;
 }
 
 .arr-plate-no {
@@ -8093,12 +8185,12 @@ body.dark-theme .btn-dangsan-view-toggle.active {
     border-radius: 18px !important;
   }
   .today-date-text {
-    font-size: 22px !important;
+    font-size: 24.5px !important;
     letter-spacing: -0.4px !important;
   }
   .realtime-clock-pill {
-    font-size: 15.5px !important;
-    padding: 5px 10px !important;
+    font-size: 17.5px !important;
+    padding: 5px 11px !important;
   }
   .today-shift-badge {
     font-size: 26px !important;
@@ -8107,9 +8199,15 @@ body.dark-theme .btn-dangsan-view-toggle.active {
     border-radius: 13px !important;
   }
   .today-weather-pill {
-    font-size: 14px !important;
-    padding: 4px 9px !important;
+    font-size: 16px !important;
+    padding: 5px 10px !important;
     max-width: 100% !important;
+  }
+  .today-weather-pill .weather-icon {
+    font-size: 16.5px !important;
+  }
+  .today-weather-pill .weather-text {
+    font-size: 15.5px !important;
   }
 
   /* 년월 네비게이션 */
@@ -8135,14 +8233,16 @@ body.dark-theme .btn-dangsan-view-toggle.active {
     column-gap: 2px !important;
   }
   .weekday {
-    font-size: 15px !important;
+    font-size: 18.5px !important;
+    font-weight: 900 !important;
   }
   .calendar-day-cell {
     min-height: 64px !important;
     padding: 2px 1px !important;
   }
   .day-number {
-    font-size: 16px !important;
+    font-size: 19px !important;
+    font-weight: 900 !important;
   }
   .shift-badge {
     font-size: 13.5px !important;
@@ -8173,6 +8273,36 @@ body.dark-theme .btn-dangsan-view-toggle.active {
   .btn-update-schedule-big {
     font-size: 13.5px !important;
     padding: 11px 10px !important;
+  }
+
+  /* 출퇴근 요약 헤더 및 티커 반응형 */
+  .est-main-header {
+    gap: 4px !important;
+  }
+  .est-dest-label {
+    font-size: 14.5px !important;
+  }
+  .est-total-min {
+    font-size: 20px !important;
+  }
+  .est-arr-box {
+    padding: 5px 8px !important;
+    max-width: 50% !important;
+  }
+  .est-arr-sub {
+    font-size: 11px !important;
+  }
+  .est-arr-time {
+    font-size: 18.5px !important;
+  }
+  .transit-time-min {
+    font-size: 18px !important;
+  }
+  .transit-time-sec {
+    font-size: 14.5px !important;
+  }
+  .transit-clock-time {
+    font-size: 17.5px !important;
   }
 
   /* 실시간 버스·지하철 도착정보 카드 */
@@ -8315,11 +8445,11 @@ body.dark-theme .btn-dangsan-view-toggle.active {
     border-radius: 16px !important;
   }
   .today-date-text {
-    font-size: 19px !important;
+    font-size: 22.5px !important;
   }
   .realtime-clock-pill {
-    font-size: 14px !important;
-    padding: 4px 8px !important;
+    font-size: 16px !important;
+    padding: 4px 9px !important;
   }
   .today-shift-badge {
     font-size: 22px !important;
@@ -8329,8 +8459,14 @@ body.dark-theme .btn-dangsan-view-toggle.active {
     border-width: 2.5px !important;
   }
   .today-weather-pill {
-    font-size: 13px !important;
-    padding: 3.5px 7px !important;
+    font-size: 15px !important;
+    padding: 4px 8px !important;
+  }
+  .today-weather-pill .weather-icon {
+    font-size: 15.5px !important;
+  }
+  .today-weather-pill .weather-text {
+    font-size: 14.5px !important;
   }
 
   /* 년월 네비게이션 */
@@ -8350,14 +8486,16 @@ body.dark-theme .btn-dangsan-view-toggle.active {
     column-gap: 1.5px !important;
   }
   .weekday {
-    font-size: 13.5px !important;
+    font-size: 17.5px !important;
+    font-weight: 900 !important;
   }
   .calendar-day-cell {
     min-height: 58px !important;
     padding: 1.5px 0.5px !important;
   }
   .day-number {
-    font-size: 14px !important;
+    font-size: 18px !important;
+    font-weight: 900 !important;
   }
   .shift-badge {
     font-size: 13px !important;
@@ -8439,6 +8577,40 @@ body.dark-theme .btn-dangsan-view-toggle.active {
     font-size: 12.5px !important;
     padding: 9px 8px !important;
   }
+
+  /* 출퇴근 요약 헤더 및 티커 반응형 */
+  .est-main-header {
+    gap: 3px !important;
+  }
+  .est-dest-icon {
+    font-size: 18px !important;
+    padding: 3px 5px !important;
+  }
+  .est-dest-label {
+    font-size: 13.5px !important;
+  }
+  .est-total-min {
+    font-size: 18px !important;
+  }
+  .est-arr-box {
+    padding: 4px 6px !important;
+    max-width: 50% !important;
+  }
+  .est-arr-sub {
+    font-size: 10px !important;
+  }
+  .est-arr-time {
+    font-size: 16.5px !important;
+  }
+  .transit-time-min {
+    font-size: 16.5px !important;
+  }
+  .transit-time-sec {
+    font-size: 13px !important;
+  }
+  .transit-clock-time {
+    font-size: 15.5px !important;
+  }
 }
 
 /* 4. 3단계 최적화: 유효 뷰포트 너비 <= 325px (화면 크게 최대 배율 설정 시) */
@@ -8452,11 +8624,11 @@ body.dark-theme .btn-dangsan-view-toggle.active {
     padding: 12px 8px 10px 8px !important;
   }
   .today-date-text {
-    font-size: 17.5px !important;
+    font-size: 20.5px !important;
   }
   .realtime-clock-pill {
-    font-size: 12.5px !important;
-    padding: 3px 6px !important;
+    font-size: 15px !important;
+    padding: 3px 7px !important;
   }
   .today-shift-badge {
     font-size: 19px !important;
@@ -8464,22 +8636,30 @@ body.dark-theme .btn-dangsan-view-toggle.active {
     min-width: 62px !important;
   }
   .today-weather-pill {
-    font-size: 12px !important;
-    padding: 3px 5px !important;
+    font-size: 14px !important;
+    padding: 3px 6px !important;
+  }
+  .today-weather-pill .weather-icon {
+    font-size: 14.5px !important;
+  }
+  .today-weather-pill .weather-text {
+    font-size: 13.5px !important;
   }
 
   .calendar-card {
     padding: 6px 2px 8px 2px !important;
   }
   .weekday {
-    font-size: 12.5px !important;
+    font-size: 16px !important;
+    font-weight: 900 !important;
   }
   .calendar-day-cell {
     min-height: 52px !important;
     padding: 1px 0 !important;
   }
   .day-number {
-    font-size: 12.5px !important;
+    font-size: 16.5px !important;
+    font-weight: 900 !important;
   }
   .shift-badge {
     font-size: 12px !important;
@@ -8516,6 +8696,40 @@ body.dark-theme .btn-dangsan-view-toggle.active {
   }
   .live-bus-sec .time-min {
     font-size: 14.5px !important;
+  }
+
+  /* 출퇴근 요약 헤더 및 티커 반응형 */
+  .est-main-header {
+    gap: 2px !important;
+  }
+  .est-dest-icon {
+    font-size: 16px !important;
+    padding: 2px 4px !important;
+  }
+  .est-dest-label {
+    font-size: 12px !important;
+  }
+  .est-total-min {
+    font-size: 16px !important;
+  }
+  .est-arr-box {
+    padding: 3px 5px !important;
+    max-width: 50% !important;
+  }
+  .est-arr-sub {
+    font-size: 9.5px !important;
+  }
+  .est-arr-time {
+    font-size: 15px !important;
+  }
+  .transit-time-min {
+    font-size: 15px !important;
+  }
+  .transit-time-sec {
+    font-size: 12px !important;
+  }
+  .transit-clock-time {
+    font-size: 14px !important;
   }
 }
 

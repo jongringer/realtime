@@ -833,7 +833,7 @@
     }
     .est-dest-label {
       display: block !important;
-      font-size: 14.5px !important;
+      font-size: 16px !important;
       font-weight: 800 !important;
       color: #0f172a !important;
       letter-spacing: -0.4px !important;
@@ -843,7 +843,7 @@
     }
     .est-total-min {
       color: #0284c7 !important;
-      font-size: 19px !important;
+      font-size: 23px !important;
       font-weight: 900 !important;
       letter-spacing: -0.3px !important;
       white-space: nowrap !important;
@@ -858,12 +858,12 @@
       flex-shrink: 0 !important;
       white-space: nowrap !important;
       margin-left: auto !important; /* 🔥 우측 밀착 */
-      max-width: 48% !important;    /* 화면 밖 이탈 방지 */
+      max-width: 52% !important;    /* 화면 밖 이탈 방지 */
       box-sizing: border-box !important;
     }
     .est-arr-sub {
       display: block !important;
-      font-size: 10.5px !important;
+      font-size: 12px !important;
       color: #991b1b !important;
       font-weight: 800 !important;
       margin-bottom: 2px !important;
@@ -872,13 +872,13 @@
     }
     .est-arr-time {
       display: block !important;
-      font-size: 17.5px !important;
+      font-size: 21px !important;
       font-weight: 900 !important;
       color: #dc2626 !important;
       margin-top: 1px !important;
       line-height: 1.15 !important;
       white-space: nowrap !important;
-      letter-spacing: -0.3px !important;
+      letter-spacing: -0.5px !important;
       text-align: right !important;
     }
 
@@ -3006,7 +3006,7 @@
             <div class="est-dest-title">
               <span class="est-dest-icon">${isCommute ? '🏢' : '🏠'}</span>
               <div class="est-dest-text">
-                <div class="est-dep-time">지금(${fmtTime(now)}) 출발 기준 · ${isTimetableMode ? '🗓️ 지하철 시간표' : '⚡ 지하철 실시간'}</div>
+                <div class="est-dep-time">지금(${fmtTime(now)}) 출발 기준</div>
                 <div class="est-dest-label"><span class="est-total-min">${totalMins}분</span> 소요 예상</div>
               </div>
             </div>

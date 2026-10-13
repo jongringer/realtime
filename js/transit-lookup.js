@@ -1392,7 +1392,6 @@
                 <div class="bus-arrival-block first-bus-block">
                   <div class="arr-main-info">
                     <span class="arr-badge arr-first">다음</span>
-                    ${plate1 ? `<span class="arr-plate-no ${badgeClass === 'badge-green' ? 'arr-plate-green' : ''}">${plate1}</span>` : ''}
                     ${targetTime1 ? `
                       <span class="live-bus-sec" data-target-time="${targetTime1}">
                         ${this.formatSecondsHtml(tra1)}
@@ -1402,9 +1401,12 @@
                     `}
                   </div>
                   <div class="arr-sub-info">
-                    <span class="arr-stops-cnt">${this.extractStationCount(busMsg1) || '정류소 진입/운행중'}</span>
+                    <div class="arr-sub-left">
+                      ${plate1 ? `<span class="arr-plate-no ${badgeClass === 'badge-green' ? 'arr-plate-green' : ''}">${plate1}</span>` : ''}
+                      <span class="arr-stops-cnt">${this.extractStationCount(busMsg1) || '정류소 진입/운행중'}</span>
+                      ${bus.reride_Num1 === '1' || bus.busType1 === '1' ? `<span class="badge-low-bus">저상</span>` : ''}
+                    </div>
                     ${targetTime1 ? `<span class="arr-eta-time">도착 예정: <strong class="eta-clock">${this.formatEtaTime(targetTime1)}</strong></span>` : ''}
-                    ${bus.reride_Num1 === '1' || bus.busType1 === '1' ? `<span class="badge-low-bus">저상</span>` : ''}
                   </div>
                 </div>
 
@@ -1412,7 +1414,6 @@
                 <div class="bus-arrival-block second-bus-block">
                   <div class="arr-main-info">
                     <span class="arr-badge arr-second">다다음</span>
-                    ${plate2 ? `<span class="arr-plate-no ${badgeClass === 'badge-green' ? 'arr-plate-green' : ''}">${plate2}</span>` : ''}
                     ${targetTime2 ? `
                       <span class="live-bus-sec" data-target-time="${targetTime2}">
                         ${this.formatSecondsHtml(tra2)}
@@ -1422,7 +1423,10 @@
                     `}
                   </div>
                   <div class="arr-sub-info">
-                    <span class="arr-stops-cnt">${this.extractStationCount(busMsg2) || '차기 순번 운행중'}</span>
+                    <div class="arr-sub-left">
+                      ${plate2 ? `<span class="arr-plate-no ${badgeClass === 'badge-green' ? 'arr-plate-green' : ''}">${plate2}</span>` : ''}
+                      <span class="arr-stops-cnt">${this.extractStationCount(busMsg2) || '차기 순번 운행중'}</span>
+                    </div>
                     ${targetTime2 ? `<span class="arr-eta-time">도착 예정: <strong class="eta-clock">${this.formatEtaTime(targetTime2)}</strong></span>` : ''}
                   </div>
                 </div>

@@ -2736,7 +2736,7 @@ class TransitManager {
           <div class="est-dest-title">
             <span class="est-dest-icon">${isCommute ? '🏢' : '🏠'}</span>
             <div class="est-dest-text">
-              <div class="est-dep-time">지금(${fmtTime(est.startTime)}) 출발 기준 · ${isTimetableMode ? '🗓️ 지하철 시간표' : '⚡ 지하철 실시간'}</div>
+              <div class="est-dep-time">지금(${fmtTime(est.startTime)}) 출발 기준</div>
               <div class="est-dest-label"><span class="est-total-min">${est.totalMinutes}분</span> 소요 예상</div>
             </div>
           </div>
