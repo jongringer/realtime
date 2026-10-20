@@ -2084,8 +2084,12 @@
             this.cache.subway[cleanName] = data.realtimeArrivalList;
             return data.realtimeArrivalList;
           }
+          console.warn('[TransitLookup] 지하철 실시간 데이터 없음:', cleanName, data?.code || data?.errorMessage?.code);
+          return [];
         }
-      } catch (e) {}
+      } catch (e) {
+        console.warn('[TransitLookup] 지하철 직결 실패, 프록시 시도:', e?.message || e);
+      }
 
       // 2차 CORS 프록시
       try {

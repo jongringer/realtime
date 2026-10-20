@@ -500,6 +500,9 @@ class TransitManager {
           this.busCache[cacheKey] = item;
           return item;
         }
+        // 직결 응답은 정상이나 데이터 없음 → 느린 프록시 재시도 생략
+        console.warn('[Transit] 버스 API 데이터 없음:', cacheKey, data?.msgHeader?.headerMsg);
+        return this.busCache[cacheKey] || null;
       }
     } catch (e) {
       // Android가 아닌 웹(HTTPS) 브라우저 환경에서 Mixed Content 차단 발생 시 프록시 fallback
@@ -559,6 +562,9 @@ class TransitManager {
           this.subwayCache[cacheKey] = data.realtimeArrivalList;
           return data.realtimeArrivalList;
         }
+        // 직결 응답은 정상이나 실시간 데이터 없음(INFO-200 등) → 느린 프록시 재시도 생략, 시간표로 폴백
+        console.warn('[Transit] 지하철 실시간 데이터 없음:', stationName, data?.code || data?.errorMessage?.code, data?.message || '');
+        return [];
       }
     } catch (e) {
       // 프록시 fallback
