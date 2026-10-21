@@ -1,6 +1,6 @@
 {
   "appId": "com.shiftalarm.app",
-  "appName": "ShiftAlarm",
+  "appName": "근무실시간교통",
   "webDir": "dist",
   "bundledWebRuntime": false,
   "plugins": {
