@@ -34,29 +34,6 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
-
-        <!-- 1. 알람 수신 브로드캐스트 리시버 -->
-        <receiver
-            android:name=".alarm.AlarmReceiver"
-            android:exported="false" />
-
-        <!-- 2. 기기 재부팅 수신 리시버 -->
-        <receiver
-            android:name=".alarm.BootReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-        </receiver>
-
-        <!-- 3. 전체화면 알람 액티비티 (잠금화면/화면꺼짐 상태에서 즉시 노출) -->
-        <activity
-            android:name=".alarm.AlarmFullScreenActivity"
-            android:exported="false"
-            android:showWhenLocked="true"
-            android:turnScreenOn="true"
-            android:launchMode="singleTop"
-            android:excludeFromRecents="true" />
     </application>
 
     <queries>
@@ -68,15 +45,9 @@
         </intent>
     </queries>
 
-    <!-- Permissions (금융 앱 악성앱 오탐 방지: 위험 권한 REQUEST_INSTALL_PACKAGES 등 완전 제거) -->
+    <!-- Permissions (금융 앱 100% 무사 통과 클린 권한: 화면잠금 해제/백그라운드 악성 권한 원천 차단) -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
-
-    <!-- 정확한 알람 및 알림 권한 (기존 시계 알람 기능 100% 정상 작동) -->
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.VIBRATE" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 </manifest>

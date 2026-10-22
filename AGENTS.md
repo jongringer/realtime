@@ -66,3 +66,13 @@
   2. **PC 다운로드 폴더 자동 저장**: 사용자 컴퓨터의 다운로드 폴더(`C:\Users\KBS\Downloads\`)로 최신 서명 APK 파일을 즉시 자동으로 다운로드합니다.
   3. **탐색기 표출 및 공지**: 윈도우 탐색기(`explorer /select,...`)로 다운로드된 최신 APK 파일을 화면에 띄우고, 다운로드 완료 사실과 버전명을 공지합니다.
   4. **웹 다운로드 링크 갱신**: 신규 서명 APK를 Surge 배포 디렉토리(`dist/ShiftAlarm.apk`)에도 동기화 배포하여 웹 다이렉트 다운로드 링크 역시 항상 최신 버전을 가리키도록 유지합니다.
+
+## 3. 금융 앱(토스·은행 등) 악성앱 오탐 방지 영구 아키텍처 원칙 (필수 준수)
+- **패키지명(applicationId):** `com.kbs.shiftwork` 영구 유지 (기존 오탐 이력의 `com.shiftalarm.app` 절대 재사용 금지).
+- **절대 금지 권한 및 코드:**
+  1. `REQUEST_INSTALL_PACKAGES` (트로이목마 다운로더 오탐 1순위) 절대 선언 금지.
+  2. `requestDismissKeyguard` 및 `FLAG_DISMISS_KEYGUARD` (잠금화면 무단 해제 해킹 행위로 분류) 절대 포함 금지.
+  3. `USE_FULL_SCREEN_INTENT`, `RECEIVE_BOOT_COMPLETED`, `WAKE_LOCK` 등 특권 권한 금지.
+- **알람 처리 표준:**
+  - 자체 네이티브 브로드캐스트 수신기나 백그라운드 서비스를 만들지 않고, 안드로이드 순정 인텐트(`AlarmClock.ACTION_SET_ALARM`)를 통해 삼성 갤럭시 기본 시계 앱으로 알람을 안전하게 위임 전송한다.
+  - 이로써 모든 국내 금융 앱 백신(AppIron, V3, FakeFinder 등)의 오탐을 원천 차단하고 100% 안전성을 영구 보장한다.

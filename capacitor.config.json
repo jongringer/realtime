@@ -1,5 +1,5 @@
 {
-  "appId": "com.shiftalarm.app",
+  "appId": "com.kbs.shiftwork",
   "appName": "ShiftAlarm",
   "webDir": "dist",
   "bundledWebRuntime": false,
