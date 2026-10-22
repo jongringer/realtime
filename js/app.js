@@ -186,6 +186,7 @@ class ShiftApp {
     try { this.renderAll(); } catch (e) { console.error('renderAll error:', e); }
     try { this.startRealTimeClock(); } catch (e) { console.error('startRealTimeClock error:', e); }
     try { this.initWeather(); } catch (e) { console.error('initWeather error:', e); }
+    try { this.initSelfAlarmMonitor(); } catch (e) { console.error('initSelfAlarmMonitor error:', e); }
   }
 
   initElements() {
@@ -283,11 +284,26 @@ class ShiftApp {
     this.modalAlarmPopup = document.getElementById('modalAlarmPopup');
     this.alarmPopupShiftBadge = document.getElementById('alarmPopupShiftBadge');
     this.alarmPopupTargetTime = document.getElementById('alarmPopupTargetTime');
+    this.alarmPopupSelfTime = document.getElementById('alarmPopupSelfTime');
     this.alarmPopupRemainTime = document.getElementById('alarmPopupRemainTime');
     this.btnCancelAlarmPopup = document.getElementById('btnCancelAlarmPopup');
     this.btnDismissAlarmPopup = document.getElementById('btnDismissAlarmPopup');
     this.btnConfirmAlarmPopup = document.getElementById('btnConfirmAlarmPopup');
+    this.btnTestSelfAlarm = document.getElementById('btnTestSelfAlarm');
     this.pendingAlarmData = null;
+
+    // 어플 자체 알람 울림 팝업 DOM
+    this.modalSelfAlarmRing = document.getElementById('modalSelfAlarmRing');
+    this.selfAlarmRingBadge = document.getElementById('selfAlarmRingBadge');
+    this.selfAlarmRingTime = document.getElementById('selfAlarmRingTime');
+    this.btnDismissSelfAlarmClock = document.getElementById('btnDismissSelfAlarmClock');
+    this.btnDismissSelfAlarmBar = document.getElementById('btnDismissSelfAlarmBar');
+
+    this.isSelfAlarmRinging = false;
+    this.currentSelfAlarmDateStr = null;
+    this.alarmAudioCtx = null;
+    this.selfAlarmInterval = null;
+    this.selfAlarmVibrateInterval = null;
 
     // 월간 통계/요약 모달
     this.btnOpenSummary = document.getElementById('btnOpenSummary');
@@ -338,6 +354,28 @@ class ShiftApp {
     }
     if (this.btnConfirmAlarmPopup) {
       this.btnConfirmAlarmPopup.addEventListener('click', () => this.executeSetAlarm());
+    }
+
+    // 자체 알람시계 터치 시 즉시 해제 및 일정 자동 삭제
+    if (this.btnDismissSelfAlarmClock) {
+      this.btnDismissSelfAlarmClock.addEventListener('click', () => this.dismissSelfAlarm());
+    }
+    if (this.btnDismissSelfAlarmBar) {
+      this.btnDismissSelfAlarmBar.addEventListener('click', () => this.dismissSelfAlarm());
+    }
+    if (this.btnTestSelfAlarm) {
+      this.btnTestSelfAlarm.addEventListener('click', () => {
+        this.closeModal(this.modalAlarmPopup);
+        this.showWeatherToast('🔔 1초 뒤 알람시계가 화면에 울립니다.');
+        setTimeout(() => {
+          const testDateStr = this.pendingAlarmData ? this.pendingAlarmData.dateStr : this.todayDateStr;
+          const testShift = this.pendingAlarmData ? this.pendingAlarmData.shiftType : '일근';
+          const now = new Date();
+          const h = now.getHours();
+          const m = now.getMinutes();
+          this.triggerSelfAlarm(testDateStr, { time: `${h}:${m}`, type: testShift }, h, m);
+        }, 1000);
+      });
     }
 
     // 개인 일정 등록 (폼이 존재할 때만 바인딩)
@@ -1638,13 +1676,28 @@ class ShiftApp {
       }
 
       if (personalNotes.length > 0) {
-        personalNotes.forEach(item => {
+        if (personalNotes.length === 1) {
+          const item = personalNotes[0];
           const schBadge = document.createElement('div');
           schBadge.className = 'schedule-badge-mini';
           schBadge.title = `개인 일정: ${item.text}`;
           schBadge.innerHTML = `<span class="pin-icon">📌</span>${item.text}`;
           cell.appendChild(schBadge);
-        });
+        } else {
+          // 일정이 2개 이상일 때: 첫 번째 일정 1개 + "+N건" 뱃지로 표시하여 달력 칸이 길어지는 현상 원천 차단
+          const firstItem = personalNotes[0];
+          const schBadge = document.createElement('div');
+          schBadge.className = 'schedule-badge-mini';
+          schBadge.title = `개인 일정: ${firstItem.text}`;
+          schBadge.innerHTML = `<span class="pin-icon">📌</span>${firstItem.text}`;
+          cell.appendChild(schBadge);
+
+          const moreBadge = document.createElement('div');
+          moreBadge.className = 'schedule-badge-mini schedule-badge-more';
+          moreBadge.title = personalNotes.map(p => p.text).join('\n');
+          moreBadge.textContent = `+${personalNotes.length - 1}건 더보기`;
+          cell.appendChild(moreBadge);
+        }
       }
 
       // 클릭 시 날짜 선택 (다른 날짜 클릭 시 3.5초 뒤 디폴트 오늘 날짜로 자동 복귀)
@@ -2791,6 +2844,21 @@ class ShiftApp {
     if (this.alarmPopupTargetTime) {
       this.alarmPopupTargetTime.textContent = displayTime;
     }
+
+    // 어플 자체 알람 시각 (설정 시각보다 1분 늦게 자체 어플에서 알람시계 노출)
+    let selfH = h;
+    let selfM = min + 1;
+    if (selfM >= 60) {
+      selfM = 0;
+      selfH = (selfH + 1) % 24;
+    }
+    const selfPeriodStr = selfH < 12 ? '오전' : '오후';
+    const selfDisplayHour = selfH === 0 ? 12 : (selfH > 12 ? selfH - 12 : selfH);
+    const selfDisplayTime = `${selfPeriodStr} ${String(selfDisplayHour).padStart(2, '0')}:${String(selfM).padStart(2, '0')}`;
+    if (this.alarmPopupSelfTime) {
+      this.alarmPopupSelfTime.textContent = `${selfDisplayTime} (알람시계 노출 & 터치 시 자동삭제)`;
+    }
+
     if (this.alarmPopupRemainTime) {
       this.alarmPopupRemainTime.textContent = remainText;
     }
@@ -2870,8 +2938,19 @@ class ShiftApp {
     });
     this.renderCalendar();
 
+    // 오디오 컨텍스트 웜업 (모바일 브라우저 자체 알람 소리 재생 권한 획득)
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx && !this.alarmAudioCtx) {
+        this.alarmAudioCtx = new AudioCtx();
+      }
+      if (this.alarmAudioCtx && this.alarmAudioCtx.state === 'suspended') {
+        this.alarmAudioCtx.resume();
+      }
+    } catch (e) {}
+
     // 화면 전환을 방해하지 않는 깔끔한 토스트 안내
-    this.showWeatherToast(`⏰ ${m}월 ${d}일(${dayName}) ${shiftType} 알람 (${hour}:${padMinute}) 등록 완료`);
+    this.showWeatherToast(`⏰ ${m}월 ${d}일(${dayName}) ${shiftType} 알람 (${hour}:${padMinute}) 등록 완료 (1분 뒤 앱 자체 알람 울림)`);
   }
 
   executeDismissAlarm() {
@@ -2895,6 +2974,202 @@ class ShiftApp {
     this.renderCalendar();
 
     this.showWeatherToast(`🔕 ${m}월 ${d}일 ${shiftType} 근무알람이 해제되었습니다.`);
+  }
+
+  // ========================================================
+  // 어플 자체 알람 시스템 (설정 시각 1분 후 동작 & 알람시계 노출 및 자동삭제)
+  // ========================================================
+
+  initSelfAlarmMonitor() {
+    // 1초마다 실시간 활성 알람 체크
+    setInterval(() => {
+      this.checkSelfAlarm();
+    }, 1000);
+
+    // 사용자가 앱으로 복귀하거나 화면 켤 때 즉시 체크
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        this.checkSelfAlarm();
+      }
+    });
+    window.addEventListener('focus', () => {
+      this.checkSelfAlarm();
+    });
+  }
+
+  checkSelfAlarm() {
+    if (this.isSelfAlarmRinging) return;
+
+    const now = new Date();
+    const curY = now.getFullYear();
+    const curM = now.getMonth() + 1;
+    const curD = now.getDate();
+    const curH = now.getHours();
+    const curMin = now.getMinutes();
+    const todayDateStr = `${curY}-${String(curM).padStart(2, '0')}-${String(curD).padStart(2, '0')}`;
+
+    const activeAlarms = shiftStorage.getActiveAlarms();
+    const todayAlarm = activeAlarms[todayDateStr];
+    if (!todayAlarm || !todayAlarm.time) return;
+
+    const parts = todayAlarm.time.split(':').map(Number);
+    if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) return;
+
+    const baseH = parts[0];
+    const baseM = parts[1];
+
+    // 사용자가 설정한 시간보다 정확히 1분 늦게 자체 어플 알람 울림!
+    let targetSelfH = baseH;
+    let targetSelfM = baseM + 1;
+    if (targetSelfM >= 60) {
+      targetSelfM = 0;
+      targetSelfH = (targetSelfH + 1) % 24;
+    }
+
+    // 현재 시/분이 자체 알람 시/분과 일치하고, 아직 오늘 울리지 않았다면 울림 작동!
+    if (curH === targetSelfH && curMin === targetSelfM && !todayAlarm.selfAlarmRung) {
+      todayAlarm.selfAlarmRung = true;
+      try {
+        localStorage.setItem('kbs_shift_active_alarms', JSON.stringify(activeAlarms));
+      } catch (e) {}
+
+      this.triggerSelfAlarm(todayDateStr, todayAlarm, targetSelfH, targetSelfM);
+    }
+  }
+
+  triggerSelfAlarm(dateStr, alarmObj, selfHour, selfMinute) {
+    if (this.isSelfAlarmRinging) return;
+    this.isSelfAlarmRinging = true;
+    this.currentSelfAlarmDateStr = dateStr;
+
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+    const cal = new Date(y, m - 1, d);
+    const dayName = dayNames[cal.getDay()] || '';
+
+    const periodStr = selfHour < 12 ? '오전' : '오후';
+    const displayHour = selfHour === 0 ? 12 : (selfHour > 12 ? selfHour - 12 : selfHour);
+    const displayTime = `${periodStr} ${String(displayHour).padStart(2, '0')}:${String(selfMinute).padStart(2, '0')}`;
+
+    if (this.selfAlarmRingBadge) {
+      this.selfAlarmRingBadge.textContent = `${m}월 ${d}일 (${dayName}) · ${alarmObj.type || '근무'} 알람 (+1분)`;
+    }
+    if (this.selfAlarmRingTime) {
+      this.selfAlarmRingTime.textContent = displayTime;
+    }
+
+    // 전체화면 알람 모달 노출
+    if (this.modalSelfAlarmRing) {
+      this.openModal(this.modalSelfAlarmRing);
+    }
+
+    // 자체 알람 사운드 & 진동 실행
+    this.playSelfAlarmSound();
+  }
+
+  playSelfAlarmSound() {
+    this.stopSelfAlarmSound();
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        if (!this.alarmAudioCtx) {
+          this.alarmAudioCtx = new AudioCtx();
+        }
+        if (this.alarmAudioCtx.state === 'suspended') {
+          this.alarmAudioCtx.resume();
+        }
+
+        const ringTone = () => {
+          if (!this.isSelfAlarmRinging || !this.alarmAudioCtx) return;
+          try {
+            const t = this.alarmAudioCtx.currentTime;
+            // 1차 톤 (880Hz -> 1174Hz)
+            const osc1 = this.alarmAudioCtx.createOscillator();
+            const gain1 = this.alarmAudioCtx.createGain();
+            osc1.type = 'triangle';
+            osc1.frequency.setValueAtTime(880, t);
+            osc1.frequency.setValueAtTime(1174.66, t + 0.1);
+            gain1.gain.setValueAtTime(0.4, t);
+            gain1.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+            osc1.connect(gain1);
+            gain1.connect(this.alarmAudioCtx.destination);
+            osc1.start(t);
+            osc1.stop(t + 0.26);
+
+            // 2차 톤 (880Hz -> 1318Hz)
+            const osc2 = this.alarmAudioCtx.createOscillator();
+            const gain2 = this.alarmAudioCtx.createGain();
+            osc2.type = 'triangle';
+            osc2.frequency.setValueAtTime(880, t + 0.3);
+            osc2.frequency.setValueAtTime(1318.51, t + 0.4);
+            gain2.gain.setValueAtTime(0.45, t + 0.3);
+            gain2.gain.exponentialRampToValueAtTime(0.001, t + 0.58);
+            osc2.connect(gain2);
+            gain2.connect(this.alarmAudioCtx.destination);
+            osc2.start(t + 0.3);
+            osc2.stop(t + 0.6);
+          } catch (e) {
+            console.warn('Tone error:', e);
+          }
+        };
+
+        ringTone();
+        this.selfAlarmInterval = setInterval(ringTone, 850);
+      }
+    } catch (err) {
+      console.warn('playSelfAlarmSound error:', err);
+    }
+
+    if ('vibrate' in navigator) {
+      try {
+        navigator.vibrate([400, 200, 400, 200, 800, 400]);
+        this.selfAlarmVibrateInterval = setInterval(() => {
+          if (this.isSelfAlarmRinging && 'vibrate' in navigator) {
+            navigator.vibrate([400, 200, 400, 200, 800, 400]);
+          }
+        }, 2600);
+      } catch (e) {}
+    }
+  }
+
+  stopSelfAlarmSound() {
+    if (this.selfAlarmInterval) {
+      clearInterval(this.selfAlarmInterval);
+      this.selfAlarmInterval = null;
+    }
+    if (this.selfAlarmVibrateInterval) {
+      clearInterval(this.selfAlarmVibrateInterval);
+      this.selfAlarmVibrateInterval = null;
+    }
+    if ('vibrate' in navigator) {
+      try { navigator.vibrate(0); } catch (e) {}
+    }
+  }
+
+  dismissSelfAlarm() {
+    if (!this.isSelfAlarmRinging) return;
+    this.isSelfAlarmRinging = false;
+
+    // 1. 소리 & 진동 즉시 정지
+    this.stopSelfAlarmSound();
+
+    // 2. 모달 닫기
+    if (this.modalSelfAlarmRing) {
+      this.closeModal(this.modalSelfAlarmRing);
+    }
+
+    // 3. 해당 날짜 알람 자동 삭제!
+    const targetDate = this.currentSelfAlarmDateStr;
+    if (targetDate) {
+      shiftStorage.removeActiveAlarm(targetDate);
+      this.currentSelfAlarmDateStr = null;
+    }
+
+    // 4. 달력 및 상태 즉시 갱신 (⏰ 아이콘 자동 삭제)
+    this.renderCalendar();
+
+    // 5. 알림 토스트
+    this.showWeatherToast('⏰ 알람이 꺼졌으며, 등록된 알람이 자동 삭제되었습니다.');
   }
 }
 

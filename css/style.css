@@ -1074,11 +1074,22 @@ body:not([data-theme="apple-light"]) .today-shift-badge span {
 /* --------------------------------------------------------------------------
    4. 달력 (다크 모드 카드)
    -------------------------------------------------------------------------- */
+/* 첫 화면(뷰포트) 전용 컨테이너: 첫 화면에 오로지 달력까지만 나오고, 하단 대중교통이 살짝 걸쳐 보이지 않도록 100dvh 높이 보장 */
+.first-screen-view {
+  min-height: 100dvh;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  box-sizing: border-box;
+  padding-bottom: 24px;
+}
+
 .calendar-card {
   background: var(--cal-bg);
   border-radius: var(--border-radius-card);
   padding: 8px 6px 12px 6px;
-  margin-bottom: 100px; /* 기존 여백(50px)만큼 더 띄워(100px) 하단 홈버튼 간섭 완전 차단 */
+  margin-bottom: 16px; /* first-screen-view가 100dvh를 보장하므로 불필요한 과도한 마진 제거 */
   box-shadow: var(--card-shadow);
   border: var(--cal-border);
   color: var(--cal-text);
@@ -1178,7 +1189,9 @@ body[data-theme="apple-light"] .calendar-day-cell:not(.sun):not(.sat):not(.holid
 }
 
 .calendar-day-cell {
-  min-height: 72px; /* 달력 상하로 약 1cm(약 38~40px) 늘림 (5주 기준 8px*5=40px) */
+  height: clamp(58px, 8.5vh, 68px) !important;
+  min-height: 56px !important;
+  max-height: 68px !important;
   min-width: 0 !important;                  /* 개인 일정으로 인한 칸 간격 변형 원천 차단 */
   background-color: transparent;
   border-radius: 6px;
@@ -1189,8 +1202,9 @@ body[data-theme="apple-light"] .calendar-day-cell:not(.sun):not(.sat):not(.holid
   cursor: pointer;
   transition: background-color 0.15s ease;
   user-select: none;
-  touch-action: pan-x pan-y pinch-zoom;           /* 달력 날짜 칸 위에서도 확대 후 상하좌우 자유 이동 및 핀치 줌 100% 보장 */
-  overflow: hidden !important;              /* 칸 간격 유지 */
+  touch-action: pan-x pan-y pinch-zoom;     /* 달력 날짜 칸 위에서도 확대 후 상하좌우 자유 이동 및 핀치 줌 100% 보장 */
+  overflow: hidden !important;              /* 일정 추가 시에도 칸이 아래로 늘어나지 않도록 완벽 고정 */
+  box-sizing: border-box !important;
 }
 
 .calendar-day-cell:hover {
@@ -1545,24 +1559,34 @@ body[data-theme="noble-gold"] .shift-badge.shift-vacation {
   color: #d1fae5;
 }
 
-/* 개인 일정 미니 뱃지 (달력 안: 사용자 요청 2~3줄 표기 완벽 지원) */
+/* 개인 일정 미니 뱃지 (달력 안: 1줄 말줄임표 및 칸 늘어남 방지) */
 .schedule-badge-mini {
   display: block !important;
   background-color: rgba(255, 255, 255, 0.12);
   color: #ffffff !important;
   font-size: 8px !important;
   font-weight: 700;
-  line-height: 1.25 !important;
-  padding: 2px 3px !important;
+  line-height: 1.2 !important;
+  padding: 1px 3px !important;
   border-radius: 3px;
-  margin-top: 2px;
-  white-space: normal !important;          /* 사용자 요청: 2~3줄 표기 허용 */
-  word-break: break-all !important;        /* 칸 너비 초과 시 자연스러운 줄바꿈 */
+  margin-top: 1.5px;
+  white-space: nowrap !important;          /* 칸 늘어남 방지를 위해 1줄 말줄임표 처리 */
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
   border-left: 2px solid #94a3b8;
   text-align: left;
-  overflow: hidden;
   box-sizing: border-box;
   width: 100%;
+}
+
+.schedule-badge-more {
+  background-color: rgba(59, 130, 246, 0.25) !important;
+  color: #93c5fd !important;
+  border-left: 2px solid #3b82f6 !important;
+  font-weight: 800 !important;
+  text-align: center !important;
+  font-size: 7.5px !important;
+  padding: 0.5px 2px !important;
 }
 
 .schedule-badge-mini .pin-icon {
@@ -1576,6 +1600,12 @@ body[data-theme="apple-light"] .schedule-badge-mini {
   background-color: #f1f5f9;
   color: #000000 !important;
   border-left: 2px solid #475569;
+}
+
+body[data-theme="apple-light"] .schedule-badge-more {
+  background-color: #dbeafe !important;
+  color: #1d4ed8 !important;
+  border-left: 2px solid #2563eb !important;
 }
 
 /* 밤 모드 (옵시디언 다크 / 노블 골드): 흰색 글씨 & 다크 반투명 배경 */
@@ -8956,6 +8986,58 @@ body.dark-theme .btn-dangsan-view-toggle.active {
   .modal-title {
     font-size: 15px !important;
   }
+}
+
+/* 6. 어플 자체 2차 알람(1분 늦게 울림) 전용 UI & 알람시계 흔들림/파동 애니메이션 */
+@keyframes alarmRingWobble {
+  0% { transform: rotate(0deg) scale(1); }
+  10% { transform: rotate(-16deg) scale(1.1); }
+  20% { transform: rotate(16deg) scale(1.1); }
+  30% { transform: rotate(-16deg) scale(1.1); }
+  40% { transform: rotate(16deg) scale(1.1); }
+  50% { transform: rotate(0deg) scale(1.05); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+
+@keyframes alarmPulseWave {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.85), 0 0 0 0 rgba(249, 115, 22, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 35px rgba(239, 68, 68, 0), 0 0 0 65px rgba(249, 115, 22, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0), 0 0 0 0 rgba(249, 115, 22, 0);
+  }
+}
+
+.self-alarm-clock-btn {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ef4444, #f97316);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin: 18px auto;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  animation: alarmRingWobble 0.85s infinite, alarmPulseWave 1.7s infinite;
+  transition: transform 0.15s ease, filter 0.15s ease;
+  box-shadow: 0 12px 30px rgba(239, 68, 68, 0.5);
+  border: 4px solid rgba(255, 255, 255, 0.4);
+}
+
+.self-alarm-clock-btn:active {
+  transform: scale(0.9);
+  filter: brightness(0.8);
+}
+
+.self-alarm-clock-icon {
+  font-size: 72px;
+  line-height: 1;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35));
 }
 
 

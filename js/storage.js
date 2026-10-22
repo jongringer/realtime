@@ -167,8 +167,9 @@ class ShiftStorage {
         }
 
         const alarmTimestamp = new Date(y, m - 1, d, hour, minute, 0).getTime();
-        // 알람 날짜와 시간 경과 시 자동 제거
-        if (now >= alarmTimestamp) {
+        // 자체 2차 알람(1분 늦게 울림) 및 사용자 터치 해제를 위해 2시간 이상 충분히 경과한 알람만 자동 정리
+        const expireThreshold = alarmTimestamp + (2 * 60 * 60 * 1000);
+        if (now >= expireThreshold) {
           delete alarms[dateStr];
           changed = true;
         }
