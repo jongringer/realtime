@@ -10,5 +10,5 @@ Thumbs.db
 scratch/
 .idea/
 android/.idea/
-*.tmp
+.agents/
 
