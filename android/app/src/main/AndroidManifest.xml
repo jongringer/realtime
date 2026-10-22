@@ -68,19 +68,15 @@
         </intent>
     </queries>
 
-    <!-- Permissions -->
-
+    <!-- Permissions (금융 앱 악성앱 오탐 방지: 위험 권한 REQUEST_INSTALL_PACKAGES 등 완전 제거) -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
 
-    <!-- 정확한 알람 및 알림 권한 -->
+    <!-- 정확한 알람 및 알림 권한 (기존 시계 알람 기능 100% 정상 작동) -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 </manifest>
