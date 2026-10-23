@@ -80,12 +80,21 @@ jobs:
 
             ---
 
-            ### 📲 스마트폰 카메라로 QR 코드를 스캔하세요
-            > 갤럭시 기본 카메라 앱으로 아래 QR 코드를 비추면 즉시 최신 앱이 다운로드됩니다.
+            ### 📲 스마트폰 카메라로 QR 코드를 스캔하세요 (또는 이미지 터치)
+            > 스마트폰 기본 카메라 앱으로 아래 QR 코드를 비추거나, 이미지를 직접 터치하면 바로 최신 앱이 다운로드됩니다.
 
-            ![Download QR Code](https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/ShiftAlarm-${{ github.ref_name }}.apk)
+            [![Download QR Code](https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/ShiftAlarm-${{ github.ref_name }}.apk)](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/ShiftAlarm-${{ github.ref_name }}.apk)
 
-            - **직접 다운로드 파일 링크**: [ShiftAlarm-${{ github.ref_name }}.apk](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/ShiftAlarm-${{ github.ref_name }}.apk)
+            - **📥 APK 직접 다운로드 주소 (클릭 시 다운로드)**:  
+              [https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/ShiftAlarm-${{ github.ref_name }}.apk](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/ShiftAlarm-${{ github.ref_name }}.apk)
+            - **⚡ Surge 미러 다운로드 주소**:  
+              [https://kbs-4shift-5855.surge.sh/ShiftAlarm.apk](https://kbs-4shift-5855.surge.sh/ShiftAlarm.apk)
+
+            ---
+
+            ### 🌐 실시간 공개 웹앱 바로가기 (설치 없이 브라우저로 열기)
+            - 🔗 **GitHub Pages 웹앱**: [https://jongringer.github.io/apk/](https://jongringer.github.io/apk/)
+            - ⚡ **Surge 상시 웹앱**: [https://kbs-4shift-5855.surge.sh](https://kbs-4shift-5855.surge.sh)
           draft: false
           prerelease: false
           files: ./ShiftAlarm-${{ github.ref_name }}.apk

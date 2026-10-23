@@ -4,13 +4,16 @@
 
 ---
 
-## 🌐 실시간 온라인 접속 링크 (공개 공유용)
+## 📱 QR 코드 스캔 및 실시간 접속 링크 (공개 공유용)
 
-누구나 컴퓨터나 스마트폰에서 아래 링크로 접속하여 교대근무표를 확인 및 공유할 수 있습니다.
+스마트폰 기본 카메라로 아래 **QR 코드**를 비추거나, **링크 및 QR 이미지를 터치(클릭)**하면 바로 다운로드 및 웹앱으로 연결됩니다.
 
-- 🔗 **GitHub Pages 공개 링크**: [https://jongringer.github.io/apk/](https://jongringer.github.io/apk/)
-- ⚡ **Surge 상시 배포 링크**: [https://kbs-4shift-5855.surge.sh](https://kbs-4shift-5855.surge.sh)
-- 📲 **최신 안드로이드 APK 다이렉트 다운로드**: [https://kbs-4shift-5855.surge.sh/ShiftAlarm.apk](https://kbs-4shift-5855.surge.sh/ShiftAlarm.apk)
+| 📲 안드로이드 APK 앱 다운로드 (스마트폰 설치) | 🌐 실시간 공개 웹앱 (설치 없이 브라우저 열기) |
+| :---: | :---: |
+| [![APK 직접 다운로드 QR](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://kbs-4shift-5855.surge.sh/ShiftAlarm.apk)](https://kbs-4shift-5855.surge.sh/ShiftAlarm.apk) | [![GitHub Pages 웹앱 바로가기 QR](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://jongringer.github.io/apk/)](https://jongringer.github.io/apk/) |
+| **[📥 최신 APK 파일 직접 다운로드](https://kbs-4shift-5855.surge.sh/ShiftAlarm.apk)** | **[🔗 GitHub Pages 웹앱 바로가기](https://jongringer.github.io/apk/)** |
+| `https://kbs-4shift-5855.surge.sh/ShiftAlarm.apk` | `https://jongringer.github.io/apk/` |
+| [📦 GitHub Releases 다운로드 목록](https://github.com/jongringer/apk/releases) | **[⚡ Surge 상시 웹앱 바로가기](https://kbs-4shift-5855.surge.sh)** |
 
 ---
 
