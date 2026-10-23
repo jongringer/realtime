@@ -4,6 +4,16 @@
 
 ---
 
+## 🌐 실시간 온라인 접속 링크 (공개 공유용)
+
+누구나 컴퓨터나 스마트폰에서 아래 링크로 접속하여 교대근무표를 확인 및 공유할 수 있습니다.
+
+- 🔗 **GitHub Pages 공개 링크**: [https://jongringer.github.io/apk/](https://jongringer.github.io/apk/)
+- ⚡ **Surge 상시 배포 링크**: [https://kbs-4shift-5855.surge.sh](https://kbs-4shift-5855.surge.sh)
+- 📲 **최신 안드로이드 APK 다이렉트 다운로드**: [https://kbs-4shift-5855.surge.sh/ShiftAlarm.apk](https://kbs-4shift-5855.surge.sh/ShiftAlarm.apk)
+
+---
+
 ## 🌟 주요 기능 및 특징
 
 1. **4조 3교대 패턴 자동 계산**:
