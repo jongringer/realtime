@@ -258,6 +258,11 @@ class ShiftApp {
     this.dayScheduleItemsContainer = document.getElementById('dayScheduleItemsContainer');
     this.btnResetDayEdit = document.getElementById('btnResetDayEdit');
 
+    // 달력 하단 선택된 날짜의 일정 1~2줄 요약 배너
+    this.selectedScheduleBar = document.getElementById('selectedScheduleBar');
+    this.selectedScheduleDatePill = document.getElementById('selectedScheduleDatePill');
+    this.selectedScheduleText = document.getElementById('selectedScheduleText');
+
     // 시간 선택기 (오전/오후, 1~12시, 30분 단위)
     this.editScheduleAmPm = document.getElementById('editScheduleAmPm');
     this.editScheduleHour = document.getElementById('editScheduleHour');
@@ -480,6 +485,14 @@ class ShiftApp {
     if (this.btnCloseDayEditFooter) {
       this.btnCloseDayEditFooter.addEventListener('click', () => {
         this.closeModal(this.modalDayEdit);
+      });
+    }
+
+    // 달력 하단 일정 요약 배너 클릭 시 화면 중앙 일정 모달 즉시 호출
+    if (this.selectedScheduleBar) {
+      this.selectedScheduleBar.addEventListener('click', () => {
+        const targetDate = this.selectedDateStr || this.todayDateStr;
+        this.openDayEditModal(targetDate);
       });
     }
 
@@ -1676,52 +1689,84 @@ class ShiftApp {
       }
 
       if (personalNotes.length > 0) {
+        const handleBadgeTouch = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.openDayEditModal(dateStr, shiftInfo);
+        };
+
         if (personalNotes.length === 1) {
           const item = personalNotes[0];
           const schBadge = document.createElement('div');
           schBadge.className = 'schedule-badge-mini';
-          schBadge.title = `개인 일정: ${item.text}`;
+          schBadge.title = `개인 일정: ${item.text} (터치 시 상세/수정)`;
           schBadge.innerHTML = `<span class="pin-icon">📌</span>${item.text}`;
+          schBadge.addEventListener('click', handleBadgeTouch);
+          schBadge.addEventListener('touchend', handleBadgeTouch);
           cell.appendChild(schBadge);
         } else {
           // 일정이 2개 이상일 때: 첫 번째 일정 1개 + "+N건" 뱃지로 표시하여 달력 칸이 길어지는 현상 원천 차단
           const firstItem = personalNotes[0];
           const schBadge = document.createElement('div');
           schBadge.className = 'schedule-badge-mini';
-          schBadge.title = `개인 일정: ${firstItem.text}`;
+          schBadge.title = `개인 일정: ${firstItem.text} (터치 시 상세/수정)`;
           schBadge.innerHTML = `<span class="pin-icon">📌</span>${firstItem.text}`;
+          schBadge.addEventListener('click', handleBadgeTouch);
+          schBadge.addEventListener('touchend', handleBadgeTouch);
           cell.appendChild(schBadge);
 
           const moreBadge = document.createElement('div');
           moreBadge.className = 'schedule-badge-mini schedule-badge-more';
-          moreBadge.title = personalNotes.map(p => p.text).join('\n');
+          moreBadge.title = personalNotes.map(p => p.text).join('\n') + '\n(터치 시 전체 일정 확인)';
           moreBadge.textContent = `+${personalNotes.length - 1}건 더보기`;
+          moreBadge.addEventListener('click', handleBadgeTouch);
+          moreBadge.addEventListener('touchend', handleBadgeTouch);
           cell.appendChild(moreBadge);
         }
       }
 
-      // 클릭 시 날짜 선택 (다른 날짜 클릭 시 3.5초 뒤 디폴트 오늘 날짜로 자동 복귀)
-      cell.addEventListener('click', () => {
+      // 더블 탭 / 더블 클릭 감지 (모바일 & PC 모두 지원)
+      let lastTapTime = 0;
+      let lastClickTime = 0;
+
+      const triggerModalDirectly = (e) => {
+        if (e) {
+          e.stopPropagation();
+          if (e.cancelable && e.type === 'touchend') e.preventDefault();
+        }
+        this.openDayEditModal(dateStr, shiftInfo);
+      };
+
+      // 1. 단일 클릭 / 빠른 더블 클릭 통합 (PC 및 모바일 브라우저)
+      cell.addEventListener('click', (e) => {
+        const now = Date.now();
+        const clickDiff = now - lastClickTime;
+        lastClickTime = now;
+
+        // 450ms 이내 빠른 2회 클릭 시 모달 즉시 호출
+        if (clickDiff > 0 && clickDiff < 450) {
+          triggerModalDirectly(e);
+          return;
+        }
+
+        // 일반 1회 클릭 시: 날짜 선택 & 하단 일정 요약 바 즉시 갱신
         this.selectDate(dateStr);
       });
 
-      // 더블 클릭 시 개인 일정 및 근무 수정 모달 즉시 호출 (PC)
+      // 2. PC 더블 클릭 이벤트
       cell.addEventListener('dblclick', (e) => {
-        e.stopPropagation();
-        this.openDayEditModal(dateStr, shiftInfo);
+        triggerModalDirectly(e);
       });
 
-      // 모바일 스마트폰 환경: 더블 탭 시 개인 일정/근무 수정 모달 즉시 호출
-      let lastTapTime = 0;
+      // 3. 모바일 터치 환경: touchend 기반 빠른 2회 터치(더블 탭) 감지
       cell.addEventListener('touchend', (e) => {
         const currentTime = Date.now();
         const tapDiff = currentTime - lastTapTime;
-        if (tapDiff > 0 && tapDiff < 350) {
-          e.preventDefault();
-          e.stopPropagation();
-          this.openDayEditModal(dateStr, shiftInfo);
-        }
         lastTapTime = currentTime;
+
+        if (tapDiff > 0 && tapDiff < 450) {
+          triggerModalDirectly(e);
+        }
       });
 
       this.elCalendarGrid.appendChild(cell);
@@ -1782,6 +1827,9 @@ class ShiftApp {
         this.elCalendarGrid.appendChild(cell);
       }
     }
+
+    // 달력 하단 일정 요약 배너 최신화
+    this.renderSelectedDateScheduleBar();
   }
 
   selectDate(dateStr) {
@@ -1794,6 +1842,7 @@ class ShiftApp {
     this.renderCalendar();
     this.renderTodayCard();
     this.populateScheduleDateOptions();
+    this.renderSelectedDateScheduleBar();
 
     // 사용자가 날짜 클릭 후 근무알람 등을 여유롭게 설정할 수 있도록 15초 유지 후 오늘 날짜로 복귀
     if (dateStr !== this.todayDateStr) {
@@ -1804,7 +1853,65 @@ class ShiftApp {
         this.renderCalendar();
         this.renderTodayCard();
         this.populateScheduleDateOptions();
+        this.renderSelectedDateScheduleBar();
       }, 15000);
+    }
+  }
+
+  renderSelectedDateScheduleBar() {
+    if (!this.selectedScheduleBar) {
+      this.selectedScheduleBar = document.getElementById('selectedScheduleBar');
+      this.selectedScheduleDatePill = document.getElementById('selectedScheduleDatePill');
+      this.selectedScheduleText = document.getElementById('selectedScheduleText');
+    }
+    if (!this.selectedScheduleBar) return;
+
+    const dateStr = this.selectedDateStr || this.todayDateStr;
+    const [y, m, d] = dateStr.split('-');
+    const dateObj = new Date(Number(y), Number(m) - 1, Number(d));
+    const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+    const dayName = dayNames[dateObj.getDay()];
+    const isToday = (dateStr === this.todayDateStr);
+
+    if (this.selectedScheduleDatePill) {
+      this.selectedScheduleDatePill.textContent = `${Number(m)}/${Number(d)}(${dayName})${isToday ? ' 오늘' : ''}`;
+    }
+
+    const schedules = shiftStorage.getSchedulesForDate(dateStr);
+
+    if (this.selectedScheduleText) {
+      if (schedules.length === 0) {
+        this.selectedScheduleBar.classList.remove('has-schedules');
+        this.selectedScheduleText.innerHTML = `<span class="schedule-empty-hint">등록된 일정 없음 <span class="add-plus-icon">(터치하여 추가 ＋)</span></span>`;
+      } else {
+        this.selectedScheduleBar.classList.add('has-schedules');
+        // 시간순 정렬
+        const sorted = [...schedules].sort((a, b) => {
+          const minA = parseScheduleTimeToMinutes(a.timeStr);
+          const minB = parseScheduleTimeToMinutes(b.timeStr);
+          if (minA !== minB) return minA - minB;
+          return (a.id || '').localeCompare(b.id || '');
+        });
+
+        if (sorted.length === 1) {
+          const item = sorted[0];
+          const timeText = item.timeStr ? `⏰ ${this.formatDisplayTime(item.timeStr)} ` : '';
+          this.selectedScheduleText.innerHTML = `<strong class="schedule-item-highlight">${timeText}${this.escapeHtml(item.title)}</strong>`;
+        } else {
+          const first = sorted[0];
+          const time1 = first.timeStr ? `⏰ ${this.formatDisplayTime(first.timeStr)} ` : '';
+          const second = sorted[1];
+          const time2 = second.timeStr ? `${this.formatDisplayTime(second.timeStr)} ` : '';
+          const remain = sorted.length - 2;
+
+          let displayHtml = `<strong class="schedule-item-highlight">${time1}${this.escapeHtml(first.title)}</strong>`;
+          displayHtml += ` · <span class="schedule-sub-item">${time2}${this.escapeHtml(second.title)}</span>`;
+          if (remain > 0) {
+            displayHtml += ` <span class="schedule-more-count">+${remain}건</span>`;
+          }
+          this.selectedScheduleText.innerHTML = displayHtml;
+        }
+      }
     }
   }
 
@@ -1895,11 +2002,14 @@ class ShiftApp {
 
     this.openModal(this.modalDayEdit);
 
-    setTimeout(() => {
-      if (this.elEditNoteInput) {
-        this.elEditNoteInput.focus();
-      }
-    }, 150);
+    // 데스크톱 환경에서만 편의를 위해 포커스하고, 모바일 터치 환경에서는 키보드로 인한 일정 화면 가림 방지
+    if (window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      setTimeout(() => {
+        if (this.elEditNoteInput) {
+          this.elEditNoteInput.focus();
+        }
+      }, 150);
+    }
   }
 
   renderDayScheduleList() {

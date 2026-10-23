@@ -100,7 +100,7 @@
           </div>
         </div>
       </section>
-      <section class="month-nav-bar" style="margin-top: 10px; margin-bottom: 10px;">
+      <section class="month-nav-bar" style="margin-top: 4px; margin-bottom: 6px;">
         <div class="month-title-wrap">
           <button type="button" class="btn-home-today" id="btnHomeToday" title="오늘(이번 달)로 바로 이동" onclick="window.app && window.app.goToToday && window.app.goToToday()">🏠</button>
           <h1 class="month-title" id="monthTitle">2026년 9월 근무표</h1>
@@ -124,6 +124,20 @@
         </div>
         <div class="calendar-grid" id="calendarGrid"></div>
       </section>
+      <!-- 선택된 날짜의 일정 1~2줄 요약 배너 (터치 시 화면 중앙 일정 팝업 호출) -->
+      <div class="calendar-selected-schedule-bar" id="selectedScheduleBar" role="button" tabindex="0" title="터치하여 일정 상세 확인 및 추가">
+        <div class="schedule-bar-icon-wrap">
+          <span class="schedule-bar-icon">📌</span>
+        </div>
+        <div class="schedule-bar-content" id="selectedScheduleContent">
+          <span class="schedule-bar-date-pill" id="selectedScheduleDatePill">오늘 일정</span>
+          <span class="schedule-bar-text" id="selectedScheduleText">등록된 일정이 없습니다 (터치하여 추가 ＋)</span>
+        </div>
+        <div class="schedule-bar-action">
+          <span class="schedule-bar-action-label">상세/추가</span>
+          <span class="schedule-bar-arrow">↗</span>
+        </div>
+      </div>
     </div>
     <!-- 2화면(스크롤 시 진입): 실시간 대중교통 -->
     <section class=transit-widget-card id=transitWidgetSection>
@@ -287,32 +301,28 @@
     </div>
   </div>
   <div class=modal-overlay id=modalDayEdit>
-    <div class=modal-container style=max-width: 420px;>
+    <div class=modal-container style="max-width: 440px; margin: auto;">
       <div class=modal-header>
         <h3 class=modal-title id=editDateTitle>근무 및 개인 일정 관리</h3>
         <button class=modal-close-btn id=btnCloseDayEdit>✕</button>
       </div>
-      <div class=modal-body style=display: flex; flex-direction: column; gap: 14px;>
-        <div class=form-group style="margin-bottom: 0;">
-          <label class=form-label for=editShiftSelect style="font-weight: 700; margin-bottom: 6px;">근무 형태</label>
-          <div style="display: flex; gap: 8px; align-items: center;">
-            <select id=editShiftSelect class=form-select style="flex: 1; height: 38px;">
-              <option value=일근>일근 (기본)</option>
-              <option value=야근>야근 (기본)</option>
-              <option value=조근>조근 (기본)</option>
-              <option value=비번>비번 (휴무/미표시)</option>
-              <option value=일근대근>⚡ 일근대근 (빨간색)</option>
-              <option value=야근대근>⚡ 야근대근 (빨간색)</option>
-              <option value=조근대근>⚡ 조근대근 (빨간색)</option>
-              <option value=일근휴가>🌿 일근휴가 (녹색)</option>
-              <option value=야근휴가>🌿 야근휴가 (녹색)</option>
-              <option value=조근휴가>🌿 조근휴가 (녹색)</option>
-            </select>
-            <button type=button class=btn-primary id=btnSaveShiftType style="padding: 0 16px; font-size: 13px; font-weight: 700; white-space: nowrap; height: 38px; margin-left: auto;">근무 저장</button>
+      <div class=modal-body style="display: flex; flex-direction: column; gap: 14px; padding: 16px;">
+        <!-- 1. 최상단: 등록된 개인 일정 목록 (크고 시원하게 표출) -->
+        <div class=day-schedule-list-section>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-size: 14px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 5px;">
+              <span>📌</span> <span>등록된 개인 일정</span> (<span id=dayScheduleCount style="color: var(--primary-blue, #0284c7);">0</span>)
+            </span>
+            <button type=button class=btn-secondary id=btnDeleteSelectedSchedules style="font-size: 11.5px; padding: 4px 9px; color: #dc2626; border-color: #fecaca; display: none;">🗑️ 선택 삭제</button>
           </div>
+          <div id=dayScheduleItemsContainer class=day-schedule-items-container style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;"></div>
         </div>
+
+        <!-- 2. 중간: 개인 일정 추가 (시간 선택 + 내용 입력 + 저장) -->
         <div class=day-schedule-add-box style="background: var(--bg-card); border: 1.5px solid var(--card-border, #cbd5e1); border-radius: 12px; padding: 12px;">
-          <label class=form-label style="font-weight: 800; font-size: 13px; margin-bottom: 8px; display: block;">➕ 개인 일정 추가</label>
+          <label class=form-label style="font-weight: 800; font-size: 13.5px; margin-bottom: 8px; display: flex; align-items: center; gap: 4px;">
+            <span>➕</span> <span>새 개인 일정 추가</span>
+          </label>
           <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 8px; flex-wrap: wrap;" id=scheduleTimePickerRow>
             <span style="font-size: 12.5px; font-weight: 700; color: var(--text-secondary); white-space: nowrap;">⏰ 시간:</span>
             <select id=editScheduleAmPm class=form-select style="width: auto; min-width: 68px; height: 36px; padding: 4px 8px; font-size: 13px; font-weight: 700;">
@@ -343,21 +353,36 @@
             ⏰ 설정 시각: <span id=editScheduleTimeBadgeText>오전 09:00</span>
           </div>
           <div style="display: flex; gap: 8px; align-items: center;">
-            <input type=text id=editNoteInput class=form-input placeholder="일정 내용 입력" style="flex: 1; height: 38px;">
-            <button type=button class=btn-primary id=btnSaveDayEdit style="padding: 0 16px; font-size: 13px; font-weight: 700; white-space: nowrap; height: 38px; margin-left: auto;">일정 저장</button>
+            <input type=text id=editNoteInput class=form-input placeholder="새 일정 내용 입력 (예: 치과 예약, 저녁 약속)" style="flex: 1; height: 40px; font-size: 14px;">
+            <button type=button class=btn-primary id=btnSaveDayEdit style="padding: 0 16px; font-size: 13.5px; font-weight: 800; white-space: nowrap; height: 40px; margin-left: auto;">일정 저장</button>
           </div>
         </div>
-        <div class=day-schedule-list-section>
-          <div style=display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;>
-            <span style=font-size: 13px; font-weight: 800; color: var(--text-main);>📌 등록된 개인 일정 (<span id=dayScheduleCount>0</span>)</span>
-            <button type=button class=btn-secondary id=btnDeleteSelectedSchedules style=font-size: 11.5px; padding: 4px 9px; color: #dc2626; border-color: #fecaca; display: none;>🗑️ 선택 삭제</button>
+
+        <!-- 3. 하단: 근무 형태 변경 (일정 확인/입력 다음으로 배치) -->
+        <div class="day-shift-edit-box" style="background: rgba(100, 116, 139, 0.05); border: 1px dashed var(--card-border, #cbd5e1); border-radius: 10px; padding: 10px 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label class=form-label for=editShiftSelect style="font-weight: 700; font-size: 12.5px; margin-bottom: 0; color: var(--text-secondary);">🔄 이 날의 근무 형태 변경</label>
           </div>
-          <div id=dayScheduleItemsContainer class=day-schedule-items-container style=max-height: 160px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;></div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <select id=editShiftSelect class=form-select style="flex: 1; height: 36px; font-size: 13px;">
+              <option value=일근>일근 (기본)</option>
+              <option value=야근>야근 (기본)</option>
+              <option value=조근>조근 (기본)</option>
+              <option value=비번>비번 (휴무/미표시)</option>
+              <option value=일근대근>⚡ 일근대근 (빨간색)</option>
+              <option value=야근대근>⚡ 야근대근 (빨간색)</option>
+              <option value=조근대근>⚡ 조근대근 (빨간색)</option>
+              <option value=일근휴가>🌿 일근휴가 (녹색)</option>
+              <option value=야근휴가>🌿 야근휴가 (녹색)</option>
+              <option value=조근휴가>🌿 조근휴가 (녹색)</option>
+            </select>
+            <button type=button class=btn-secondary id=btnSaveShiftType style="padding: 0 14px; font-size: 12.5px; font-weight: 700; white-space: nowrap; height: 36px; margin-left: auto;">근무 저장</button>
+          </div>
         </div>
       </div>
-      <div class=modal-footer style=justify-content: space-between; border-top: 1px solid #f1f5f9; padding-top: 12px; margin-top: 4px;>
-        <button type=button class=btn-secondary id=btnResetDayEdit style=color: #ef4444; border-color: #fecaca; font-size: 12px; title=근무 형태와 모든 일정을 기본 교대근무로 초기화>기본값 복원</button>
-        <button type=button class=btn-secondary id=btnCloseDayEditFooter style=padding: 8px 16px; font-size: 13px;>닫기</button>
+      <div class=modal-footer style="justify-content: space-between; border-top: 1px solid #f1f5f9; padding-top: 12px; margin-top: 4px;">
+        <button type=button class=btn-secondary id=btnResetDayEdit style="color: #ef4444; border-color: #fecaca; font-size: 12px;" title="근무 형태와 모든 일정을 기본 교대근무로 초기화">기본값 복원</button>
+        <button type=button class=btn-secondary id=btnCloseDayEditFooter style="padding: 8px 18px; font-size: 13px; font-weight: 700;">닫기</button>
       </div>
     </div>
   </div>
