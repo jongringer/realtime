@@ -4,7 +4,8 @@ const STORAGE_KEYS = {
   OVERRIDES: 'shift_app_overrides',
   SCHEDULES: 'shift_app_schedules',
   ALARM_SETTINGS: 'shift_app_alarm_settings',
-  ACTIVE_ALARMS: 'shift_app_active_alarms'
+  ACTIVE_ALARMS: 'shift_app_active_alarms',
+  KNOWN_MEMBERS: 'shift_app_known_members'
 };
 
 // 기본 알람 설정 (일근 06:00, 야근 15:00, 조근 05:20)
@@ -220,6 +221,52 @@ class ShiftStorage {
   setProfile(profile) {
     localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(profile));
   }
+
+  getKnownMembers() {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.KNOWN_MEMBERS);
+      if (data) {
+        const list = JSON.parse(data);
+        if (Array.isArray(list) && list.length > 0) return list;
+      }
+      return ['최종철', '김철수', '이영희', '박민수'];
+    } catch (e) {
+      return ['최종철', '김철수', '이영희', '박민수'];
+    }
+  }
+
+  setKnownMembers(members) {
+    if (Array.isArray(members)) {
+      localStorage.setItem(STORAGE_KEYS.KNOWN_MEMBERS, JSON.stringify(members));
+    }
+  }
+
+  addKnownMember(name) {
+    if (!name || typeof name !== 'string') return;
+    const clean = name.replace(/\s*님$/, '').trim();
+    if (!clean) return;
+    const members = this.getKnownMembers();
+    if (!members.includes(clean)) {
+      members.push(clean);
+      this.setKnownMembers(members);
+    }
+  }
+
+  switchMember(name, team = null) {
+    if (!name || typeof name !== 'string') return;
+    const clean = name.replace(/\s*님$/, '').trim();
+    if (!clean) return;
+    this.addKnownMember(clean);
+    const curProfile = this.getProfile();
+    const updated = {
+      name: clean + ' 님',
+      team: (team !== null && team !== undefined) ? team : (curProfile.team || '생방기술1 · 직무 NDC'),
+      avatar: clean[0] || '최'
+    };
+    this.setProfile(updated);
+    return updated;
+  }
+
 
   getBaseSettings() {
     try {

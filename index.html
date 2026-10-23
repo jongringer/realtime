@@ -247,6 +247,24 @@
         <button class=modal-close-btn id=btnCloseUploadModal>✕</button>
       </div>
       <div class=modal-body>
+        <!-- 근무 대상자 (이름 초이스) 선택 영역 -->
+        <div class="ocr-member-selection-card" style="background: rgba(2, 132, 199, 0.06); border: 1.5px solid rgba(2, 132, 199, 0.25); border-radius: 14px; padding: 12px 14px; margin-bottom: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-size: 16px;">👤</span>
+              <strong style="font-size: 13.5px; color: var(--text-main); font-weight: 800;">근무자 선택 (초이스)</strong>
+            </div>
+            <span id="ocrCurrentSelectedMemberBadge" style="font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 9999px; background: #0284c7; color: #ffffff;">
+              최종철 님
+            </span>
+          </div>
+          <p style="font-size: 11.5px; color: #64748b; margin: 0 0 8px 0;">사진이나 파일 등록 시 명단이 자동 추출되며, 터치하여 대상자를 바꿀 수 있습니다.</p>
+          <div id="ocrMemberChipsContainer" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;"></div>
+          <div style="display: flex; gap: 6px; align-items: center;">
+            <input type="text" id="inputCustomMemberName" class="form-input" placeholder="새 근무자 이름 (예: 홍길동)" style="height: 32px; font-size: 12px; padding: 4px 8px;">
+            <button type="button" id="btnAddCustomMember" class="btn-secondary" style="height: 32px; font-size: 12px; padding: 0 12px; font-weight: 700; white-space: nowrap;">＋ 추가</button>
+          </div>
+        </div>
         <p style="font-size: 13px; color: #64748b; margin-bottom: 14px;">근무표 PDF 또는 사진(이미지) 파일을 등록하시면 대근 및 휴가 일정을 자동으로 감지하여 근무표를 업데이트합니다.</p>
         <div class=upload-options-grid>
           <button type=button class=upload-option-card id=btnCameraSelect>
@@ -524,6 +542,47 @@
       <div class=modal-footer>
         <button type=button class=btn-secondary onclick=window.print()>인쇄 / PDF 저장</button>
         <button type=button class=btn-primary id=btnCloseSummaryFooter>닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 근무자 이름 원클릭 간편 변경 모달 (좌상단 최종철 님 터치 시 호출) -->
+  <div class="modal-overlay" id="modalMemberSwitch">
+    <div class="modal-container" style="max-width: 380px;">
+      <div class="modal-header">
+        <h3 class="modal-title" style="display: flex; align-items: center; gap: 6px; font-size: 16px;">
+          <span>👤</span> <span>근무자 이름 변경 / 선택</span>
+        </h3>
+        <button class="modal-close-btn" id="btnCloseMemberSwitch">✕</button>
+      </div>
+      <div class="modal-body" style="padding-top: 10px;">
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.45;">
+          원하시는 이름을 터치하시면 좌상단 프로필과 개인 근무표가 즉시 해당 근무자로 변경됩니다.
+        </p>
+
+        <!-- 등록된 동료 명단 빠른 선택 칩 -->
+        <div style="margin-bottom: 14px;">
+          <div style="font-size: 12px; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">
+            ⚡ 빠른 선택 (등록된 동료 명단):
+          </div>
+          <div id="quickMemberChipsContainer" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
+        </div>
+
+        <!-- 새 이름 직접 입력 -->
+        <div style="background: var(--bg-card); border: 1.5px solid var(--card-border, #cbd5e1); border-radius: 12px; padding: 12px; margin-bottom: 4px;">
+          <div class="form-group" style="margin-bottom: 8px;">
+            <label class="form-label" for="inputSwitchName" style="font-size: 12px; font-weight: 700;">근무자 이름</label>
+            <input type="text" id="inputSwitchName" class="form-input" placeholder="이름 입력 (예: 홍길동)" style="height: 36px; font-weight: 700;">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" for="inputSwitchTeam" style="font-size: 12px; font-weight: 700;">소속 및 직무 (선택)</label>
+            <input type="text" id="inputSwitchTeam" class="form-input" placeholder="생방기술1 · 직무 NDC" style="height: 36px;">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; gap: 8px; justify-content: stretch; padding-top: 10px;">
+        <button type="button" class="btn-secondary" id="btnCancelMemberSwitch" style="flex: 1;">닫기</button>
+        <button type="button" class="btn-primary" id="btnApplyMemberSwitch" style="flex: 1.5; font-weight: 700;">이름 적용하기</button>
       </div>
     </div>
   </div>

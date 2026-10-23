@@ -36,3 +36,22 @@ if (parsed.length === 3 &&
   console.error('❌ OCR 파서 테스트 실패');
   process.exit(1);
 }
+
+// 2. 이름 추출 테스트
+const sampleMultiNameText = `
+[10월 교대근무 편성표]
+최종철 님: 10월 23일 일근대근, 10월 31일 일근대근
+김철수 팀장: 10월 24일 야근대근
+이영희 님: 10월 25일 일근휴가
+박민수: 10월 26일 조근
+`;
+
+const detectedNames = parser.extractCandidateNames(sampleMultiNameText, '최종철');
+console.log('감지된 근무자 목록:', detectedNames);
+
+if (detectedNames.includes('최종철') && detectedNames.includes('김철수') && detectedNames.includes('이영희') && detectedNames.includes('박민수')) {
+  console.log('✅ 근무자 이름 추출 테스트 성공: 다자간 근무표에서 동료 이름이 정확히 추출되었습니다!');
+} else {
+  console.error('❌ 근무자 이름 추출 테스트 실패:', detectedNames);
+  process.exit(1);
+}

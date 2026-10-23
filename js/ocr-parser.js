@@ -358,6 +358,83 @@ class ShiftOCRParser {
   }
 
   /**
+   * 텍스트에서 한글 인명(근무자 이름 후보군) 자동 감지 및 추출
+   * @param {string} text - OCR 또는 PDF 추출 전체 텍스트
+   * @param {string} currentName - 현재 설정된 사용자 이름
+   * @returns {Array<string>} 고유한 근무자 이름 목록 (예: ['최종철', '김철수', '이영희'])
+   */
+  extractCandidateNames(text, currentName = '최종철') {
+    const candidates = new Set();
+    const cleanCurrent = (currentName || '').replace(/\s*님$/, '').trim();
+    if (cleanCurrent) candidates.add(cleanCurrent);
+
+    if (!text || typeof text !== 'string') {
+      return Array.from(candidates);
+    }
+
+    // 근무표 및 앱 불용어(인명이 아닌 단어) 리스트
+    const stopwords = new Set([
+      '근무', '일근', '야근', '조근', '비번', '휴가', '연차', '대근', '월차', '공가', '포상', '병가',
+      '특이', '사항', '일정', '요일', '일자', '시간', '날짜', '교대', '스마트', '캘린더', '관리', '안내',
+      '출근', '퇴근', '오전', '오후', '시계', '알람', '등록', '변경', '확인', '수정', '저장', '복원',
+      '취소', '초기화', '새로', '고침', '여의도', '목동', '서울', '병원', '모임', '회식', '약속', '생일',
+      '지하철', '정류장', '공휴일', '신정', '설날', '추석', '삼일절', '어린이', '현충일', '광복절', '개천절',
+      '한글날', '성탄절', '이대병원', '양정고', '경인초', '직무', '생방', '기술', '모드', '날씨', '현재',
+      '단독', '표출', '도착', '정보', '전광판', '이달', '월간', '통계', '선택', '인쇄', '자체', '울림'
+    ]);
+
+    // 1. "XXX 님", "XXX 팀장/선임/책임/과장/대리/사원/주임/부장" 명시적 호칭 패턴 (신뢰도 최우선)
+    const titleRegex = /([가-힣]{2,4})\s*(?:님|팀장|선임|책임|과장|대리|사원|주임|부장|차장)/g;
+    let match;
+    while ((match = titleRegex.exec(text)) !== null) {
+      const name = match[1].trim();
+      if (!stopwords.has(name) && name.length >= 2 && name.length <= 4) {
+        candidates.add(name);
+      }
+    }
+
+    // 2. 한국 주요 성씨 기반 2~3글자 인명 패턴 (성씨 + 1~2자)
+    const familyNames = '김|이|박|최|정|강|조|윤|장|임|한|오|서|신|권|황|안|송|류|홍|고|문|양|손|배|백|허|유|남|심|노|하|곽|성|차|주|우|구|전|민|진|지|엄|채|원|천|방|공|현|함|변|염|여|추|도|소|석|선|설|마|길|연|위|표|명|기|반|왕|금|옥|육|인|맹|제|탁|어';
+    const nameRegex = new RegExp(`(?:^|[\\s\\n\\r,;:\\[\\]\\(/])(${familyNames})([가-힣]{1,2})(?=[\\s\\n\\r,;:\\]\\)/]|$)`, 'g');
+    
+    while ((match = nameRegex.exec(text)) !== null) {
+      const fullName = (match[1] + match[2]).trim();
+      if (!stopwords.has(fullName) && fullName.length >= 2 && fullName.length <= 3) {
+        if (!/^(일근|야근|조근|비번|휴가|연차|대근)$/.test(fullName)) {
+          candidates.add(fullName);
+        }
+      }
+    }
+
+    return Array.from(candidates);
+  }
+
+  /**
+   * 특정 근무자(이름)에 특화된 근무 일정 파싱
+   */
+  parseShiftTextForName(text, targetName, targetYear = null, targetMonth = null, filename = '') {
+    if (!targetName) {
+      return this.parseShiftText(text, targetYear, targetMonth, filename);
+    }
+
+    const cleanName = targetName.replace(/\s*님$/, '').trim();
+    const lines = text.split(/\r?\n/);
+    
+    // 대상 이름이 포함된 줄(Line)들을 우선 필터링
+    const targetLines = lines.filter(line => line.includes(cleanName));
+
+    if (targetLines.length > 0) {
+      const userText = targetLines.join('\n');
+      const results = this.parseShiftText(userText, targetYear, targetMonth, filename);
+      if (results && results.length > 0) {
+        return results;
+      }
+    }
+
+    return this.parseShiftText(text, targetYear, targetMonth, filename);
+  }
+
+  /**
    * 데모/테스트용 샘플 데이터 생성
    * - 9월: 17일 일근대근, 18일 일근휴가, 19일 야근
    * - 10월: 모바일 캘린더 스크린샷 실제 포맷 (23일 일근대근, 31일 일근대근, 12일 저녁 감자바위, 15일 퇴직연금 개시 2년차 등)
@@ -419,3 +496,4 @@ class ShiftOCRParser {
 }
 
 const shiftOCRParser = new ShiftOCRParser();
+
