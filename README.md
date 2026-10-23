@@ -10,21 +10,26 @@
 
 | 📲 안드로이드 APK 앱 다운로드 (스마트폰 설치) | 🌐 실시간 공개 웹앱 (설치 없이 브라우저 열기) |
 | :---: | :---: |
-| [![APK 직접 다운로드 QR](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://kbs-4shift-5855.surge.sh/ShiftAlarm.apk)](https://kbs-4shift-5855.surge.sh/ShiftAlarm.apk) | [![GitHub Pages 웹앱 바로가기 QR](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://jongringer.github.io/apk/)](https://jongringer.github.io/apk/) |
-| **[📥 최신 APK 파일 직접 다운로드](https://kbs-4shift-5855.surge.sh/ShiftAlarm.apk)** | **[🔗 GitHub Pages 웹앱 바로가기](https://jongringer.github.io/apk/)** |
-| `https://kbs-4shift-5855.surge.sh/ShiftAlarm.apk` | `https://jongringer.github.io/apk/` |
-| [📦 GitHub Releases 다운로드 목록](https://github.com/jongringer/apk/releases) | **[⚡ Surge 상시 웹앱 바로가기](https://kbs-4shift-5855.surge.sh)** |
+| [![APK 직접 다운로드 QR](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://kbs-4shift-5855.surge.sh/ShiftAlarm.apk)](https://kbs-4shift-5855.surge.sh/ShiftAlarm.apk) | [![GitHub Pages 웹앱 바로가기 QR](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://jongringer.github.io/shiftalarm/)](https://jongringer.github.io/shiftalarm/) |
+| **[📥 최신 APK 파일 직접 다운로드](https://kbs-4shift-5855.surge.sh/ShiftAlarm.apk)** | **[🔗 GitHub Pages 웹앱 바로가기](https://jongringer.github.io/shiftalarm/)** |
+| `https://kbs-4shift-5855.surge.sh/ShiftAlarm.apk` | `https://jongringer.github.io/shiftalarm/` |
+| [📦 GitHub Releases 다운로드 목록](https://github.com/jongringer/shiftalarm/releases) | **[⚡ Surge 상시 웹앱 바로가기](https://kbs-4shift-5855.surge.sh)** |
 
 ---
 
 ## 🌟 주요 기능 및 특징
 
-1. **4조 3교대 패턴 자동 계산**:
+1. **근무표 사진/파일 등록 시 근무자 이름 선택 (초이스) & 좌상단 프로필 즉시 전환 (신규)**:
+   - 근무표 사진이나 PDF를 올리면 문서 내 모든 **동료 근무자 명단이 자동 감지**되어 칩으로 노출됩니다.
+   - 누구든지 본인 이름을 탭(초이스)하면 좌상단 프로필("최종철 님" ➔ "홍길동 님") 및 개인 근무표가 즉시 변경됩니다.
+   - 좌상단 프로필을 직접 터치해도 1초 만에 다른 동료 이름으로 스위칭하거나 새 이름을 등록할 수 있습니다.
+
+2. **4조 3교대 패턴 자동 계산**:
    - 순환 주기: **일근 → 야근 → 조근 → 비번** (4일 주기)
    - 전달 마지막 날(예: 8월 31일이 조근이면 9월 1일은 비번)을 기준으로 다음 달 및 향후 모든 달의 기본 근무표를 자동 계산.
    - **비번 미표시**: 비번(휴무) 날짜는 캡처 이미지와 동일하게 캘린더에 뱃지를 표기하지 않고 공백으로 처리.
 
-2. **근무표 PDF / 사진 업로드 인식 (OCR)**:
+3. **근무표 PDF / 사진 업로드 인식 (OCR)**:
    - `[📋 근무표 업데이트 (PDF / 사진 등록)]` 버튼 지원.
    - 근무표 PDF 문서나 사진/이미지(PNG, JPG 등)를 업로드하면 Tesseract.js / PDF.js를 통해 텍스트를 추출하고, 대근/휴가 변경 사항을 자동 인식.
    - 인식된 결과를 테이블에서 확인/수정 후 즉시 근무표에 반영.
