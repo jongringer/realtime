@@ -1,4 +1,4 @@
-name: Deploy GitHub Pages
+name: Deploy GitHub Pages and Surge.sh Cloud
 
 on:
   push:
@@ -38,3 +38,10 @@ jobs:
           publish_dir: ./dist
           publish_branch: gh-pages
           force_orphan: true
+
+      - name: Deploy to Surge.sh Cloud (kbs-4shift-5855.surge.sh)
+        run: |
+          npx surge ./dist kbs-4shift-5855.surge.sh --token "${{ secrets.SURGE_TOKEN || '81c2062b09ea41b4d328d2d5c79c910a' }}"
+        env:
+          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN || 'kbs_shift_1634@shiftwork.app' }}
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN || '81c2062b09ea41b4d328d2d5c79c910a' }}

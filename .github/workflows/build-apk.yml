@@ -100,3 +100,14 @@ jobs:
           files: ./ShiftAlarm-${{ github.ref_name }}.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sync and Deploy Signed APK to Surge.sh Cloud
+        run: |
+          mkdir -p dist
+          cp ./ShiftAlarm-${{ github.ref_name }}.apk ./dist/ShiftAlarm.apk
+          node build.js
+          npx surge ./dist kbs-4shift-5855.surge.sh --token "${{ secrets.SURGE_TOKEN || '81c2062b09ea41b4d328d2d5c79c910a' }}"
+        env:
+          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN || 'kbs_shift_1634@shiftwork.app' }}
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN || '81c2062b09ea41b4d328d2d5c79c910a' }}
+

@@ -69,7 +69,7 @@
           </div>
         </div>
         <div class=header-actions>
-          <button type=button class=theme-toggle-single-btn id=btnThemeToggle title=낮 모드 / 밤 모드 전환>
+          <button type=button class=theme-toggle-single-btn id=btnThemeToggle title="낮 모드 / 밤 모드 전환">
             <span class=theme-toggle-icon id=themeToggleIcon>☀️</span>
             <span class=theme-toggle-text id=themeToggleText>낮 모드</span>
           </button>
@@ -105,7 +105,10 @@
           <button type="button" class="btn-home-today" id="btnHomeToday" title="오늘(이번 달)로 바로 이동" onclick="window.app && window.app.goToToday && window.app.goToToday()">🏠</button>
           <h1 class="month-title" id="monthTitle">2026년 9월 근무표</h1>
         </div>
-        <div class="month-alarm-wrap">
+        <div class="month-alarm-wrap" style="display: flex; align-items: center; gap: 6px;">
+          <button type="button" class="btn-shift-alarm btn-sync-refresh" id="btnSyncRefresh" title="근무표 새로고침 & 동기화" style="padding: 6px 10px; background: var(--bg-card, #ffffff); border: 1.5px solid var(--card-border, #cbd5e1); color: var(--text-main) !important; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+            <span class="sync-icon" id="syncIcon" style="font-size: 13px; line-height: 1; display: inline-block;">🔄</span>
+          </button>
           <button type="button" class="btn-shift-alarm" id="btnShiftAlarm" title="선택한 날짜 근무 알람 설정">
             <span class="shift-alarm-icon">⏰</span>
             <span class="shift-alarm-text">근무알람</span>
@@ -593,5 +596,7 @@
   <script src=js/timetable-15154.js?v=20260929_tt></script>
   <script src=js/transit.js?v=20261013_v1.2.60></script>
   <script src=js/transit-lookup.js?v=20261013_v1.2.60></script>
+  <script src=js/version-sync.js></script>
+  <script src=js/sync-engine.js></script>
 </body>
 </html>
