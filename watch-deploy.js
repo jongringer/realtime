@@ -70,7 +70,8 @@ const watchTargets = [
   path.join(baseDir, 'css'),
   path.join(baseDir, 'js'),
   path.join(baseDir, 'icons'),
-  path.join(baseDir, 'manifest.json')
+  path.join(baseDir, 'manifest.json'),
+  path.join(baseDir, 'master-shifts.json')
 ];
 
 watchTargets.forEach(target => {

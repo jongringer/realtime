@@ -52,24 +52,40 @@ const versionInfo = {
 fs.writeFileSync(path.join(distDir, 'version.json'), JSON.stringify(versionInfo, null, 2), 'utf8');
 console.log('✓ version.json 생성 완료');
 
-// 4-1. master-shifts.json 생성 (모든 사용자/APK 자동 동기화용 마스터 근무표)
+// 4-1. master-shifts.json 보존 및 동기화 (기존 파일의 모든 월별 오버라이드 영구 보존)
+const defaultMasterOverrides = {
+  '2026-09-17': { shiftType: '일근대근', time: '', alarm: '', note: '' },
+  '2026-09-18': { shiftType: '일근휴가', time: '', alarm: '', note: '' },
+  '2026-09-19': { shiftType: '야근', time: '', alarm: '', note: '' },
+  '2026-10-23': { shiftType: '일근대근', time: '', alarm: '', note: '' },
+  '2026-10-31': { shiftType: '일근대근', time: '', alarm: '', note: '' },
+  '2026-11-05': { shiftType: '일근휴가', time: '', alarm: '', note: '' },
+  '2026-11-12': { shiftType: '일근대근', time: '', alarm: '', note: '' },
+  '2026-11-20': { shiftType: '일근대근', time: '', alarm: '', note: '' }
+};
+
+let existingOverrides = {};
+const masterShiftsPath = path.join(baseDir, 'master-shifts.json');
+if (fs.existsSync(masterShiftsPath)) {
+  try {
+    const raw = JSON.parse(fs.readFileSync(masterShiftsPath, 'utf8'));
+    if (raw && raw.overrides) existingOverrides = raw.overrides;
+  } catch (e) {
+    console.warn('기존 master-shifts.json 파싱 실패, 기본값 사용');
+  }
+}
+
+// 기존 파일의 오버라이드를 최우선 보존하고, 누락된 기본 날짜만 채움
+const mergedOverrides = Object.assign({}, defaultMasterOverrides, existingOverrides);
+
 const masterShifts = {
   version: pkgVersion,
   updatedAt: buildDate,
-  overrides: {
-    '2026-09-17': { shiftType: '일근대근', time: '', alarm: '', note: '' },
-    '2026-09-18': { shiftType: '일근휴가', time: '', alarm: '', note: '' },
-    '2026-09-19': { shiftType: '야근', time: '', alarm: '', note: '' },
-    '2026-10-23': { shiftType: '일근대근', time: '', alarm: '', note: '' },
-    '2026-10-31': { shiftType: '일근대근', time: '', alarm: '', note: '' },
-    '2026-11-05': { shiftType: '일근휴가', time: '', alarm: '', note: '' },
-    '2026-11-12': { shiftType: '일근대근', time: '', alarm: '', note: '' },
-    '2026-11-20': { shiftType: '일근대근', time: '', alarm: '', note: '' }
-  }
+  overrides: mergedOverrides
 };
 fs.writeFileSync(path.join(distDir, 'master-shifts.json'), JSON.stringify(masterShifts, null, 2), 'utf8');
 fs.writeFileSync(path.join(baseDir, 'master-shifts.json'), JSON.stringify(masterShifts, null, 2), 'utf8');
-console.log('✓ master-shifts.json 생성 완료 (11월 근무표 포함)');
+console.log('✓ master-shifts.json 동기화 완료 (모든 월별 일정 보존됨)');
 
 // 5. 정적 리소스 복사 (css, js, icons, manifest 등)
 const copyItems = [

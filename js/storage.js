@@ -130,8 +130,10 @@ class ShiftStorage {
         let updated = false;
         // 마스터 특이사항(9월, 10월, 11월 대근/휴가 등)은 구버전 캐시보다 항상 우선 최신화
         for (const [k, v] of Object.entries(DEFAULT_INITIAL_DATA.overrides)) {
-          storedOverrides[k] = v;
-          updated = true;
+          if (!storedOverrides[k]) {
+            storedOverrides[k] = v;
+            updated = true;
+          }
         }
         if (updated) {
           this.setOverrides(storedOverrides);
@@ -271,7 +273,10 @@ class ShiftStorage {
     if (!overrideData) {
       delete overrides[dateStr];
     } else {
-      overrides[dateStr] = overrideData;
+      overrides[dateStr] = {
+        ...overrideData,
+        updatedAt: Date.now()
+      };
     }
     this.setOverrides(overrides);
   }
