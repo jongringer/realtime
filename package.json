@@ -1,6 +1,6 @@
 {
   "name": "realtime",
-  "version": "1.0.1",
+  "version": "1.2",
   "description": "실시간 대중교통 및 스마트 캘린더·근무표",
   "main": "index.html",
   "scripts": {
