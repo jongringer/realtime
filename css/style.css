@@ -9222,48 +9222,6 @@ body.dark-theme .btn-dangsan-view-toggle.active {
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35));
 }
 
-/* 근무자 이름 선택 칩 (초이스) 스타일 */
-.member-chip-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  border-radius: 9999px;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  border: 1.5px solid var(--card-border, #cbd5e1);
-  background: var(--bg-card, #ffffff);
-  color: var(--text-main, #0f172a);
-  transition: all 0.16s ease-in-out;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.member-chip-btn:hover {
-  border-color: #0284c7;
-  transform: translateY(-1px);
-}
-
-.member-chip-btn.active {
-  background: linear-gradient(135deg, #0284c7, #0369a1) !important;
-  color: #ffffff !important;
-  border-color: #0284c7 !important;
-  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35);
-}
-
-.profile-pill {
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.profile-pill:hover {
-  transform: translateY(-1px);
-}
-
-.profile-pill:active {
-  transform: scale(0.97);
-}
 
 
 

@@ -88,7 +88,7 @@
     isChecking = true;
 
     var currentBuildTime = window.__BUILD_TIMESTAMP__ || 0;
-    var fetchUrl = '/version.json?_t=' + Date.now();
+    var fetchUrl = 'version.json?_t=' + Date.now();
 
     fetch(fetchUrl, {
       cache: 'no-store',

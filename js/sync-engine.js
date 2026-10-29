@@ -65,7 +65,7 @@
       }, 650);
     }
 
-    var fetchUrl = '/master-shifts.json?_t=' + Date.now();
+    var fetchUrl = 'master-shifts.json?_t=' + Date.now();
 
     fetch(fetchUrl, {
       cache: 'no-store',

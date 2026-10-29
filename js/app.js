@@ -195,7 +195,6 @@ class ShiftApp {
     this.elAvatar = document.getElementById('headerAvatar');
     this.elName = document.getElementById('headerName');
     this.elTeam = document.getElementById('headerTeam');
-    this.selectedMemberName = (shiftStorage.getProfile().name || '최종철').replace(/\s*님$/, '').trim();
     this.lastExtractedOcrText = '';
 
     // 상단 낮 ☀️ / 밤 🌙 단일 교대 토글 버튼
@@ -246,20 +245,6 @@ class ShiftApp {
     this.ocrResultsArea = document.getElementById('ocrResultsArea');
     this.ocrResultsTbody = document.getElementById('ocrResultsTbody');
     this.btnApplyOcr = document.getElementById('btnApplyOcr');
-
-    // 근무자 선택 및 간편 변경 관련 DOM
-    this.ocrMemberChipsContainer = document.getElementById('ocrMemberChipsContainer');
-    this.ocrCurrentSelectedMemberBadge = document.getElementById('ocrCurrentSelectedMemberBadge');
-    this.inputCustomMemberName = document.getElementById('inputCustomMemberName');
-    this.btnAddCustomMember = document.getElementById('btnAddCustomMember');
-
-    this.modalMemberSwitch = document.getElementById('modalMemberSwitch');
-    this.btnCloseMemberSwitch = document.getElementById('btnCloseMemberSwitch');
-    this.btnCancelMemberSwitch = document.getElementById('btnCancelMemberSwitch');
-    this.btnApplyMemberSwitch = document.getElementById('btnApplyMemberSwitch');
-    this.quickMemberChipsContainer = document.getElementById('quickMemberChipsContainer');
-    this.inputSwitchName = document.getElementById('inputSwitchName');
-    this.inputSwitchTeam = document.getElementById('inputSwitchTeam');
 
     // 날짜별 근무 수동 수정 & 개인 일정 관리 모달
     this.modalDayEdit = document.getElementById('modalDayEdit');
@@ -416,59 +401,18 @@ class ShiftApp {
     if (this.btnOpenUploadModal) {
       this.btnOpenUploadModal.addEventListener('click', () => {
         this.renderUploadModalSpecialNotes();
-        this.renderOcrMemberChips();
         this.openModal(this.modalUpload);
       });
     }
     if (this.btnOpenUploadModalHeader) {
       this.btnOpenUploadModalHeader.addEventListener('click', () => {
         this.renderUploadModalSpecialNotes();
-        this.renderOcrMemberChips();
         this.openModal(this.modalUpload);
       });
     }
     this.btnCloseUploadModal.addEventListener('click', () => {
       this.closeModal(this.modalUpload);
     });
-
-    // 좌상단 프로필(최종철 님) 터치 시 근무자 간편 선택/변경 모달 호출
-    if (this.profilePill) {
-      this.profilePill.addEventListener('click', () => {
-        this.openMemberSwitchModal();
-      });
-    }
-
-    // 근무자 간편 변경 모달 닫기 및 적용 이벤트
-    if (this.btnCloseMemberSwitch) {
-      this.btnCloseMemberSwitch.addEventListener('click', () => this.closeModal(this.modalMemberSwitch));
-    }
-    if (this.btnCancelMemberSwitch) {
-      this.btnCancelMemberSwitch.addEventListener('click', () => this.closeModal(this.modalMemberSwitch));
-    }
-    if (this.btnApplyMemberSwitch) {
-      this.btnApplyMemberSwitch.addEventListener('click', () => this.applyMemberSwitch());
-    }
-    if (this.inputSwitchName) {
-      this.inputSwitchName.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          this.applyMemberSwitch();
-        }
-      });
-    }
-
-    // 업로드 모달 내 새 근무자 직접 추가 버튼
-    if (this.btnAddCustomMember) {
-      this.btnAddCustomMember.addEventListener('click', () => this.addCustomMemberFromInput());
-    }
-    if (this.inputCustomMemberName) {
-      this.inputCustomMemberName.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          this.addCustomMemberFromInput();
-        }
-      });
-    }
 
     // 3대 업로드 옵션 (카메라 촬영 / 갤러리 선택 / 파일(PDF) 선택)
     if (this.btnCameraSelect && this.cameraInput) {
@@ -2411,15 +2355,10 @@ class ShiftApp {
       // 추출된 원본 텍스트 보관
       this.lastExtractedOcrText = extractedText;
 
-      // 텍스트 내 동료 이름 목록 자동 감지 및 등록
-      const detectedNames = shiftOCRParser.extractCandidateNames(extractedText, this.selectedMemberName);
-      detectedNames.forEach(n => shiftStorage.addKnownMember(n));
-      this.renderOcrMemberChips(detectedNames);
-
-      // 선택된 근무자 기준 변동사항 파싱
+      // 최종철 님 기준 변동사항 파싱
       const results = shiftOCRParser.parseShiftTextForName(
         extractedText,
-        this.selectedMemberName,
+        '최종철',
         this.detectedOcrYear,
         this.detectedOcrMonth,
         file.name
@@ -2430,7 +2369,7 @@ class ShiftApp {
         this.ocrProgressBox.classList.remove('active');
         if (results.length === 0) {
           // 텍스트 미발견 시 샘플 가이드 표시
-          alert(`${this.detectedOcrYear}년 ${this.detectedOcrMonth}월 기준 [${this.selectedMemberName}] 님의 인식된 대근/휴가 내역이 없어 샘플 가이드 데이터로 표시됩니다.`);
+          alert(`${this.detectedOcrYear}년 ${this.detectedOcrMonth}월 기준 최종철 님의 인식된 대근/휴가 내역이 없어 샘플 가이드 데이터로 표시됩니다.`);
           this.renderOcrResults(shiftOCRParser.getSampleExtractedData(this.detectedOcrYear, this.detectedOcrMonth));
         } else {
           this.renderOcrResults(results);
@@ -2512,124 +2451,7 @@ class ShiftApp {
     this.renderAll();
   }
 
-  // --------------------------------------------------------------------------
-  // 근무자 선택(초이스) 및 프로필 즉시 전환 모듈
-  // --------------------------------------------------------------------------
 
-  renderOcrMemberChips(activeCandidates = null) {
-    if (!this.ocrMemberChipsContainer) return;
-    this.ocrMemberChipsContainer.innerHTML = '';
-
-    const members = shiftStorage.getKnownMembers();
-    if (activeCandidates && Array.isArray(activeCandidates)) {
-      activeCandidates.forEach(n => {
-        if (!members.includes(n)) members.push(n);
-      });
-    }
-
-    const cur = (this.selectedMemberName || shiftStorage.getProfile().name || '최종철').replace(/\s*님$/, '').trim();
-
-    members.forEach(name => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = `member-chip-btn ${name === cur ? 'active' : ''}`;
-      btn.innerHTML = `<span>👤</span> <span>${name}</span>`;
-      btn.addEventListener('click', () => {
-        this.selectOcrMember(name);
-      });
-      this.ocrMemberChipsContainer.appendChild(btn);
-    });
-
-    if (this.ocrCurrentSelectedMemberBadge) {
-      this.ocrCurrentSelectedMemberBadge.textContent = cur + ' 님';
-    }
-  }
-
-  selectOcrMember(name) {
-    const clean = (name || '').replace(/\s*님$/, '').trim();
-    if (!clean) return;
-    this.selectedMemberName = clean;
-
-    // 프로필 전환 및 헤더 즉시 갱신
-    shiftStorage.switchMember(clean);
-    this.renderHeader();
-    this.renderTodayCard();
-
-    // 칩 UI 업데이트
-    this.renderOcrMemberChips();
-
-    // 만약 이미 파싱된 텍스트가 있다면 해당 사용자에 맞춰 변동사항 즉시 재파싱
-    if (this.lastExtractedOcrText) {
-      const results = shiftOCRParser.parseShiftTextForName(
-        this.lastExtractedOcrText,
-        clean,
-        this.detectedOcrYear || this.currentYear,
-        this.detectedOcrMonth || this.currentMonth,
-        ''
-      );
-      this.renderOcrResults(results);
-    }
-  }
-
-  addCustomMemberFromInput() {
-    if (!this.inputCustomMemberName) return;
-    const name = this.inputCustomMemberName.value.trim();
-    if (!name) {
-      alert('근무자 이름을 입력해주세요.');
-      return;
-    }
-    const clean = name.replace(/\s*님$/, '').trim();
-    shiftStorage.addKnownMember(clean);
-    this.selectOcrMember(clean);
-    this.inputCustomMemberName.value = '';
-  }
-
-  openMemberSwitchModal() {
-    if (!this.modalMemberSwitch) return;
-    const profile = shiftStorage.getProfile();
-    const curName = (profile.name || '최종철').replace(/\s*님$/, '').trim();
-
-    if (this.inputSwitchName) this.inputSwitchName.value = curName;
-    if (this.inputSwitchTeam) this.inputSwitchTeam.value = profile.team || '생방기술1 · 직무 NDC';
-
-    // 빠른 선택 칩 렌더링
-    if (this.quickMemberChipsContainer) {
-      this.quickMemberChipsContainer.innerHTML = '';
-      const members = shiftStorage.getKnownMembers();
-      members.forEach(name => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = `member-chip-btn ${name === curName ? 'active' : ''}`;
-        btn.innerHTML = `<span>👤</span> <span>${name}</span>`;
-        btn.addEventListener('click', () => {
-          if (this.inputSwitchName) this.inputSwitchName.value = name;
-          this.quickMemberChipsContainer.querySelectorAll('.member-chip-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-        });
-        this.quickMemberChipsContainer.appendChild(btn);
-      });
-    }
-
-    this.openModal(this.modalMemberSwitch);
-  }
-
-  applyMemberSwitch() {
-    if (!this.inputSwitchName) return;
-    const name = this.inputSwitchName.value.trim();
-    if (!name) {
-      alert('근무자 이름을 입력해주세요.');
-      return;
-    }
-    const team = this.inputSwitchTeam ? this.inputSwitchTeam.value.trim() : null;
-    const clean = name.replace(/\s*님$/, '').trim();
-
-    shiftStorage.switchMember(clean, team);
-    this.selectedMemberName = clean;
-    this.renderHeader();
-    this.renderTodayCard();
-
-    this.closeModal(this.modalMemberSwitch);
-  }
 
   renderMonthlySummary() {
     const overrides = shiftStorage.getOverrides();
