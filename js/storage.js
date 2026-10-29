@@ -57,6 +57,25 @@ const DEFAULT_INITIAL_DATA = {
       time: '',
       alarm: '',
       note: ''
+    },
+    // 11월 근무표 스크린샷 1:1 반영 (5일 일근휴가, 12일·20일 일근대근)
+    '2026-11-05': {
+      shiftType: '일근휴가',
+      time: '',
+      alarm: '',
+      note: ''
+    },
+    '2026-11-12': {
+      shiftType: '일근대근',
+      time: '',
+      alarm: '',
+      note: ''
+    },
+    '2026-11-20': {
+      shiftType: '일근대근',
+      time: '',
+      alarm: '',
+      note: ''
     }
   },
   schedules: []

@@ -7,8 +7,15 @@
 (function() {
   'use strict';
 
+  function getStorage() {
+    if (typeof shiftStorage !== 'undefined' && shiftStorage) return shiftStorage;
+    if (typeof window !== 'undefined' && window.shiftStorage) return window.shiftStorage;
+    return null;
+  }
+
   // 1. 토스트 알림 헬퍼
-  function showToast(message, isSuccess = true) {
+  function showToast(message, isSuccess) {
+    if (isSuccess === undefined) isSuccess = true;
     var old = document.getElementById('sync-toast-msg');
     if (old) old.remove();
 
@@ -46,6 +53,25 @@
     }, 3500);
   }
 
+  // 클립보드 폴백 복사
+  function fallbackCopyText(text) {
+    try {
+      var textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-9999px';
+      textArea.style.top = '0';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      var successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      return successful;
+    } catch (err) {
+      return false;
+    }
+  }
+
   // 2. 동기화 링크 생성 및 복사/공유
   function triggerSyncShare() {
     var icon = document.getElementById('syncIcon');
@@ -59,19 +85,22 @@
     }
 
     try {
-      if (typeof StorageManager === 'undefined') {
+      var storage = getStorage();
+      if (!storage) {
         showToast('저장소 로드 대기 중입니다. 잠시 후 다시 눌러주세요.', false);
         return;
       }
 
-      var overrides = StorageManager.getOverrides();
-      var profile = StorageManager.getProfile();
-      var baseSettings = StorageManager.getBaseSettings();
+      var overrides = storage.getOverrides ? storage.getOverrides() : {};
+      var profile = storage.getProfile ? storage.getProfile() : {};
+      var baseSettings = storage.getBaseSettings ? storage.getBaseSettings() : {};
+      var schedules = storage.getSchedules ? storage.getSchedules() : [];
 
       var payload = {
         overrides: overrides,
         profile: profile,
         baseSettings: baseSettings,
+        schedules: schedules,
         ts: Date.now()
       };
 
@@ -86,8 +115,15 @@
       var syncUrl = baseUrl + '?sync=' + encodeURIComponent(base64);
 
       // 클립보드 복사 시도
+      var copied = false;
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(syncUrl).catch(function() {});
+        navigator.clipboard.writeText(syncUrl).then(function() {
+          copied = true;
+        }).catch(function() {
+          copied = fallbackCopyText(syncUrl);
+        });
+      } else {
+        copied = fallbackCopyText(syncUrl);
       }
 
       // 스마트폰 네이티브 공유 다이얼로그 (카카오톡, 메시지 등)
@@ -99,15 +135,14 @@
         }).then(function() {
           showToast('📋 최신 근무표 동기화 링크가 공유되었습니다!');
         }).catch(function(err) {
-          // 사용자가 취소한 경우에도 클립보드 복사 안내
           showToast('📋 최신 근무표 동기화 링크가 복사되었습니다!\n카카오톡에 붙여넣어 웹에서 열면 즉시 반영됩니다.');
         });
       } else {
         showToast('📋 최신 근무표 동기화 링크가 복사되었습니다!\n웹 브라우저나 카카오톡에 붙여넣으면 즉시 반영됩니다.');
       }
     } catch (e) {
-      console.error('[SyncEngine] 동기화 링크 생성 실패:', e);
-      showToast('동기화 링크 생성 중 오류가 발생했습니다.', false);
+      console.error('[SyncEngine] 동기화 링크 생성 오류:', e);
+      showToast('동기화 링크 생성 중 오류: ' + (e.message || e), false);
     }
   }
 
@@ -125,13 +160,15 @@
 
       var payload = JSON.parse(jsonStr);
       if (payload && payload.overrides) {
-        if (typeof StorageManager !== 'undefined') {
-          var curOverrides = StorageManager.getOverrides();
+        var storage = getStorage();
+        if (storage) {
+          var curOverrides = storage.getOverrides ? storage.getOverrides() : {};
           var merged = Object.assign({}, curOverrides, payload.overrides);
-          StorageManager.setOverrides(merged);
+          if (storage.setOverrides) storage.setOverrides(merged);
 
-          if (payload.profile) StorageManager.setProfile(payload.profile);
-          if (payload.baseSettings) StorageManager.setBaseSettings(payload.baseSettings);
+          if (payload.profile && storage.setProfile) storage.setProfile(payload.profile);
+          if (payload.baseSettings && storage.setBaseSettings) storage.setBaseSettings(payload.baseSettings);
+          if (payload.schedules && storage.setSchedules) storage.setSchedules(payload.schedules);
 
           // 화면 갱신
           if (window.app && typeof window.app.renderCalendar === 'function') {
@@ -161,7 +198,7 @@
       btnSync.addEventListener('click', triggerSyncShare);
     }
 
-    // 0.5초 후 URL 동기화 파라미터 점검
+    // 0.3초 후 URL 동기화 파라미터 점검
     setTimeout(checkUrlSync, 300);
   });
 
