@@ -1,15 +1,17 @@
 /**
- * sync-engine.js - APK ↔ 웹 실시간 양방향 클라우드 동기화 엔진 (v1.2.76)
+ * sync-engine.js - APK 마스터 전용 클라우드 자동 동기화 엔진 (v1.2.77)
  *
- * - Lamport 논리 시계(updatedAt) + 전체 스냅샷 동기화로 APK와 웹 어느 쪽에서
- *   어느 달(지난달, 이번달, 다음달, 다다음달 등)의 일정을 추가/변경/삭제하더라도
- *   즉시 클라우드에 반영되고 상대 기기에 100% 동일하게 동기화됩니다.
- * - 연속 수정 자동 병합(Coalescing Queue) 및 FLOOD_WAIT 자동 재시도로
- *   빠른 연속 입력 시에도 API 제한 없이 100% 안전하게 전송됩니다.
- * - 불필요한 토스트 공지 없이 조용하고 정확하게 화면만 갱신합니다.
+ * - 기본 모드 (ALLOW_WEB_TO_APK_SYNC = false):
+ *   1) APK(어플)에서만 일정 변경/추가/삭제 시 클라우드로 자동 푸시됩니다.
+ *   2) 웹 링크(kbs-4shift-5855.surge.sh)에서는 APK의 최신 근무표를 자동으로 받아와 표시하며,
+ *      웹에서 APK로 역방향 변경하는 UI 및 전송 기능은 숨김/차단됩니다.
+ * - 향후 웹 -> APK 양방향 변경이 필요할 경우 ALLOW_WEB_TO_APK_SYNC = true 로만 바꾸면 즉시 활성화됩니다.
  */
 (function() {
   'use strict';
+
+  // [전환 스위치] 필요 시 true로 변경하면 웹에서의 일정 수정 및 웹 -> APK 역방향 동기화가 즉시 활성화됨
+  var ALLOW_WEB_TO_APK_SYNC = false;
 
   var TELEGRAPH_PATH = 'KBS-SHIFT-SYNC-10-29';
   var TELEGRAPH_TOKEN = 'cad37a8299f5f01af3cd742787193d2e28f317467f91bc42d3fff0317000';
@@ -20,8 +22,55 @@
   var lastPushedTime = 0;
   var hasPendingPush = false;
   var currentPushPromise = null;
+  var currentSyncPromise = null;
   var pushDebounceTimer = null;
-  var isSyncing = false;
+
+  // 현재 실행 환경이 안드로이드 네이티브 APK(어플)인지 정확히 판별
+  function isApkClient() {
+    if (typeof window === 'undefined') return false;
+    if (window.__FORCE_APK_MODE__ === true) return true;
+    if (window.__FORCE_WEB_MODE__ === true) return false;
+    if (typeof window.AndroidAlarm !== 'undefined') return true;
+    if (window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform()) return true;
+    if (window.location && window.location.hostname === 'localhost' && typeof navigator !== 'undefined' && /android/i.test(navigator.userAgent || '')) return true;
+    return false;
+  }
+
+  // 클라우드 전송(Push) 권한 여부 판별 (APK이거나 양방향 허용 스위치 켜진 경우만 true)
+  function canPushToCloud() {
+    return isApkClient() || ALLOW_WEB_TO_APK_SYNC;
+  }
+
+  // 웹 전용 열람 모드(수정 기능 숨김) 스타일 적용/해제
+  function applyWebReadonlyMode() {
+    if (typeof document === 'undefined' || !document.body) return;
+    var styleId = 'web-readonly-mode-style';
+    if (!document.getElementById(styleId)) {
+      var styleEl = document.createElement('style');
+      styleEl.id = styleId;
+      styleEl.textContent = [
+        'body.web-readonly-mode .day-schedule-add-box,',
+        'body.web-readonly-mode .day-shift-edit-box,',
+        'body.web-readonly-mode #btnResetDayEdit,',
+        'body.web-readonly-mode #btnDeleteSelectedSchedules,',
+        'body.web-readonly-mode .day-schedule-checkbox,',
+        'body.web-readonly-mode .btn-delete-single-schedule,',
+        'body.web-readonly-mode .monthly-note-delete-btn,',
+        'body.web-readonly-mode .add-plus-icon,',
+        'body.web-readonly-mode #btnOpenUpload,',
+        'body.web-readonly-mode #btnOpenUploadModal {',
+        '  display: none !important;',
+        '}'
+      ].join('\n');
+      document.head.appendChild(styleEl);
+    }
+
+    if (!canPushToCloud()) {
+      document.body.classList.add('web-readonly-mode');
+    } else {
+      document.body.classList.remove('web-readonly-mode');
+    }
+  }
 
   function getStorage() {
     if (typeof shiftStorage !== 'undefined' && shiftStorage) return shiftStorage;
@@ -56,8 +105,17 @@
     }
   }
 
-  // 현재 로컬 스토리지 스냅샷을 클라우드로 전송 (동시 호출 병합 및 FLOOD_WAIT 자동 복구 지원)
+  // 현재 로컬 스토리지 스냅샷을 클라우드로 전송 (APK 전용 또는 양방향 스위치 활성 시에만 동작)
   function pushToCloud() {
+    if (!canPushToCloud()) {
+      hasPendingPush = false;
+      if (pushDebounceTimer) {
+        clearTimeout(pushDebounceTimer);
+        pushDebounceTimer = null;
+      }
+      return Promise.resolve(false);
+    }
+
     if (pushDebounceTimer) {
       clearTimeout(pushDebounceTimer);
       pushDebounceTimer = null;
@@ -84,7 +142,7 @@
     }
 
     var snapshot = {
-      version: '1.2.76',
+      version: '1.2.77',
       updatedAt: localTime,
       overrides: storage.getOverrides ? storage.getOverrides() : {},
       schedules: storage.getSchedules ? storage.getSchedules() : []
@@ -124,7 +182,6 @@
         return true;
       }
 
-      // FLOOD_WAIT 발생 시 지정된 대기 시간 직후 자동 재전송
       if (json && json.error && String(json.error).indexOf('FLOOD_WAIT_') === 0) {
         var waitSec = parseInt(String(json.error).replace('FLOOD_WAIT_', ''), 10) || 2;
         hasPendingPush = true;
@@ -149,8 +206,11 @@
     return reqPromise;
   }
 
-  // 로컬에서 일정 변경 발생 시 즉각 호출 (동일 틱 내 다중 변경 자동 병합)
+  // 로컬에서 일정 변경 발생 시 즉각 호출 (APK에서만 클라우드 전송 예약)
   function pushNow() {
+    if (!canPushToCloud()) {
+      return Promise.resolve(false);
+    }
     hasPendingPush = true;
     var storage = getStorage();
     if (storage && storage.getUpdatedAt && storage.setUpdatedAt) {
@@ -166,23 +226,24 @@
     }, 150);
   }
 
-  // 클라우드에서 최신 스냅샷 조회 및 양방향 동기화
+  // 클라우드에서 최신 스냅샷 조회 및 동기화
   function syncNow(isManualClick) {
     if (isManualClick) {
       spinSyncIcon();
     }
 
     var waitPush = Promise.resolve(true);
-    if (pushDebounceTimer || hasPendingPush || currentPushPromise) {
+    if (canPushToCloud() && (pushDebounceTimer || hasPendingPush || currentPushPromise)) {
       waitPush = pushToCloud();
     }
 
-    if (isSyncing) {
-      return waitPush;
+    if (currentSyncPromise) {
+      return currentSyncPromise.then(function() {
+        return syncNow(isManualClick);
+      });
     }
-    isSyncing = true;
 
-    return waitPush
+    var syncTask = waitPush
       .then(function() {
         var url = TELEGRAPH_GET_URL + '&_t=' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
         return fetch(url, { cache: 'no-store' });
@@ -211,8 +272,25 @@
 
         var localTime = storage.getUpdatedAt ? storage.getUpdatedAt() : 0;
 
+        if (!canPushToCloud()) {
+          // [웹 열람 전용 모드]: 항상 APK가 올린 클라우드 스냅샷을 절대 기준으로 자동 동기화
+          if (cloudTime > 0 && (cloudTime !== localTime || isManualClick)) {
+            if (cloudSnapshot.overrides && typeof cloudSnapshot.overrides === 'object' && storage.setOverrides) {
+              storage.setOverrides(cloudSnapshot.overrides);
+            }
+            if (Array.isArray(cloudSnapshot.schedules) && storage.setSchedules) {
+              storage.setSchedules(cloudSnapshot.schedules);
+            }
+            if (storage.setUpdatedAt) {
+              storage.setUpdatedAt(cloudTime);
+            }
+            refreshUI();
+          }
+          return true;
+        }
+
+        // [APK 마스터 모드 (또는 양방향 허용 시)]
         if (cloudTime > localTime) {
-          // 클라우드에 더 최신 변경사항이 있으면 즉시 로컬에 반영 (추가/수정/삭제 모두 완벽 동기화)
           if (cloudSnapshot.overrides && typeof cloudSnapshot.overrides === 'object' && storage.setOverrides) {
             storage.setOverrides(cloudSnapshot.overrides);
           }
@@ -226,7 +304,6 @@
           refreshUI();
           return true;
         } else if (localTime > cloudTime) {
-          // 로컬에 더 최신 변경사항이 있으면 클라우드로 즉시 푸시
           return pushToCloud().then(function() {
             refreshUI();
             return true;
@@ -246,13 +323,24 @@
         return false;
       })
       .finally(function() {
-        isSyncing = false;
+        currentSyncPromise = null;
       });
+
+    currentSyncPromise = syncTask;
+    return syncTask;
+  }
+
+  // 웹 -> APK 역방향 변경 기능 동적 제어 API (필요 시 즉시 호출 가능)
+  function setWebToApkSyncEnabled(enabled) {
+    ALLOW_WEB_TO_APK_SYNC = !!enabled;
+    applyWebReadonlyMode();
   }
 
   // 브라우저 / 웹뷰 환경 이벤트 바인딩
   if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-    window.addEventListener('DOMContentLoaded', function() {
+    var initSyncEngine = function() {
+      applyWebReadonlyMode();
+
       var btnSync = document.getElementById('btnSyncRefresh');
       if (btnSync) {
         btnSync.addEventListener('click', function() {
@@ -276,18 +364,27 @@
         syncNow(false);
       });
 
-      // 화면을 열어둔 상태에서 8초 주기로 조용히 자동 동기화
+      // 화면을 열어둔 상태에서 6초 주기로 조용히 자동 동기화
       setInterval(function() {
         if (document.visibilityState === 'visible' && !currentPushPromise && !pushDebounceTimer) {
           syncNow(false);
         }
-      }, 8000);
-    });
+      }, 6000);
+    };
+
+    if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', initSyncEngine);
+    } else {
+      initSyncEngine();
+    }
 
     window.syncEngine = {
       pushNow: pushNow,
       pushToCloud: pushToCloud,
       syncNow: syncNow,
+      isApkClient: isApkClient,
+      canPushToCloud: canPushToCloud,
+      setWebToApkSyncEnabled: setWebToApkSyncEnabled,
       getLastKnownCloudTime: function() { return lastKnownCloudTime; }
     };
     window.handleManualSyncClick = function() { return syncNow(true); };
@@ -297,7 +394,8 @@
     module.exports = {
       pushNow: pushNow,
       pushToCloud: pushToCloud,
-      syncNow: syncNow
+      syncNow: syncNow,
+      setWebToApkSyncEnabled: setWebToApkSyncEnabled
     };
   }
 })();

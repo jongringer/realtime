@@ -1975,11 +1975,14 @@ class ShiftApp {
     const baseSettings = shiftStorage.getBaseSettings();
     const info = shiftInfo || getShiftInfoForDate(dateStr, overrides, baseSettings);
 
-    this.elEditDateTitle.textContent = `${Number(m)}월 ${Number(d)}일 근무 및 개인 일정`;
+    const isReadonlyWeb = document.body && document.body.classList.contains('web-readonly-mode');
+    this.elEditDateTitle.textContent = isReadonlyWeb
+      ? `${Number(m)}월 ${Number(d)}일 일정 (${info.shiftType || '비번'})`
+      : `${Number(m)}월 ${Number(d)}일 근무 및 개인 일정`;
     this.elEditShiftSelect.value = info.shiftType || '비번';
 
     // 기존 override.note가 있다면 schedules로 자동 마이그레이션 (기존 데이터도 선택 삭제 가능하게 통합)
-    if (info.note && info.note.trim()) {
+    if (!isReadonlyWeb && info.note && info.note.trim()) {
       const existingSchedules = shiftStorage.getSchedulesForDate(dateStr);
       const isAlready = existingSchedules.some(s => s.title.trim() === info.note.trim());
       if (!isAlready) {
