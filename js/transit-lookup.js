@@ -213,11 +213,12 @@
   // 여의도·KBS·국회의사당 및 서울 주요 환승 거점 정류소 DB (즉시 자동완성 백업)
   const LOCAL_POPULAR_STATIONS = [
     { arsId: '19130', stNm: 'KBS', keywords: ['kbs', 'KBS', '한국방송', '본관', '19130', '162', '5615', '5618', '10부천', '70-2'] },
+    { arsId: '19152', stNm: '여의도공원1번출입구', keywords: ['여의도공원', '여의도공원1번출입구', 'kbs', 'KBS인근', '19152', '160', '260', '360', '600', '662', '5012', '5713', '700'] },
     { arsId: '19150', stNm: 'KBS별관', keywords: ['kbs', 'KBS별관', '별관', '19150', '162', '261', '262'] },
     { arsId: '19151', stNm: '샛강역3번출구.KBS별관', keywords: ['kbs', 'KBS별관', '샛강역', '19151'] },
-    { arsId: '19132', stNm: '국회의사당역', keywords: ['국회', '국회의사당', '국회의사당역', '19132', '9호선'] },
+    { arsId: '19132', stNm: '국회의사당역.KB국민은행', keywords: ['국회', '국회의사당', '국회의사당역', '국민은행', '19132', '9호선'] },
     { arsId: '19133', stNm: '국회의사당역5번출구', keywords: ['국회', '국회의사당', '국회의사당역', '5번출구', '19133', '162', '260', '461'] },
-    { arsId: '19131', stNm: '국회의사당역1번출구', keywords: ['국회', '국회의사당', '국회의사당역', '1번출구', '19131'] },
+    { arsId: '19131', stNm: '국회의사당', keywords: ['국회', '국회의사당', '국회의사당역', '1번출구', '19131'] },
     { arsId: '19134', stNm: '국회의사당', keywords: ['국회', '국회의사당', '19134'] },
     { arsId: '19007', stNm: '여의도환승센터 (1~2번승강장)', keywords: ['여의도', '여의도환승센터', '환승센터', '19007', '260', '262', '360'] },
     { arsId: '19008', stNm: '여의도환승센터 (3~4번승강장)', keywords: ['여의도', '여의도환승센터', '환승센터', '19008', '260', '360', '662'] },
@@ -1447,10 +1448,13 @@
       if (!this.resultContainer) return;
 
       const formattedArs = this.formatArsId(arsId);
+      const cleanArsKey = String(arsId || '').replace(/[^0-9]/g, '');
       const nowMs = Date.now();
       const targetHighlight = this.highlightBusNo || '';
+      const hiddenRouteSet = new Set(this.getHiddenBusRoutesForStop(cleanArsKey));
+      const hiddenRouteCount = busList.filter(b => hiddenRouteSet.has(String(b.rtNm || '').trim())).length;
 
-      let filtered = [...busList];
+      let filtered = busList.filter(b => !hiddenRouteSet.has(String(b.rtNm || '').trim()));
       if (this.filterType === 'town') {
         filtered = filtered.filter(b => String(b.routeType) === '2' || (b.rtNm && /(마을|양천|영등포|마포|강서|구로|관악|동작)/.test(b.rtNm)));
       } else if (this.filterType === 'blue') {
@@ -1477,7 +1481,12 @@
 
       let cardsHtml = '';
       if (filtered.length === 0) {
-        cardsHtml = `<div class="lookup-no-results"><span>선택한 필터에 해당하는 운행 버스가 없습니다.</span></div>`;
+        cardsHtml = hiddenRouteCount > 0
+          ? `<div class="lookup-no-results" style="display:flex; flex-direction:column; align-items:center; gap:10px; padding:18px 12px;">
+               <span>표시할 버스가 없습니다 (${hiddenRouteCount}개 노선 숨김 상태).</span>
+               <button type="button" class="btn-show-all-pill has-hidden" id="btnRestoreHiddenBusInline">📋 전체조회 (모든 버스노선 다시 보기)</button>
+             </div>`
+          : `<div class="lookup-no-results"><span>선택한 필터에 해당하는 운행 버스가 없습니다.</span></div>`;
       } else {
         cardsHtml = filtered.map(bus => {
           const isHighlighted = targetHighlight && this.busItemMatchesHighlight(bus.rtNm, targetHighlight);
@@ -1514,13 +1523,14 @@
                   <span class="bus-type-tag">${this.escapeHtml(typeName)}${dirText ? ` · ${this.escapeHtml(dirText)}` : ''}</span>
                   ${isHighlighted ? `<span class="highlight-target-pill">🎯 선택 노선</span>` : ''}
                 </div>
-                <div class="bus-time-zoom-ctrl">
+                <div class="bus-time-zoom-ctrl" style="display:inline-flex; align-items:center; gap:5px;">
                   <button type="button" class="btn-time-zoom-btn btn-time-zoom-plus" onclick="window.transitManager && window.transitManager.increaseTimeFontSize(event, '${busZoomKey}')" title="${this.escapeHtml(bus.rtNm)}번 글씨 확대">
                     <span class="zoom-btn-icon">＋</span>
                   </button>
                   <button type="button" class="btn-time-zoom-btn btn-time-zoom-reset" onclick="window.transitManager && window.transitManager.resetTimeFontSize(event, '${busZoomKey}')" title="글씨 원래대로">
                     <span class="zoom-btn-icon">↺</span>
                   </button>
+                  <button type="button" class="btn-card-hide-x" data-hide-bus-rt="${this.escapeHtml(bus.rtNm)}" title="${this.escapeHtml(bus.rtNm)}번 버스 숨기기 (전체조회로 복원 가능)" aria-label="${this.escapeHtml(bus.rtNm)}번 숨기기">✕</button>
                 </div>
               </div>
 
@@ -1605,9 +1615,16 @@
                 </button>
               `).join('')}
             </div>
-            <button type="button" id="btnToggleSort" style="padding:4px 10px; border-radius:8px; font-size:12px; font-weight:800; border:1px solid #cbd5e1; background:transparent; color:inherit; cursor:pointer;">
-              ${this.sortType === 'arrival' ? '⏱️ 도착순' : '🔢 번호순'}
-            </button>
+            <div style="display:flex; gap:5px; align-items:center; flex-wrap:wrap;">
+              ${hiddenRouteCount > 0 ? `
+                <button type="button" class="btn-show-all-pill has-hidden" id="btnRestoreStopBusRoutes" title="이 정류장에서 숨긴 버스노선 전체 표시">
+                  📋 전체조회 (${hiddenRouteCount}개 숨김)
+                </button>
+              ` : ''}
+              <button type="button" id="btnToggleSort" style="padding:4px 10px; border-radius:8px; font-size:12px; font-weight:800; border:1px solid #cbd5e1; background:transparent; color:inherit; cursor:pointer;">
+                ${this.sortType === 'arrival' ? '⏱️ 도착순' : '🔢 번호순'}
+              </button>
+            </div>
           </div>
 
           <div class="lookup-cards-container">
@@ -1617,6 +1634,7 @@
       `;
 
       this.resultContainer.innerHTML = boardHtml;
+      this.updateShowAllBusBadge();
       if (this.userInitiatedScroll) {
         this.scrollToResult();
         this.userInitiatedScroll = false;
@@ -1629,6 +1647,29 @@
           this.renderBusBoard(arsId, stationName, busList);
         });
       }
+
+      this.resultContainer.querySelectorAll('[data-hide-bus-rt]').forEach(xBtn => {
+        xBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          const rt = xBtn.getAttribute('data-hide-bus-rt');
+          if (rt) {
+            this.hideBusRouteAtStop(cleanArsKey, rt);
+            this.renderBusBoard(arsId, stationName, busList);
+          }
+        });
+      });
+
+      const restoreStopHandler = () => {
+        this.restoreStopHiddenBusRoutes(cleanArsKey);
+        this.filterType = 'all';
+        this.highlightBusNo = '';
+        this.renderBusBoard(arsId, stationName, busList);
+      };
+      const btnRestoreStop = document.getElementById('btnRestoreStopBusRoutes');
+      if (btnRestoreStop) btnRestoreStop.addEventListener('click', restoreStopHandler);
+      const btnRestoreInline = document.getElementById('btnRestoreHiddenBusInline');
+      if (btnRestoreInline) btnRestoreInline.addEventListener('click', restoreStopHandler);
 
       this.resultContainer.querySelectorAll('.btn-filter').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -1802,36 +1843,160 @@
     // ==========================================
     // 빠른 선택 칩 & 최근 검색 기록
     // ==========================================
+    getHiddenBusChips() {
+      try {
+        const raw = localStorage.getItem('realtime_hidden_bus_chips');
+        const arr = raw ? JSON.parse(raw) : [];
+        return Array.isArray(arr) ? arr : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    saveHiddenBusChips(list) {
+      try {
+        localStorage.setItem('realtime_hidden_bus_chips', JSON.stringify(list));
+      } catch (e) {}
+    }
+
+    removeBusChip(arsId) {
+      const cleanId = String(arsId || '').trim();
+      if (!cleanId) return;
+      const hidden = this.getHiddenBusChips();
+      if (!hidden.includes(cleanId)) {
+        hidden.push(cleanId);
+        this.saveHiddenBusChips(hidden);
+      }
+      try {
+        const hist = this.getRecentHistory().filter(h => !(h.type === 'bus' && h.id === cleanId));
+        localStorage.setItem('realtime_recent_transits', JSON.stringify(hist));
+      } catch (e) {}
+      this.renderQuickChips();
+      this.updateShowAllBusBadge();
+      if (window.transitManager) {
+        window.transitManager.showTimeZoomToast(`정류장(${cleanId})을 빠른선택에서 제외했습니다 ([📋 전체조회]로 복원)`);
+      }
+    }
+
+    unhideBusChip(arsId) {
+      const cleanId = String(arsId || '').trim();
+      const hidden = this.getHiddenBusChips().filter(x => x !== cleanId);
+      this.saveHiddenBusChips(hidden);
+    }
+
+    getAllHiddenBusRoutesMap() {
+      try {
+        const raw = localStorage.getItem('realtime_hidden_bus_routes');
+        const obj = raw ? JSON.parse(raw) : {};
+        return (obj && typeof obj === 'object') ? obj : {};
+      } catch (e) {
+        return {};
+      }
+    }
+
+    saveAllHiddenBusRoutesMap(obj) {
+      try {
+        localStorage.setItem('realtime_hidden_bus_routes', JSON.stringify(obj));
+      } catch (e) {}
+    }
+
+    getHiddenBusRoutesForStop(arsId) {
+      const cleanId = String(arsId || '').replace(/[^0-9]/g, '');
+      const map = this.getAllHiddenBusRoutesMap();
+      return Array.isArray(map[cleanId]) ? map[cleanId] : [];
+    }
+
+    hideBusRouteAtStop(arsId, rtNm) {
+      const cleanId = String(arsId || '').replace(/[^0-9]/g, '');
+      const cleanRt = String(rtNm || '').trim();
+      if (!cleanId || !cleanRt) return;
+      const map = this.getAllHiddenBusRoutesMap();
+      if (!Array.isArray(map[cleanId])) map[cleanId] = [];
+      if (!map[cleanId].includes(cleanRt)) {
+        map[cleanId].push(cleanRt);
+        this.saveAllHiddenBusRoutesMap(map);
+      }
+      if (window.transitManager) {
+        window.transitManager.showTimeZoomToast(`${cleanRt}번 버스를 숨겼습니다 ([📋 전체조회]로 다시 표시)`);
+      }
+    }
+
+    restoreStopHiddenBusRoutes(arsId) {
+      const cleanId = String(arsId || '').replace(/[^0-9]/g, '');
+      const map = this.getAllHiddenBusRoutesMap();
+      delete map[cleanId];
+      this.saveAllHiddenBusRoutesMap(map);
+      if (window.transitManager) {
+        window.transitManager.showTimeZoomToast('🚌 이 정류장의 전체 버스노선이 표시됩니다');
+      }
+    }
+
+    restoreAllBusItems() {
+      this.saveHiddenBusChips([]);
+      this.saveAllHiddenBusRoutesMap({});
+      this.filterType = 'all';
+      this.highlightBusNo = '';
+      this.renderQuickChips();
+      if (this.currentType === 'bus' && this.currentId && this.lastBusData) {
+        this.renderBusBoard(this.currentId, this.currentName, this.lastBusData);
+      }
+      this.updateShowAllBusBadge();
+      if (window.transitManager) {
+        window.transitManager.showTimeZoomToast('🚌 모든 빠른선택 정류장 및 전체 버스노선이 표시됩니다');
+      }
+    }
+
+    updateShowAllBusBadge() {
+      const btn = document.getElementById('btnBusLookupShowAll');
+      if (!btn) return;
+      const hiddenChipsCnt = this.getHiddenBusChips().length;
+      const map = this.getAllHiddenBusRoutesMap();
+      let hiddenRoutesCnt = 0;
+      Object.keys(map).forEach(k => {
+        if (Array.isArray(map[k])) hiddenRoutesCnt += map[k].length;
+      });
+      const total = hiddenChipsCnt + hiddenRoutesCnt;
+      btn.textContent = total > 0 ? `📋 전체조회 (${total}개 숨김)` : '📋 전체조회';
+      btn.classList.toggle('has-hidden', total > 0);
+    }
+
     renderQuickChips() {
       if (!this.chipsContainer) return;
 
       const history = this.getRecentHistory().filter(h => h.type === 'bus');
+      const hiddenChipSet = new Set(this.getHiddenBusChips());
       const defaultChips = [
-        { type: 'bus', id: '19130', name: 'KBS (19130)' },
-        { type: 'bus', id: '19007', name: '여의도환승센터' },
+        { type: 'bus', id: '19130', name: 'KBS' },
+        { type: 'bus', id: '19152', name: '여의도공원1번출입구' },
         { type: 'bus', id: '19133', name: '국회의사당역5번출구' },
-        { type: 'bus', id: '19156', name: '여의도역5번출구' },
-        { type: 'bus', id: '19155', name: '여의도역6번출구' },
-        { type: 'bus', id: '19150', name: 'KBS별관' }
+        { type: 'bus', id: '19132', name: '국회의사당역.KB국민은행' },
+        { type: 'bus', id: '19150', name: 'KBS별관' },
+        { type: 'bus', id: '19151', name: '샛강역3번출구.KBS별관' },
+        { type: 'bus', id: '19131', name: '국회의사당' },
+        { type: 'bus', id: '19007', name: '여의도환승센터' }
       ];
 
-      const merged = [...defaultChips];
+      const merged = [];
+      defaultChips.forEach(c => {
+        if (!hiddenChipSet.has(c.id)) merged.push(c);
+      });
       history.forEach(h => {
-        if (!merged.some(m => m.type === h.type && m.id === h.id)) {
+        if (!hiddenChipSet.has(h.id) && !merged.some(m => m.type === h.type && m.id === h.id)) {
           merged.push(h);
         }
       });
 
-      const chipsHtml = merged.slice(0, 9).map(chip => {
+      const chipsHtml = merged.slice(0, 12).map(chip => {
         const isBus = (chip.type === 'bus');
         const isActive = (this.currentType === chip.type && this.currentId === chip.id);
         const icon = isBus ? '🚏' : '🚇';
         const label = isBus && !String(chip.name).includes(chip.id) ? `[${chip.id}] ${chip.name}` : chip.name;
         return `
-          <button type="button" class="quick-chip-btn ${isBus ? 'chip-bus' : 'chip-subway'} ${isActive ? 'active' : ''}"
+          <button type="button" class="quick-chip-btn ${isBus ? 'chip-bus' : 'chip-subway'} has-chip-del ${isActive ? 'active' : ''}"
                   data-type="${chip.type}" data-id="${this.escapeHtml(chip.id)}" data-name="${this.escapeHtml(chip.name)}">
             <span class="chip-icon">${icon}</span>
             <span class="chip-text">${this.escapeHtml(label)}</span>
+            <span class="chip-del-x" data-del-bus-chip="${this.escapeHtml(chip.id)}" title="빠른선택에서 삭제">✕</span>
           </button>
         `;
       }).join('');
@@ -1840,13 +2005,23 @@
         <div class="quick-sub-chips-row" style="margin-top:4px;">
           <span class="quick-chips-sublabel">빠른선택:</span>
           <div class="quick-chips-scroll-sub">
-            ${chipsHtml}
+            ${chipsHtml || '<span style="font-size:12px; color:#64748b; padding:4px 6px;">표시할 정류장이 없습니다. [📋 전체조회]를 누르세요.</span>'}
           </div>
         </div>
       `;
 
+      this.chipsContainer.querySelectorAll('.chip-del-x').forEach(delEl => {
+        delEl.addEventListener('click', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          const delId = delEl.getAttribute('data-del-bus-chip');
+          if (delId) this.removeBusChip(delId);
+        });
+      });
+
       this.chipsContainer.querySelectorAll('.quick-chip-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', (e) => {
+          if (e.target.closest('.chip-del-x')) return;
           this.userInitiatedScroll = true;
           const type = btn.getAttribute('data-type');
           const id = btn.getAttribute('data-id');
@@ -1864,6 +2039,7 @@
           this.scrollToResult();
         });
       });
+      this.updateShowAllBusBadge();
     }
 
     getRecentHistory() {
@@ -1877,6 +2053,9 @@
 
     saveRecentHistory(type, id, name) {
       try {
+        if (type === 'bus' && this.userInitiatedScroll) {
+          this.unhideBusChip(id);
+        }
         let history = this.getRecentHistory();
         history = history.filter(h => !(h.type === type && h.id === id));
         history.unshift({ type, id, name });

@@ -153,6 +153,7 @@ class ShiftApp {
 
     this.autoResetTodayTimer = null;
     this.weatherData = null;
+    this.gpsWeatherLocation = null;
     this.weatherTimer = null;
     this.lastWeatherFetchTime = 0;
     this.isWeatherLoading = false;
@@ -2463,26 +2464,118 @@ class ShiftApp {
     }
   }
 
-  getCurrentWeatherLocation() {
-    const defaultYeouido = {
+  getDefaultWeatherLocation() {
+    return {
       code: 'yeouido',
+      isGps: false,
       name: '여의도동',
       query: '여의도동 날씨',
       lat: 37.528,
       lon: 126.924,
       daumUrl: 'https://m.search.daum.net/search?q=%EC%97%AC%EC%9D%98%EB%8F%84%EB%8F%99+%EB%82%A0%EC%94%A8&w=tot'
     };
-    if (this.isRegularMode()) {
-      return defaultYeouido;
+  }
+
+  getCurrentWeatherLocation() {
+    if (this.gpsWeatherLocation) {
+      return this.gpsWeatherLocation;
     }
+    return this.getDefaultWeatherLocation();
+  }
+
+  getBrowserGpsPosition() {
+    return new Promise((resolve, reject) => {
+      if (typeof navigator === 'undefined' || !navigator.geolocation) {
+        reject(new Error('GPS_UNSUPPORTED'));
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        pos => resolve(pos),
+        err => {
+          if (err && err.code === 1) {
+            reject(err);
+            return;
+          }
+          // 실내 등 고정밀 수신 지연 시 네트워크/기지국 위치로 즉시 재시도
+          navigator.geolocation.getCurrentPosition(
+            pos2 => resolve(pos2),
+            err2 => reject(err2),
+            { enableHighAccuracy: false, timeout: 5500, maximumAge: 180000 }
+          );
+        },
+        { enableHighAccuracy: true, timeout: 6500, maximumAge: 60000 }
+      );
+    });
+  }
+
+  async reverseGeocodeKoreanRegion(lat, lon) {
+    const normalizeDong = (raw) => {
+      const s = String(raw || '').trim();
+      if (s === '여의동') return '여의도동';
+      return s;
+    };
+
+    // 1차: OpenStreetMap Nominatim 한국어 상세 행정구역(동/읍/면/구) 판별
     try {
-      if (typeof getWeatherLocationForDateTime === 'function') {
-        const overrides = shiftStorage.getOverrides();
-        const baseSettings = shiftStorage.getBaseSettings();
-        return getWeatherLocationForDateTime(new Date(), overrides, baseSettings);
+      const nomUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&accept-language=ko&zoom=18`;
+      const ctrl = new AbortController();
+      const tid = setTimeout(() => ctrl.abort(), 4000);
+      const res = await fetch(nomUrl, { signal: ctrl.signal, headers: { 'Accept-Language': 'ko' } });
+      clearTimeout(tid);
+      if (res.ok) {
+        const data = await res.json();
+        const addr = (data && data.address) || {};
+        const dong = normalizeDong(addr.quarter || addr.neighbourhood || addr.suburb || addr.village || addr.town || '');
+        const gu = String(addr.borough || addr.city_district || addr.county || addr.city || '').trim();
+        const regionName = dong || gu;
+        if (regionName) {
+          const fullRegion = (gu && dong && !dong.includes(gu)) ? `${gu} ${dong}` : regionName;
+          return { name: regionName, fullRegion };
+        }
       }
     } catch (e) {}
-    return defaultYeouido;
+
+    // 2차 폴백: BigDataCloud 클라이언트 역지오코딩
+    try {
+      const bdcUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=ko`;
+      const ctrl2 = new AbortController();
+      const tid2 = setTimeout(() => ctrl2.abort(), 4000);
+      const res2 = await fetch(bdcUrl, { signal: ctrl2.signal });
+      clearTimeout(tid2);
+      if (res2.ok) {
+        const data2 = await res2.json();
+        const admins = (data2 && data2.localityInfo && Array.isArray(data2.localityInfo.administrative))
+          ? data2.localityInfo.administrative.map(x => String(x.name || '').trim()).filter(Boolean)
+          : [];
+        const leaf = normalizeDong(data2.locality || admins[admins.length - 1] || data2.city || '');
+        const parentGu = admins.length >= 2 ? admins[admins.length - 2] : '';
+        if (leaf) {
+          const fullRegion = (parentGu && leaf && !leaf.includes(parentGu) && !parentGu.includes('특별시') && !parentGu.includes('광역시'))
+            ? `${parentGu} ${leaf}`
+            : leaf;
+          return { name: leaf, fullRegion };
+        }
+      }
+    } catch (e) {}
+
+    return { name: '현재 위치', fullRegion: `${lat.toFixed(3)},${lon.toFixed(3)}` };
+  }
+
+  async resolveGpsWeatherLocation() {
+    const pos = await this.getBrowserGpsPosition();
+    const lat = pos.coords.latitude;
+    const lon = pos.coords.longitude;
+    const geo = await this.reverseGeocodeKoreanRegion(lat, lon);
+    const queryStr = `${geo.fullRegion} 날씨`;
+    return {
+      code: 'gps',
+      isGps: true,
+      name: geo.name,
+      query: queryStr,
+      lat,
+      lon,
+      daumUrl: `https://m.search.daum.net/search?q=${encodeURIComponent(queryStr)}&w=tot`
+    };
   }
 
   getDaumWeatherIcon(desc) {
@@ -2502,12 +2595,28 @@ class ShiftApp {
     if (this.isWeatherLoading) return;
     this.isWeatherLoading = true;
 
-    const loc = this.getCurrentWeatherLocation();
     const pillEl = document.getElementById('todayWeatherPill');
     const textEl = document.getElementById('weatherText');
     if (pillEl) pillEl.classList.add('is-updating');
-    if (isManual && textEl) {
-      textEl.textContent = `${loc.name} 실시간 날씨 갱신 중...`;
+
+    let loc = this.getCurrentWeatherLocation();
+    let gpsErrorMsg = '';
+
+    // 수동 새로고침 시 내 실시간 GPS 위치 확인 및 행정동 판별
+    if (isManual) {
+      if (textEl) textEl.textContent = '📍 내 GPS 위치 확인 중...';
+      try {
+        const gpsLoc = await this.resolveGpsWeatherLocation();
+        this.gpsWeatherLocation = gpsLoc;
+        loc = gpsLoc;
+        if (textEl) textEl.textContent = `📍 ${loc.name} 날씨 조회 중...`;
+      } catch (gpsErr) {
+        loc = this.gpsWeatherLocation || this.getDefaultWeatherLocation();
+        gpsErrorMsg = (gpsErr && gpsErr.code === 1)
+          ? '위치 권한이 허용되지 않아 기본 지역(여의도동) 날씨를 표시합니다.'
+          : 'GPS 신호를 확인할 수 없어 기본 지역(여의도동) 날씨를 표시합니다.';
+        if (textEl) textEl.textContent = `${loc.name} 실시간 날씨 갱신 중...`;
+      }
     }
 
     let loaded = false;
@@ -2515,7 +2624,7 @@ class ShiftApp {
     try {
       const daumUrl = `https://m.search.daum.net/search?w=tot&q=${encodeURIComponent(loc.query)}`;
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3500);
+      const timeoutId = setTimeout(() => controller.abort(), 3200);
       const res = await fetch(daumUrl, {
         signal: controller.signal,
         headers: {
@@ -2531,7 +2640,7 @@ class ShiftApp {
           const temp = parseFloat(parseFloat(tempMatch[1].trim()).toFixed(1));
           const text = descMatch ? descMatch[1].trim() : '맑음';
           const icon = this.getDaumWeatherIcon(text);
-          this.weatherData = { temp, icon, text, locationName: loc.name, daumUrl: loc.daumUrl, updatedAt: new Date() };
+          this.weatherData = { temp, icon, text, locationName: loc.name, isGps: !!loc.isGps, daumUrl: loc.daumUrl, updatedAt: new Date() };
           this.renderWeather();
           loaded = true;
         }
@@ -2542,7 +2651,7 @@ class ShiftApp {
       try {
         const url = `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,precipitation,weather_code,cloud_cover&timezone=Asia%2FSeoul`;
         const controller2 = new AbortController();
-        const timeoutId2 = setTimeout(() => controller2.abort(), 4000);
+        const timeoutId2 = setTimeout(() => controller2.abort(), 4500);
         const res2 = await fetch(url, { signal: controller2.signal });
         clearTimeout(timeoutId2);
         if (res2.ok) {
@@ -2551,7 +2660,7 @@ class ShiftApp {
           if (curr2 && curr2.temperature_2m !== undefined) {
             const temp = parseFloat(curr2.temperature_2m.toFixed(1));
             const info = this.getWeatherInfoDetailed(curr2.weather_code, curr2.precipitation || 0, 0, 0, 0, curr2.cloud_cover || 0);
-            this.weatherData = { temp, icon: info.icon, text: info.text, locationName: loc.name, daumUrl: loc.daumUrl, updatedAt: new Date() };
+            this.weatherData = { temp, icon: info.icon, text: info.text, locationName: loc.name, isGps: !!loc.isGps, daumUrl: loc.daumUrl, updatedAt: new Date() };
             this.renderWeather();
             loaded = true;
           }
@@ -2570,9 +2679,14 @@ class ShiftApp {
       }
     }
 
-    if (isManual && loaded && this.weatherData) {
-      const timeStr = this.weatherData.updatedAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      this.showWeatherToast(`${loc.name} 실시간 날씨 (${timeStr}): ${this.weatherData.icon} ${this.formatTemp(this.weatherData.temp)}°C ${this.weatherData.text}`);
+    if (isManual) {
+      if (gpsErrorMsg) {
+        this.showWeatherToast(`⚠️ ${gpsErrorMsg}`);
+      } else if (loaded && this.weatherData) {
+        const timeStr = this.weatherData.updatedAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const prefix = loc.isGps ? `📍 내 위치 [${loc.name}]` : loc.name;
+        this.showWeatherToast(`${prefix} 실시간 날씨 (${timeStr}): ${this.weatherData.icon} ${this.formatTemp(this.weatherData.temp)}°C ${this.weatherData.text}`);
+      }
     }
   }
 
@@ -2608,11 +2722,12 @@ class ShiftApp {
     const linkEl = document.getElementById('weatherNaverLink');
     if (!this.weatherData || !iconEl || !textEl) return;
 
-    const { temp, icon, text, locationName, daumUrl, updatedAt } = this.weatherData;
+    const { temp, icon, text, locationName, isGps, daumUrl, updatedAt } = this.weatherData;
     iconEl.textContent = icon;
     const tempDisplay = this.formatTemp(temp);
     const locTitle = locationName || '여의도동';
-    textEl.textContent = `${locTitle} ${tempDisplay}°C ${text}`;
+    const gpsPin = isGps ? '📍' : '';
+    textEl.textContent = `${gpsPin}${locTitle} ${tempDisplay}°C ${text}`;
 
     if (linkEl && daumUrl) {
       linkEl.href = daumUrl;

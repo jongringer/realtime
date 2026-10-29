@@ -84,6 +84,7 @@ public class MainActivity extends BridgeActivity {
             if (this.bridge != null && this.bridge.getWebView() != null) {
                 android.webkit.WebView webView = this.bridge.getWebView();
                 android.webkit.WebSettings settings = webView.getSettings();
+                settings.setGeolocationEnabled(true);
                 settings.setTextZoom(100);
                 settings.setSupportZoom(true);
                 settings.setBuiltInZoomControls(true);

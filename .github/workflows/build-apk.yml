@@ -36,62 +36,74 @@ jobs:
           distribution: 'zulu'
           java-version: '21'
 
-      - name: Determine Next Sequential Release Version
+      - name: Migrate Legacy 3-Part Releases (v1.0.0->v1.0, v1.0.1->v1.1) & Resolve Next Version (v1.0 -> v1.1 -> v1.2...)
         id: ver
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
         run: |
+          # 기존 3자리 릴리스(v1.0.0, v1.0.1)가 있으면 단일 파일 v1.0, v1.1 릴리스로 깔끔히 마이그레이션
+          if gh release view v1.0.0 >/dev/null 2>&1; then
+            mkdir -p /tmp/mig10
+            gh release download v1.0.0 -p "realtime.apk" -D /tmp/mig10 --clobber 2>/dev/null || true
+            if [ -f /tmp/mig10/realtime.apk ] && ! gh release view v1.0 >/dev/null 2>&1; then
+              cp /tmp/mig10/realtime.apk /tmp/mig10/realtime-v1.0.apk
+              gh release create v1.0 /tmp/mig10/realtime-v1.0.apk --title "realtime v1.0" --notes "realtime v1.0 정식 서명 단일 APK (realtime-v1.0.apk)" || true
+            fi
+            gh release delete v1.0.0 --cleanup-tag --yes 2>/dev/null || true
+          fi
+
+          if gh release view v1.0.1 >/dev/null 2>&1; then
+            mkdir -p /tmp/mig11
+            gh release download v1.0.1 -p "realtime.apk" -D /tmp/mig11 --clobber 2>/dev/null || true
+            if [ -f /tmp/mig11/realtime.apk ] && ! gh release view v1.1 >/dev/null 2>&1; then
+              cp /tmp/mig11/realtime.apk /tmp/mig11/realtime-v1.1.apk
+              gh release create v1.1 /tmp/mig11/realtime-v1.1.apk --title "realtime v1.1" --notes "realtime v1.1 정식 서명 단일 APK (realtime-v1.1.apk)" || true
+            fi
+            gh release delete v1.0.1 --cleanup-tag --yes 2>/dev/null || true
+          fi
+
           node - <<'EOF'
           const fs = require('fs');
           const { execSync } = require('child_process');
 
-          function parseVer(v) {
-            const clean = String(v || '1.0.0').replace(/^v/i, '').trim();
+          // v1.0 -> v1.1 -> v1.2 ... 2자리 버전 파서
+          function parseMinorVer(v) {
+            const clean = String(v || '1.0').replace(/^v/i, '').trim();
             const parts = clean.split('.').map(n => parseInt(n, 10) || 0);
-            return [parts[0] || 1, parts[1] || 0, parts[2] || 0];
+            return [parts[0] || 1, parts[1] || 0];
           }
           function cmpVer(a, b) {
-            for (let i = 0; i < 3; i++) {
-              if (a[i] !== b[i]) return a[i] - b[i];
-            }
-            return 0;
+            if (a[0] !== b[0]) return a[0] - b[0];
+            return a[1] - b[1];
           }
 
           let releases = [];
           try {
-            const raw = execSync(`gh api repos/${process.env.REPO}/releases?per_page=50`, { encoding: 'utf8' });
+            const raw = execSync(`gh api repos/${process.env.REPO}/releases?per_page=100`, { encoding: 'utf8' });
             releases = JSON.parse(raw);
           } catch (e) {
             releases = [];
           }
 
-          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-          const pkgTuple = parseVer(pkg.version || '1.0.0');
-
           let nextTuple;
           if (!Array.isArray(releases) || releases.length === 0) {
-            // 최초 릴리스: v1.0.0 생성
-            nextTuple = [1, 0, 0];
+            nextTuple = [1, 0];
           } else {
-            let maxRel = [1, 0, 0];
+            let maxRel = [1, 0];
             for (const r of releases) {
-              const t = parseVer(r.tag_name);
+              const t = parseMinorVer(r.tag_name);
               if (cmpVer(t, maxRel) > 0) maxRel = t;
             }
-            // package.json이 이미 더 높은 버전이면 그 버전을 사용, 아니면 패치 버전 +1 자동 증가
-            if (cmpVer(pkgTuple, maxRel) > 0) {
-              nextTuple = pkgTuple;
-            } else {
-              nextTuple = [maxRel[0], maxRel[1], maxRel[2] + 1];
-            }
+            nextTuple = [maxRel[0], maxRel[1] + 1];
           }
 
-          const versionNo = `${nextTuple[0]}.${nextTuple[1]}.${nextTuple[2]}`;
+          const versionNo = `${nextTuple[0]}.${nextTuple[1]}`;
           const tagName = `v${versionNo}`;
-          const versionCode = nextTuple[0] * 10000 + nextTuple[1] * 100 + nextTuple[2];
+          const apkName = `realtime-${tagName}.apk`;
+          const versionCode = nextTuple[0] * 10000 + nextTuple[1] * 100;
 
-          // package.json 및 android/app/build.gradle 버전 동기화
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
           pkg.version = versionNo;
           fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n', 'utf8');
 
@@ -102,8 +114,9 @@ jobs:
 
           fs.appendFileSync(process.env.GITHUB_OUTPUT, `version_no=${versionNo}\n`);
           fs.appendFileSync(process.env.GITHUB_OUTPUT, `tag_name=${tagName}\n`);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `apk_name=${apkName}\n`);
           fs.appendFileSync(process.env.GITHUB_OUTPUT, `version_code=${versionCode}\n`);
-          console.log(`Resolved Release Version: ${tagName} (versionCode=${versionCode})`);
+          console.log(`Resolved Release Version: ${tagName} | APK: ${apkName} (versionCode=${versionCode})`);
           EOF
 
       - name: Restore Persistent Signing Keystore
@@ -128,13 +141,13 @@ jobs:
           cd android
           ./gradlew assembleRelease --no-daemon --stacktrace
 
-      - name: Sign Android Release APK with apksigner
+      - name: Sign Single Versioned Android APK
         env:
           KS_B64: ${{ secrets.KEYSTORE_BASE64 }}
           KS_ALIAS: ${{ secrets.KEY_ALIAS }}
           KS_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_PASS: ${{ secrets.KEY_PASSWORD }}
-          TAG_NAME: ${{ steps.ver.outputs.tag_name }}
+          APK_NAME: ${{ steps.ver.outputs.apk_name }}
         run: |
           if [ -n "$KS_B64" ]; then
             echo "$KS_B64" | base64 -d > release.keystore
@@ -146,7 +159,6 @@ jobs:
             SIGN_KS_PASS="realtime2026!"
             SIGN_KEY_PASS="realtime2026!"
             if [ ! -f release.keystore ]; then
-              echo "Generating initial persistent release keystore..."
               keytool -genkeypair -v \
                 -keystore release.keystore \
                 -alias "$SIGN_ALIAS" \
@@ -156,27 +168,22 @@ jobs:
                 -storepass "$SIGN_KS_PASS" \
                 -keypass "$SIGN_KEY_PASS" \
                 -dname "CN=RealtimeApp, OU=Mobile, O=Realtime, L=Seoul, S=Seoul, C=KR"
-            else
-              echo "Reusing cached persistent release.keystore for seamless Android upgrade compatibility."
             fi
           fi
 
           UNSIGNED_APK=$(find android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
-          echo "Found unsigned APK: $UNSIGNED_APK"
           BUILD_TOOLS_DIR=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -n 1)
-          echo "Using Android Build Tools: $BUILD_TOOLS_DIR"
 
           $BUILD_TOOLS_DIR/apksigner sign \
             --ks release.keystore \
             --ks-key-alias "$SIGN_ALIAS" \
             --ks-pass "pass:$SIGN_KS_PASS" \
             --key-pass "pass:$SIGN_KEY_PASS" \
-            --out ./realtime.apk \
+            --out "./${APK_NAME}" \
             "$UNSIGNED_APK"
 
-          cp ./realtime.apk "./realtime-${TAG_NAME}.apk"
-          $BUILD_TOOLS_DIR/apksigner verify --verbose ./realtime.apk
-          echo "✓ 정식 서명 완료: ./realtime.apk 및 ./realtime-${TAG_NAME}.apk"
+          $BUILD_TOOLS_DIR/apksigner verify --verbose "./${APK_NAME}"
+          echo "✓ 단일 버전형 서명 APK 생성 완료: ./${APK_NAME}"
 
       - name: Save Persistent Signing Keystore to Cache
         uses: actions/cache/save@v4
@@ -185,51 +192,48 @@ jobs:
           path: release.keystore
           key: realtime-signing-keystore-${{ github.run_number }}
 
-      - name: Publish Versioned APK to GitHub Releases
+      - name: Publish Single Versioned APK to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.ver.outputs.tag_name }}
           target_commitish: ${{ github.sha }}
-          name: "realtime ${{ steps.ver.outputs.tag_name }} (정식 서명 APK)"
+          name: "realtime ${{ steps.ver.outputs.tag_name }}"
           body: |
-            ### 📱 realtime 정식 서명 릴리스 (${{ steps.ver.outputs.tag_name }})
+            ### 📱 realtime ${{ steps.ver.outputs.tag_name }} 정식 릴리스
             - **버전**: `${{ steps.ver.outputs.tag_name }}` (`versionCode: ${{ steps.ver.outputs.version_code }}`)
-            - **서명 상태**: Release Keystore 정식 서명 완료 (기존 설치 앱 위 덮어쓰기 업데이트 호환)
+            - **단일 APK 파일**: `${{ steps.ver.outputs.apk_name }}`
             - **변경 내용**: ${{ github.event.head_commit.message }}
 
             ---
 
-            ### 📲 항상 최신 버전 APK 다운로드 (QR 코드 & 고정 링크)
-            > 아래 링크와 QR 코드는 향후 새 버전이 릴리스될 때마다 **자동으로 가장 최신 버전의 `realtime.apk`**로 연결됩니다.
+            ### 📲 다운로드 바로가기
+            [![Latest APK QR Code](https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=10&ecc=M&data=https://kbs-realtime.surge.sh/download.html)](https://github.com/${{ github.repository }}/releases/download/${{ steps.ver.outputs.tag_name }}/${{ steps.ver.outputs.apk_name }})
 
-            [![Latest APK QR Code](https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=10&ecc=M&data=https://github.com/${{ github.repository }}/releases/latest/download/realtime.apk)](https://github.com/${{ github.repository }}/releases/latest/download/realtime.apk)
-
-            - **📥 최신 버전 자동 다운로드 (추천·고정 주소)**:
-              [https://github.com/${{ github.repository }}/releases/latest/download/realtime.apk](https://github.com/${{ github.repository }}/releases/latest/download/realtime.apk)
-            - **📦 이번 버전(${{ steps.ver.outputs.tag_name }}) 지정 다운로드**:
-              [https://github.com/${{ github.repository }}/releases/download/${{ steps.ver.outputs.tag_name }}/realtime-${{ steps.ver.outputs.tag_name }}.apk](https://github.com/${{ github.repository }}/releases/download/${{ steps.ver.outputs.tag_name }}/realtime-${{ steps.ver.outputs.tag_name }}.apk)
-            - **⚡ Surge 실시간 다운로드 미러**:
-              [https://kbs-realtime.surge.sh/realtime.apk](https://kbs-realtime.surge.sh/realtime.apk)
+            - **📥 이번 버전 APK 다운로드 (`${{ steps.ver.outputs.apk_name }}`)**:
+              [https://github.com/${{ github.repository }}/releases/download/${{ steps.ver.outputs.tag_name }}/${{ steps.ver.outputs.apk_name }}](https://github.com/${{ github.repository }}/releases/download/${{ steps.ver.outputs.tag_name }}/${{ steps.ver.outputs.apk_name }})
+            - **⚡ 웹 다이렉트 APK 다운로드**:
+              [https://kbs-realtime.surge.sh/${{ steps.ver.outputs.apk_name }}](https://kbs-realtime.surge.sh/${{ steps.ver.outputs.apk_name }})
             - **🌐 실시간 웹앱 바로가기**:
               [https://kbs-realtime.surge.sh](https://kbs-realtime.surge.sh)
           draft: false
           prerelease: false
           make_latest: true
           files: |
-            ./realtime.apk
-            ./realtime-${{ steps.ver.outputs.tag_name }}.apk
+            ./${{ steps.ver.outputs.apk_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Sync Latest APK & Version Info to Surge Cloud
-        run: |
-          mkdir -p dist
-          cp ./realtime.apk ./dist/realtime.apk
-          node build.js
-          npx surge ./dist kbs-realtime.surge.sh --token "${{ secrets.SURGE_TOKEN || '81c2062b09ea41b4d328d2d5c79c910a' }}"
+      - name: Sync Latest Versioned APK & Web App to Surge Cloud
         env:
+          APK_NAME: ${{ steps.ver.outputs.apk_name }}
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN || 'kbs_shift_1634@shiftwork.app' }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN || '81c2062b09ea41b4d328d2d5c79c910a' }}
+        run: |
+          rm -f ./dist/*.apk
+          mkdir -p dist
+          cp "./${APK_NAME}" "./dist/${APK_NAME}"
+          node build.js
+          npx surge ./dist kbs-realtime.surge.sh --token "${SURGE_TOKEN}"
 
       - name: Commit Bumped Version Metadata Back to main
         run: |

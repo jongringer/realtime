@@ -29,6 +29,7 @@
   };
 
   const POPULAR_SUBWAY_STATIONS = [
+    { name: '영등포', lines: ['1호선'] },
     { name: '선유도', lines: ['9호선'] },
     { name: '당산', lines: ['2호선', '9호선'] },
     { name: '샛강', lines: ['9호선', '신림선'] },
@@ -161,41 +162,121 @@
       }
     }
 
+    getHiddenChips() {
+      try {
+        const raw = localStorage.getItem('realtime_hidden_subway_chips');
+        const arr = raw ? JSON.parse(raw) : [];
+        return Array.isArray(arr) ? arr : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    saveHiddenChips(list) {
+      try {
+        localStorage.setItem('realtime_hidden_subway_chips', JSON.stringify(list));
+      } catch (e) {}
+    }
+
+    removeChip(stName) {
+      const clean = String(stName || '').trim();
+      if (!clean) return;
+      const hidden = this.getHiddenChips();
+      if (!hidden.includes(clean)) {
+        hidden.push(clean);
+        this.saveHiddenChips(hidden);
+      }
+      try {
+        const prev = this.getRecentStations().filter(x => x !== clean);
+        localStorage.setItem('realtime_recent_subways', JSON.stringify(prev));
+      } catch (e) {}
+      this.renderQuickChips();
+      this.updateShowAllBadge();
+      if (window.transitManager) {
+        window.transitManager.showTimeZoomToast(`'${clean.endsWith('역') ? clean : clean + '역'}'을 주요역사에서 제외했습니다 ([📋 전체조회]로 복원)`);
+      }
+    }
+
+    unhideChip(stName) {
+      const clean = String(stName || '').trim();
+      const hidden = this.getHiddenChips().filter(x => x !== clean);
+      this.saveHiddenChips(hidden);
+    }
+
+    restoreAllSubwayItems() {
+      this.saveHiddenChips([]);
+      if (window.transitManager && typeof window.transitManager.clearSearchHiddenSubwayCards === 'function') {
+        window.transitManager.clearSearchHiddenSubwayCards();
+      }
+      this.renderQuickChips();
+      this.rerenderCurrent();
+      this.updateShowAllBadge();
+      if (window.transitManager) {
+        window.transitManager.showTimeZoomToast('🚇 모든 주요역사 및 지하철 상·하행 노선이 표시됩니다');
+      }
+    }
+
+    updateShowAllBadge() {
+      const btn = document.getElementById('btnSubwayLookupShowAll');
+      if (!btn) return;
+      const hiddenChipsCnt = this.getHiddenChips().length;
+      const hiddenCardsCnt = (window.transitManager && Array.isArray(this.lastLineCards))
+        ? this.lastLineCards.filter(c => window.transitManager.isSubwayCardHidden(c.key)).length
+        : 0;
+      const totalHidden = hiddenChipsCnt + hiddenCardsCnt;
+      btn.textContent = totalHidden > 0 ? `📋 전체조회 (${totalHidden}개 숨김)` : '📋 전체조회';
+      btn.classList.toggle('has-hidden', totalHidden > 0);
+    }
+
     saveRecentStation(cleanName) {
       try {
+        this.unhideChip(cleanName);
         const prev = this.getRecentStations().filter(x => x !== cleanName);
         prev.unshift(cleanName);
-        localStorage.setItem('realtime_recent_subways', JSON.stringify(prev.slice(0, 6)));
+        localStorage.setItem('realtime_recent_subways', JSON.stringify(prev.slice(0, 8)));
       } catch (e) {}
     }
 
     renderQuickChips() {
       if (!this.chipsContainer) return;
       const recents = this.getRecentStations();
-      const defaults = ['선유도', '당산', '샛강', '여의나루', '신길', '영등포구청', '공덕', '광화문', '김포공항', '강남', '서울역'];
+      const hiddenSet = new Set(this.getHiddenChips());
+      const defaults = ['영등포', '선유도', '당산', '샛강', '여의나루', '신길', '영등포구청', '공덕', '광화문', '김포공항', '강남', '서울역'];
       const merged = [];
-      recents.forEach(s => { if (!merged.includes(s)) merged.push(s); });
-      defaults.forEach(s => { if (!merged.includes(s)) merged.push(s); });
+      defaults.forEach(s => { if (!merged.includes(s) && !hiddenSet.has(s)) merged.push(s); });
+      recents.forEach(s => { if (!merged.includes(s) && !hiddenSet.has(s)) merged.push(s); });
 
-      const chipsHtml = merged.slice(0, 10).map(stName => {
-        const isActive = (this.currentStation === stName);
-        const label = stName.endsWith('역') ? stName : `${stName}역`;
+      const chipsHtml = merged.slice(0, 14).map(stName => {
+        const isActive = (this.currentStation === stName || (stName === '서울역' && this.currentStation === '서울'));
+        let label = stName.endsWith('역') ? stName : `${stName}역`;
+        if (stName === '영등포') label = '영등포역(1호선)';
         return `
-          <button type="button" class="quick-chip-btn chip-subway ${isActive ? 'active' : ''}" data-station="${this.escapeHtml(stName)}">
+          <button type="button" class="quick-chip-btn chip-subway has-chip-del ${isActive ? 'active' : ''}" data-station="${this.escapeHtml(stName)}">
             <span class="chip-icon">🚇</span>
             <span class="chip-text">${this.escapeHtml(label)}</span>
+            <span class="chip-del-x" data-del-station="${this.escapeHtml(stName)}" title="주요역사에서 삭제">✕</span>
           </button>
         `;
       }).join('');
 
       this.chipsContainer.innerHTML = `
         <div class="quick-sub-chips-row" style="margin-top:4px;">
-          <div class="quick-chips-scroll-sub">${chipsHtml}</div>
+          <div class="quick-chips-scroll-sub">${chipsHtml || '<span style="font-size:12px; color:#64748b; padding:4px 6px;">표시할 주요역사가 없습니다. [📋 전체조회]를 누르세요.</span>'}</div>
         </div>
       `;
 
+      this.chipsContainer.querySelectorAll('.chip-del-x').forEach(delEl => {
+        delEl.addEventListener('click', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          const st = delEl.getAttribute('data-del-station');
+          if (st) this.removeChip(st);
+        });
+      });
+
       this.chipsContainer.querySelectorAll('.quick-chip-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', (e) => {
+          if (e.target.closest('.chip-del-x')) return;
           const st = btn.getAttribute('data-station');
           if (!st) return;
           if (this.input) this.input.value = st.endsWith('역') ? st : `${st}역`;
@@ -203,6 +284,7 @@
           this.lookupStation(st, true);
         });
       });
+      this.updateShowAllBadge();
     }
 
     showAutocomplete(query) {
@@ -485,9 +567,22 @@
     }
 
     rerenderCurrent() {
+      this.updateShowAllBadge();
       if (!this.resultContainer || !window.transitManager || this.lastLineCards.length === 0) return;
 
-      const html = this.lastLineCards.map(c =>
+      const visibleCards = this.lastLineCards.filter(c => !window.transitManager.isSubwayCardHidden(c.key));
+      if (visibleCards.length === 0) {
+        this.resultContainer.innerHTML = `
+          <div class="fav-loading-card">
+            <div style="font-size:24px; margin-bottom:6px;">🚇</div>
+            <div style="font-size:14.5px; font-weight:800; margin-bottom:10px;">이 역의 상·하행 카드가 모두 숨김 상태입니다.</div>
+            <button type="button" class="btn-show-all-pill has-hidden" onclick="window.subwayLookup && window.subwayLookup.restoreAllSubwayItems()">📋 전체조회 (모든 지하철 노선 다시 보기)</button>
+          </div>
+        `;
+        return;
+      }
+
+      const html = visibleCards.map(c =>
         window.transitManager.renderSubwayBitCardHtml({
           key: c.key,
           stationName: c.stationName,
@@ -510,3 +605,4 @@
     window.subwayLookup = new SubwayLookupController();
   });
 })();
+

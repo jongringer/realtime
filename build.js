@@ -42,15 +42,38 @@ function copyRecursive(src, dest) {
   }
 }
 
-// 4. version.json 생성
+// 4. version.json 및 최신 버전 자동 연결 download.html 생성
+const apkFileName = `realtime-v${pkgVersion}.apk`;
+const apkDownloadUrl = `https://github.com/jongringer/realtime/releases/download/v${pkgVersion}/${apkFileName}`;
 const versionInfo = {
   version: pkgVersion,
+  apkFileName: apkFileName,
+  apkDownloadUrl: apkDownloadUrl,
   buildTimestamp: buildTimestamp,
   buildDate: buildDate,
   domain: 'kbs-realtime.surge.sh'
 };
 fs.writeFileSync(path.join(distDir, 'version.json'), JSON.stringify(versionInfo, null, 2), 'utf8');
-console.log('✓ version.json 생성 완료');
+
+const downloadRedirectHtml = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>realtime v${pkgVersion} APK 다운로드</title>
+  <meta http-equiv="refresh" content="0;url=${apkDownloadUrl}">
+  <script>window.location.replace("${apkDownloadUrl}");</script>
+</head>
+<body style="font-family:sans-serif; background:#0f172a; color:#f8fafc; display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0; text-align:center; padding:20px;">
+  <div>
+    <h2 style="margin-bottom:10px;">📱 realtime v${pkgVersion} 다운로드 중...</h2>
+    <p style="color:#94a3b8; margin-bottom:20px;">자동으로 시작되지 않으면 아래 버튼을 터치하세요.</p>
+    <a href="${apkDownloadUrl}" style="display:inline-block; padding:12px 22px; border-radius:12px; background:#2563eb; color:#fff; font-weight:800; text-decoration:none;">📥 ${apkFileName} 다운로드</a>
+  </div>
+</body>
+</html>`;
+fs.writeFileSync(path.join(distDir, 'download.html'), downloadRedirectHtml, 'utf8');
+console.log('✓ version.json 및 download.html 생성 완료 (' + apkFileName + ')');
 
 // 4-1. master-shifts.json (개인별 클린 초기 상태 유지)
 const defaultMasterOverrides = {};
@@ -98,14 +121,19 @@ copyItems.forEach(item => {
   }
 });
 
-// 6. APK 파일 보존/동기화 (루트에 있으면 dist로 복사, dist에 이미 있으면 보존)
-const rootApk = path.join(baseDir, 'realtime.apk');
-const distApk = path.join(distDir, 'realtime.apk');
-if (fs.existsSync(rootApk)) {
-  fs.copyFileSync(rootApk, distApk);
-  console.log('✓ realtime.apk 루트에서 dist로 동기화 완료');
-} else if (fs.existsSync(distApk)) {
-  console.log('✓ 기존 dist/realtime.apk 보존 완료');
+// 6. 단일 버전형 APK 파일 동기화 (구버전 중복 APK 제거)
+const rootVersionedApk = path.join(baseDir, apkFileName);
+const distVersionedApk = path.join(distDir, apkFileName);
+fs.readdirSync(distDir).forEach(f => {
+  if (f.endsWith('.apk') && f !== apkFileName) {
+    try { fs.unlinkSync(path.join(distDir, f)); } catch (e) {}
+  }
+});
+if (fs.existsSync(rootVersionedApk)) {
+  fs.copyFileSync(rootVersionedApk, distVersionedApk);
+  console.log(`✓ ${apkFileName} 루트에서 dist로 동기화 완료`);
+} else if (fs.existsSync(distVersionedApk)) {
+  console.log(`✓ 기존 dist/${apkFileName} 보존 완료`);
 }
 
 // QR 코드 이미지가 있으면 dist에도 복사 (다운로드 안내용)

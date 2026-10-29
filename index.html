@@ -181,11 +181,12 @@
         </div>
       </div>
 
-      <!-- 상시 노출 지하철 즐겨찾기 바로가기 뱃지 (9호선 골드 / 5호선 퍼플) -->
+      <!-- 상시 노출 지하철 즐겨찾기 바로가기 뱃지 (9호선 골드 / 5호선 퍼플 + 전체조회 복원) -->
       <div class="fav-Pinned-banner">
         <button type="button" class="fav-jump-pill fav-jump-line9" onclick="window.transitManager && window.transitManager.scrollToFavCard('fav-card-assembly')">9호선 국회의사당역</button>
         <button type="button" class="fav-jump-pill fav-jump-line9" onclick="window.transitManager && window.transitManager.scrollToFavCard('fav-card-yeouido-9')">9호선 여의도역</button>
         <button type="button" class="fav-jump-pill fav-jump-line5" onclick="window.transitManager && window.transitManager.scrollToFavCard('fav-card-yeouido-5')">5호선 여의도역</button>
+        <button type="button" class="btn-show-all-pill" id="btnFavSubwayShowAll" onclick="window.transitManager && window.transitManager.showAllSubwayFavorites()" title="숨긴 지하철 상·하행 노선 전체 표시">📋 전체조회</button>
       </div>
 
       <div class="transit-widget-content" id="transitCardsContainer" style="display: flex; flex-direction: column; gap: 12px;"></div>
@@ -216,6 +217,7 @@
         <div class="transit-lookup-sub-row">
           <p class="transit-lookup-subtitle">원하는 지하철 역사명 입력 시 전 호선 실시간 도착 · 시간표 표시</p>
           <div class="transit-lookup-header-actions">
+            <button type="button" class="btn-show-all-pill" id="btnSubwayLookupShowAll" onclick="window.subwayLookup && window.subwayLookup.restoreAllSubwayItems()" title="숨긴 주요역사 및 지하철 상·하행 전체 표시">📋 전체조회</button>
             <span id="subwayLookupLiveBadge" class="transit-lookup-live-badge">⚡ 지하철 실시간</span>
             <button type="button" class="btn-lookup-refresh" id="btnSubwayLookupRefresh" title="지하철 도착 정보 새로고침">🔄</button>
           </div>
@@ -227,7 +229,7 @@
         <div class="lookup-input-wrapper">
           <span class="lookup-input-icon">🚇</span>
           <input type="text" id="inputSubwayQuery" class="lookup-input"
-                 placeholder="지하철 역사명 입력 (예: 당산, 선유도, 광화문, 강남, 서울역, 김포공항)"
+                 placeholder="지하철 역사명 입력 (예: 영등포, 당산, 선유도, 광화문, 강남, 서울역)"
                  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
           <button type="button" id="btnClearSubwayQuery" class="btn-clear-query" style="display:none;" title="입력 지우기">✕</button>
           <button type="button" id="btnExecSubwaySearch" class="btn-lookup-search">조회</button>
@@ -273,6 +275,7 @@
         <div class="transit-lookup-sub-row">
           <p class="transit-lookup-subtitle">정류장 번호·이름 / 버스번호 입력 즉시 조회 (기본: 19130 KBS)</p>
           <div class="transit-lookup-header-actions">
+            <button type="button" class="btn-show-all-pill" id="btnBusLookupShowAll" onclick="window.transitLookup && window.transitLookup.restoreAllBusItems()" title="숨긴 빠른선택 정류장 및 전체 버스노선 표시">📋 전체조회</button>
             <span id="transitLookupLiveBadge" class="transit-lookup-live-badge">⚡ TOPIS 실시간</span>
             <button type="button" class="btn-lookup-refresh" id="btnLookupRefresh" title="버스 도착 정보 새로고침">🔄</button>
           </div>

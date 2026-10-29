@@ -771,9 +771,12 @@ class TransitManager {
     return `
       <div class="bit-board-card subway-9-card ${lineMeta.cardCls}" ${domId ? `id="${domId}"` : ''} data-zoom-key="${key}" data-zoom-name="${this.escapeHtml(title)}" style="${styleBoost}">
         <div class="bit-header-row">
-          <div class="bit-title-group">
-            <span class="badge-seoul-subway ${lineMeta.badgeCls}">${this.escapeHtml(lineMeta.badge)}</span>
-            <strong class="bit-station-name">${this.escapeHtml(title)}</strong>
+          <div class="bit-title-group" style="justify-content:space-between; width:100%;">
+            <div style="display:flex; align-items:center; gap:8px; min-width:0; flex:1;">
+              <span class="badge-seoul-subway ${lineMeta.badgeCls}">${this.escapeHtml(lineMeta.badge)}</span>
+              <strong class="bit-station-name">${this.escapeHtml(title)}</strong>
+            </div>
+            <button type="button" class="btn-card-hide-x" onclick="window.transitManager && window.transitManager.hideSubwayCard('${key}', event)" title="이 상·하행 노선 숨기기 (전체조회 버튼으로 복원 가능)" aria-label="노선 숨기기">✕</button>
           </div>
           <div class="subway-source-toggle-group">
             <button type="button" class="subway-mode-btn ${!isUserTimetable ? 'active-realtime' : ''}"
@@ -829,11 +832,81 @@ class TransitManager {
     `;
   }
 
+  getHiddenSubwayCards() {
+    try {
+      const raw = localStorage.getItem('realtime_hidden_subway_cards');
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  saveHiddenSubwayCards(list) {
+    try {
+      localStorage.setItem('realtime_hidden_subway_cards', JSON.stringify(list));
+    } catch (e) {}
+  }
+
+  isSubwayCardHidden(cardKey) {
+    return this.getHiddenSubwayCards().includes(cardKey);
+  }
+
+  hideSubwayCard(cardKey, event) {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    const list = this.getHiddenSubwayCards();
+    if (!list.includes(cardKey)) {
+      list.push(cardKey);
+      this.saveHiddenSubwayCards(list);
+    }
+    this.renderFavoritesBoard();
+    if (window.subwayLookup && typeof window.subwayLookup.rerenderCurrent === 'function') {
+      window.subwayLookup.rerenderCurrent();
+    }
+    this.showTimeZoomToast('노선을 숨겼습니다 ([📋 전체조회]로 다시 표시)');
+  }
+
+  showAllSubwayFavorites() {
+    const remaining = this.getHiddenSubwayCards().filter(k => !String(k).startsWith('fav_'));
+    this.saveHiddenSubwayCards(remaining);
+    this.renderFavoritesBoard();
+    this.showTimeZoomToast('🚇 모든 즐겨찾기 지하철 상·하행 노선이 표시됩니다');
+  }
+
+  clearSearchHiddenSubwayCards() {
+    const remaining = this.getHiddenSubwayCards().filter(k => String(k).startsWith('fav_'));
+    this.saveHiddenSubwayCards(remaining);
+  }
+
   renderFavoritesBoard() {
     if (!this.cardsContainer) return;
     const isHoliday = this.isWeekendOrHoliday(new Date());
+    const hiddenSet = new Set(this.getHiddenSubwayCards());
 
-    const cardsHtml = FAVORITE_SUBWAY_CARDS.map(card => {
+    const visibleCards = FAVORITE_SUBWAY_CARDS.filter(card => !hiddenSet.has(card.key));
+    const hiddenFavCount = FAVORITE_SUBWAY_CARDS.length - visibleCards.length;
+
+    const btnAll = document.getElementById('btnFavSubwayShowAll');
+    if (btnAll) {
+      btnAll.textContent = hiddenFavCount > 0 ? `📋 전체조회 (${hiddenFavCount}개 숨김)` : '📋 전체조회';
+      btnAll.classList.toggle('has-hidden', hiddenFavCount > 0);
+    }
+
+    if (visibleCards.length === 0) {
+      this.cardsContainer.innerHTML = `
+        <div class="fav-loading-card">
+          <div style="font-size:24px; margin-bottom:6px;">🚇</div>
+          <div style="font-size:14.5px; font-weight:800; margin-bottom:10px;">모든 지하철 상·하행 카드가 숨김 상태입니다.</div>
+          <button type="button" class="btn-show-all-pill has-hidden" onclick="window.transitManager && window.transitManager.showAllSubwayFavorites()">📋 전체조회 (모든 지하철 노선 다시 보기)</button>
+        </div>
+      `;
+      return;
+    }
+
+    const cardsHtml = visibleCards.map(card => {
       const rawArrivals = this.subwayCache[card.stationName] || [];
       const schedKey = isHoliday ? card.weScheduleKey : card.wdScheduleKey;
       const scheduleObj = OFFICIAL_SUBWAY_TIMETABLES[schedKey] || null;

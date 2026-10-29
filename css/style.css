@@ -10054,3 +10054,106 @@ body[data-theme="obsidian"] .subway-9-card.subway-other-card .next2-tag-blue,
   font-size: 11.5px;
   font-weight: 900;
 }
+
+/* ==========================================================================
+   개별 삭제(✕) 칩 · 노선 숨기기(✕) 버튼 · [📋 전체조회] 복원 버튼 스타일
+   ========================================================================== */
+.quick-chip-btn.has-chip-del {
+  padding-right: 6px !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.chip-del-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-left: 2px;
+  border-radius: 50%;
+  font-size: 10.5px;
+  font-weight: 900;
+  line-height: 1;
+  background: rgba(15, 23, 42, 0.1);
+  color: #475569;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.12s ease;
+}
+.quick-chip-btn.active .chip-del-x {
+  background: rgba(255, 255, 255, 0.28);
+  color: #ffffff;
+}
+[data-theme="obsidian"] .chip-del-x {
+  background: rgba(255, 255, 255, 0.14);
+  color: #cbd5e1;
+}
+.chip-del-x:hover,
+.chip-del-x:active {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+  transform: scale(1.08);
+}
+
+.btn-card-hide-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1.5px solid #cbd5e1;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  transition: all 0.15s ease;
+}
+[data-theme="obsidian"] .lookup-bus-card .btn-card-hide-x {
+  background: rgba(30, 41, 59, 0.9);
+  border-color: #475569;
+  color: #94a3b8;
+}
+.btn-card-hide-x:hover,
+.btn-card-hide-x:active {
+  background: #fee2e2 !important;
+  border-color: #f87171 !important;
+  color: #dc2626 !important;
+}
+
+.btn-show-all-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1.5px solid #93c5fd;
+  white-space: nowrap;
+  transition: all 0.16s ease;
+}
+[data-theme="obsidian"] .btn-show-all-pill {
+  background: rgba(37, 99, 235, 0.22);
+  color: #93c5fd;
+  border-color: rgba(96, 165, 250, 0.45);
+}
+.btn-show-all-pill.has-hidden {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #1d4ed8 !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+.btn-show-all-pill:active {
+  transform: scale(0.95);
+}
+

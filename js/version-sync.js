@@ -4,7 +4,7 @@
 (function() {
   'use strict';
 
-  var LATEST_APK_URL = 'https://github.com/jongringer/realtime/releases/latest/download/realtime.apk';
+  var LATEST_APK_URL = 'https://kbs-realtime.surge.sh/download.html';
   var RELEASES_PAGE_URL = 'https://github.com/jongringer/realtime/releases';
   var REMOTE_VERSION_URL = 'https://kbs-realtime.surge.sh/version.json';
 
@@ -71,9 +71,10 @@
     }
   }
 
-  function showApkUpdateBanner(latestVersion) {
+  function showApkUpdateBanner(latestVersion, directApkUrl) {
     var cleanVer = String(latestVersion || '').replace(/^v/i, '');
     if (!cleanVer) return;
+    var targetUrl = directApkUrl || ('https://github.com/jongringer/realtime/releases/download/v' + cleanVer + '/realtime-v' + cleanVer + '.apk');
     var dismissed = sessionStorage.getItem('realtime_dismissed_update_' + cleanVer);
     if (dismissed === '1') return;
 
@@ -86,7 +87,7 @@
     banner.innerHTML =
       '<span>🆕 새 버전 <strong>v' + cleanVer + '</strong> 출시!</span>' +
       '<div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">' +
-        '<a href="' + LATEST_APK_URL + '" target="_blank" rel="noopener" style="padding:6px 11px; border-radius:9px; background:#ffffff; color:#1d4ed8; font-size:12.5px; font-weight:900; text-decoration:none;">업데이트 APK 다운로드</a>' +
+        '<a href="' + targetUrl + '" target="_blank" rel="noopener" style="padding:6px 11px; border-radius:9px; background:#ffffff; color:#1d4ed8; font-size:12.5px; font-weight:900; text-decoration:none;">realtime-v' + cleanVer + '.apk 받기</a>' +
         '<button type="button" id="btnCloseApkUpdateBanner" style="border:none; background:rgba(255,255,255,0.2); color:#fff; width:26px; height:26px; border-radius:50%; font-size:13px; cursor:pointer;">✕</button>' +
       '</div>';
 
@@ -126,7 +127,7 @@
       .then(function(res) { return res.ok ? res.json() : null; })
       .then(function(data) {
         if (data && data.version && compareSemver(data.version, curVer) > 0) {
-          showApkUpdateBanner(data.version);
+          showApkUpdateBanner(data.version, data.apkDownloadUrl);
         }
       })
       .catch(function() {});
