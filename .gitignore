@@ -3,8 +3,6 @@ release.keystore
 *.keystore
 keystore_base64.txt
 *.exe
-*.apk
-qr_realtime.png
 dist/
 cloudflared.exe
 .DS_Store
@@ -14,3 +12,5 @@ scratch/
 android/.idea/
 .agents/
 *.idsig
+android/app/build/
+android/build/
