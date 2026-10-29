@@ -4,7 +4,9 @@ const STORAGE_KEYS = {
   OVERRIDES: 'shift_app_overrides',
   SCHEDULES: 'shift_app_schedules',
   ALARM_SETTINGS: 'shift_app_alarm_settings',
-  ACTIVE_ALARMS: 'shift_app_active_alarms'
+  ACTIVE_ALARMS: 'shift_app_active_alarms',
+  SEEDED: 'shift_app_seeded_v2',
+  UPDATED_AT: 'shift_app_updated_at'
 };
 
 // 기본 알람 설정 (일근 06:00, 야근 15:00, 조근 05:20)
@@ -120,26 +122,25 @@ class ShiftStorage {
       this.setBaseSettings(DEFAULT_INITIAL_DATA.baseSettings);
     }
     
-    // OVERRIDES 로드 및 9월·10월 기본 특이사항(대근, 휴가) 자동 보충 머지
+    // OVERRIDES 최초 1회 시딩 후 사용자 변경/삭제 상태 영구 보존
     const storedOverridesRaw = localStorage.getItem(STORAGE_KEYS.OVERRIDES);
+    const isSeeded = localStorage.getItem(STORAGE_KEYS.SEEDED) === '1';
     if (!storedOverridesRaw) {
       this.setOverrides(DEFAULT_INITIAL_DATA.overrides);
-    } else {
+      localStorage.setItem(STORAGE_KEYS.SEEDED, '1');
+    } else if (!isSeeded) {
       try {
         const storedOverrides = JSON.parse(storedOverridesRaw) || {};
-        let updated = false;
-        // 마스터 특이사항(9월, 10월, 11월 대근/휴가 등)은 구버전 캐시보다 항상 우선 최신화
         for (const [k, v] of Object.entries(DEFAULT_INITIAL_DATA.overrides)) {
           if (!storedOverrides[k]) {
             storedOverrides[k] = v;
-            updated = true;
           }
         }
-        if (updated) {
-          this.setOverrides(storedOverrides);
-        }
+        this.setOverrides(storedOverrides);
+        localStorage.setItem(STORAGE_KEYS.SEEDED, '1');
       } catch (e) {
         this.setOverrides(DEFAULT_INITIAL_DATA.overrides);
+        localStorage.setItem(STORAGE_KEYS.SEEDED, '1');
       }
     }
 
@@ -264,8 +265,35 @@ class ShiftStorage {
     }
   }
 
+  getUpdatedAt() {
+    try {
+      return Number(localStorage.getItem(STORAGE_KEYS.UPDATED_AT) || 0);
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  setUpdatedAt(ts) {
+    try {
+      localStorage.setItem(STORAGE_KEYS.UPDATED_AT, String(Number(ts) || 0));
+    } catch (e) {
+      console.warn('[ShiftStorage] setUpdatedAt 오류:', e);
+    }
+  }
+
+  markModified() {
+    const prev = this.getUpdatedAt();
+    const next = Math.max(Date.now(), prev + 1);
+    this.setUpdatedAt(next);
+    if (typeof window !== 'undefined' && window.syncEngine && typeof window.syncEngine.pushNow === 'function') {
+      window.syncEngine.pushNow();
+    }
+    return next;
+  }
+
   setOverrides(overrides) {
     localStorage.setItem(STORAGE_KEYS.OVERRIDES, JSON.stringify(overrides));
+    localStorage.setItem(STORAGE_KEYS.SEEDED, '1');
   }
 
   setOverrideForDate(dateStr, overrideData) {
@@ -279,12 +307,14 @@ class ShiftStorage {
       };
     }
     this.setOverrides(overrides);
+    this.markModified();
   }
 
   removeOverrideForDate(dateStr) {
     const overrides = this.getOverrides();
     delete overrides[dateStr];
     this.setOverrides(overrides);
+    this.markModified();
   }
 
   getSchedules() {
@@ -316,6 +346,7 @@ class ShiftStorage {
       return (a.id || '').localeCompare(b.id || '');
     });
     this.setSchedules(schedules);
+    this.markModified();
     return newSchedule;
   }
 
@@ -323,6 +354,7 @@ class ShiftStorage {
     let schedules = this.getSchedules();
     schedules = schedules.filter(s => s.id !== id);
     this.setSchedules(schedules);
+    this.markModified();
   }
 
   getSchedulesForDate(dateStr) {
@@ -343,8 +375,15 @@ class ShiftStorage {
     this.setSchedules(DEFAULT_INITIAL_DATA.schedules);
     this.setAlarmSettings(DEFAULT_ALARM_SETTINGS);
     localStorage.removeItem(STORAGE_KEYS.ACTIVE_ALARMS);
+    this.markModified();
   }
 }
 
-// 전역 인스턴스 생성
+// 전역 인스턴스 생성 및 window 바인딩 보장
 const shiftStorage = new ShiftStorage();
+if (typeof window !== 'undefined') {
+  window.shiftStorage = shiftStorage;
+}
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { ShiftStorage, shiftStorage, DEFAULT_INITIAL_DATA, STORAGE_KEYS };
+}

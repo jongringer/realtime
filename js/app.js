@@ -498,20 +498,32 @@ class ShiftApp {
       });
     }
 
-    // 근무 형태만 저장
+    // 근무 형태 드롭다운 변경 즉시 저장 + '근무 저장' 버튼 클릭 시 저장 및 모달 닫기
+    const applyShiftTypeChange = () => {
+      if (!this.editingDateStr || !this.elEditShiftSelect) return;
+      const shiftType = this.elEditShiftSelect.value;
+      const currentOverride = shiftStorage.getOverrides()[this.editingDateStr] || {};
+      shiftStorage.setOverrideForDate(this.editingDateStr, {
+        ...currentOverride,
+        shiftType,
+        time: '',
+        alarm: ''
+      });
+      this.renderCalendar();
+      this.renderTodayCard();
+      this.renderMonthlyNotes();
+    };
+
+    if (this.elEditShiftSelect) {
+      this.elEditShiftSelect.addEventListener('change', () => {
+        applyShiftTypeChange();
+      });
+    }
+
     if (this.btnSaveShiftType) {
       this.btnSaveShiftType.addEventListener('click', () => {
-        const shiftType = this.elEditShiftSelect.value;
-        const currentOverride = shiftStorage.getOverrides()[this.editingDateStr] || {};
-        shiftStorage.setOverrideForDate(this.editingDateStr, {
-          ...currentOverride,
-          shiftType,
-          time: '',
-          alarm: ''
-        });
-        this.renderCalendar();
-        this.renderTodayCard();
-        this.renderMonthlyNotes();
+        applyShiftTypeChange();
+        this.closeModal(this.modalDayEdit);
       });
     }
 
@@ -1265,11 +1277,13 @@ class ShiftApp {
     const btn = this.btnRefreshMonthlyNotes || document.getElementById('btnRefreshMonthlyNotes');
     if (btn) btn.classList.add('spinning');
 
-    // 저장소 기반 이달의 특이사항 및 캘린더 화면 즉시 갱신
+    // 저장소 기반 이달의 특이사항 및 캘린더 화면 즉시 갱신 + 클라우드 양방향 동기화
     this.renderMonthlyNotes();
     this.renderCalendar();
     this.renderTodayCard();
-    this.showWeatherToast('이달의 특이사항을 최신 정보로 새로고침했습니다. 🔄');
+    if (typeof window !== 'undefined' && window.syncEngine && typeof window.syncEngine.syncNow === 'function') {
+      window.syncEngine.syncNow(true);
+    }
 
     setTimeout(() => {
       if (btn) btn.classList.remove('spinning');
