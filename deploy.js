@@ -1,4 +1,3 @@
-const fs = require('fs');
 const path = require('path');
 const { spawnSync, spawn } = require('child_process');
 
@@ -6,7 +5,7 @@ const baseDir = __dirname;
 const distDir = path.join(baseDir, 'dist');
 
 console.log('========================================================');
-console.log('  4조 3교대 스마트 근무표 24시간 클라우드 배포기');
+console.log('  realtime 실시간 대중교통 & 스마트 캘린더 클라우드 배포기');
 console.log('========================================================\n');
 
 // 1. 배포 전 최신 웹 에셋 빌드 & 캐시 무효화 (Cache-Busting) 실행
@@ -21,7 +20,7 @@ if (buildResult.status !== 0) {
 // 2. Surge 클라우드 배포 설정
 const token = process.env.SURGE_TOKEN || '81c2062b09ea41b4d328d2d5c79c910a';
 const email = process.env.SURGE_LOGIN || 'kbs_shift_1634@shiftwork.app';
-const domain = 'kbs-4shift-5855.surge.sh';
+const domain = 'kbs-realtime.surge.sh';
 
 console.log(`\n2. 클라우드 CDN 서버로 업로드 시작 (도메인: https://${domain})...`);
 
@@ -42,8 +41,8 @@ child.on('close', (code) => {
   if (code === 0) {
     console.log('\n========================================================');
     console.log('🎉 [배포 성공] 컴퓨터를 꺼도 24시간 언제나 열립니다!');
-    console.log(`📱 카카오톡 전송 웹앱: https://${domain}`);
-    console.log(`📥 최신 APK 다운로드: https://${domain}/ShiftAlarm.apk`);
+    console.log(`📱 실시간 웹앱 링크: https://${domain}`);
+    console.log(`📥 최신 APK 다운로드: https://${domain}/realtime.apk`);
     console.log('========================================================\n');
   } else {
     console.error(`\n❌ 배포 종료 (종료 코드: ${code})`);

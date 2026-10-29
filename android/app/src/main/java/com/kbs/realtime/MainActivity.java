@@ -1,4 +1,4 @@
-package com.kbs.shiftwork;
+package com.kbs.realtime;
 
 import android.content.Context;
 import android.content.Intent;
@@ -19,7 +19,7 @@ import com.getcapacitor.BridgeActivity;
 import java.util.ArrayList;
 
 public class MainActivity extends BridgeActivity {
-    private static final String TAG = "ShiftAlarmApp";
+    private static final String TAG = "RealtimeApp";
     private long lastBackPressTime = 0;
 
     @Override
@@ -191,7 +191,7 @@ public class MainActivity extends BridgeActivity {
                 cal.set(year, month - 1, day);
                 int dayOfWeek = cal.get(java.util.Calendar.DAY_OF_WEEK); // 1=일, 2=월, 3=화, 4=수, 5=목, 6=금, 7=토
 
-                String msgText = String.format("[%d/%d] %s 근무알람", month, day, shiftType);
+                String msgText = String.format("[%d/%d] %s 알람", month, day, shiftType);
                 return setAlarm(hour, minute, msgText, dayOfWeek);
             } catch (Exception e) {
                 Log.e(TAG, "Failed to schedule shift alarm to Clock app", e);
@@ -217,3 +217,4 @@ public class MainActivity extends BridgeActivity {
         }
     }
 }
+

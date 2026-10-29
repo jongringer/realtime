@@ -1,4 +1,4 @@
-// 4조 3교대 근무 계산 엔진
+// 4조 3교대 및 통상근무 지원 계산 엔진
 // 기본 패턴 순서: 일근 -> 야근 -> 조근 -> 비번 (4일 주기)
 const SHIFT_PATTERN = ['일근', '야근', '조근', '비번'];
 
@@ -91,9 +91,9 @@ function getNextShiftFromPrevious(lastMonthEndShift) {
 }
 
 /**
- * 특정 날짜의 최종 근무 정보 (대근/휴가 오버라이드 포함) 산출
+ * 특정 날짜의 최종 근무 정보 (대근/휴가/연차/반차 오버라이드 포함) 산출
  * @param {string} dateStr - 'YYYY-MM-DD'
- * @param {Object} overrides - { [dateStr]: { shiftType: '일근대근' | '일근휴가' ..., time: '09:00 ~ 18:00 (대근)', note: '대근' } }
+ * @param {Object} overrides - { [dateStr]: { shiftType: '일근대근' | '일근휴가' | '연차' | '오전반차' ..., time: '', note: '' } }
  * @param {Object} baseSettings - { baseDate, baseShiftIndex }
  */
 function getShiftInfoForDate(dateStr, overrides = {}, baseSettings = {}) {
@@ -102,33 +102,42 @@ function getShiftInfoForDate(dateStr, overrides = {}, baseSettings = {}) {
 
   const baseShift = calculateBaseShift(dateStr, baseDate, baseShiftIndex);
 
-  // 오버라이드(대근, 휴가, 수동변경) 확인
+  // 오버라이드(대근, 휴가, 연차/반차, 수동변경) 확인
   if (overrides && overrides[dateStr]) {
     const override = overrides[dateStr];
-    const shiftType = override.shiftType; // 예: '일근대근', '일근휴가', '야근', etc.
-    
+    const shiftType = override.shiftType || '';
+
     let colorClass = 'shift-day';
     let timeText = override.time || '';
     let badgeText = '';
 
-    if (shiftType.includes('대근')) {
+    if (shiftType.includes('대근') || shiftType.includes('당직') || shiftType.includes('특근')) {
       colorClass = 'shift-overtime'; // 빨간색
       badgeText = shiftType.replace(/^[⚡\s]+/, '');
-    } else if (shiftType.includes('휴가')) {
+    } else if (
+      shiftType.includes('휴가') ||
+      shiftType.includes('연차') ||
+      shiftType.includes('반차') ||
+      shiftType.includes('병가') ||
+      shiftType.includes('공가')
+    ) {
       colorClass = 'shift-vacation'; // 녹색
       badgeText = shiftType.replace(/^[🌿\s]+/, '');
+    } else if (shiftType.includes('출장') || shiftType.includes('교육') || shiftType.includes('외근')) {
+      colorClass = 'shift-day';
+      badgeText = shiftType.replace(/^[^\uAC00-\uD7A3a-zA-Z0-9]+/, '');
     } else if (shiftType === '야근' || shiftType.includes('야근')) {
       colorClass = 'shift-night';
       badgeText = '야근';
     } else if (shiftType === '조근' || shiftType.includes('조근')) {
       colorClass = 'shift-early';
       badgeText = '조근';
-    } else if (shiftType === '비번' || shiftType === '') {
+    } else if (shiftType === '비번' || shiftType === '휴무' || shiftType === '') {
       colorClass = 'shift-off';
       badgeText = '';
     } else {
       colorClass = 'shift-day';
-      badgeText = '일근';
+      badgeText = shiftType === '일근' ? '일근' : shiftType;
     }
 
     return {
@@ -163,16 +172,6 @@ function getShiftInfoForDate(dateStr, overrides = {}, baseSettings = {}) {
 
 /**
  * 근무표 일정 및 현재 시각에 따라 최적의 출퇴근 기본 모드 결정 ('commute' | 'offwork')
- *
- * [사용자 정의 기준]
- * - 일근 : 전날부터 09시까지 출근모드, 13시부터 퇴근모드
- * - 야근 : 당일 07시부터 출근모드
- * - 조근 : 당일 05시부터 퇴근모드
- *
- * @param {Date} [currentDate=new Date()] - 대상 일시
- * @param {Object} [overrides={}] - 스토리지 오버라이드 데이터
- * @param {Object} [baseSettings={}] - 기준일 설정
- * @returns {'commute' | 'offwork'}
  */
 function getCommuteModeForDateTime(currentDate = new Date(), overrides = {}, baseSettings = {}) {
   const d = new Date(currentDate);
@@ -197,8 +196,6 @@ function getCommuteModeForDateTime(currentDate = new Date(), overrides = {}, bas
   const todayCat = getCategory(todayStr);
   const nextCat = getCategory(nextStr);
 
-  // 1. 오늘이 일근인 경우
-  // 일근: 전날부터 09시까지 출근모드, 13시부터 퇴근모드
   if (todayCat === '일근') {
     if (currentMinutes < 13 * 60) {
       return 'commute';
@@ -210,8 +207,6 @@ function getCommuteModeForDateTime(currentDate = new Date(), overrides = {}, bas
     }
   }
 
-  // 2. 오늘이 야근인 경우
-  // 야근: 당일 07시부터 출근모드
   if (todayCat === '야근') {
     if (currentMinutes >= 7 * 60) {
       return 'commute';
@@ -220,8 +215,6 @@ function getCommuteModeForDateTime(currentDate = new Date(), overrides = {}, bas
     }
   }
 
-  // 3. 오늘이 조근인 경우
-  // 조근: 당일 05시부터 퇴근모드
   if (todayCat === '조근') {
     if (currentMinutes < 5 * 60) {
       return 'commute';
@@ -233,8 +226,6 @@ function getCommuteModeForDateTime(currentDate = new Date(), overrides = {}, bas
     }
   }
 
-  // 4. 오늘이 비번 (또는 기타 휴무)인 경우
-  // "일근 : 전날부터 09시까지 출근모드" 규칙에 따라 다음날이 일근이면 전날(비번일)은 출근모드 기본
   if (nextCat === '일근') {
     return 'commute';
   }
@@ -244,17 +235,6 @@ function getCommuteModeForDateTime(currentDate = new Date(), overrides = {}, bas
 
 /**
  * 근무표 일정 및 현재 시각에 따라 현재 위치(목5동 vs 여의도동) 결정
- *
- * [사용자 정의 규칙]
- * - 일근 : 06시부터 17시까지는 여의도동 날씨, 이후는 목5동 날씨. 익일 야근 15시까지 목5동.
- * - 야근 : 15시부터 여의도동 날씨 (15시 이전은 목5동)
- * - 조근 : 06시까지 여의도동 날씨, 이후 목5동 날씨
- * - 비번 : 목5동 날씨
- *
- * @param {Date} [currentDate=new Date()]
- * @param {Object} [overrides={}]
- * @param {Object} [baseSettings={}]
- * @returns {{ code: 'yeouido'|'mokdong', name: '여의도동'|'목5동', query: string, lat: number, lon: number, daumUrl: string }}
  */
 function getWeatherLocationForDateTime(currentDate = new Date(), overrides = {}, baseSettings = {}) {
   const d = new Date(currentDate);
@@ -277,28 +257,24 @@ function getWeatherLocationForDateTime(currentDate = new Date(), overrides = {},
   let isYeouido = false;
 
   if (todayCat === '일근') {
-    // 일근 : 06시부터 17시까지는 여의도동, 이후는 목5동
     if (currentMinutes >= 6 * 60 && currentMinutes < 17 * 60) {
       isYeouido = true;
     } else {
       isYeouido = false;
     }
   } else if (todayCat === '야근') {
-    // 야근 : 15시부터 여의도동, 15시 이전(익일 야근 15시까지)은 목5동
     if (currentMinutes >= 15 * 60) {
       isYeouido = true;
     } else {
       isYeouido = false;
     }
   } else if (todayCat === '조근') {
-    // 조근 : 06시까지 여의도동, 이후 목5동
     if (currentMinutes < 6 * 60) {
       isYeouido = true;
     } else {
       isYeouido = false;
     }
   } else {
-    // 비번 : 목5동 날씨
     isYeouido = false;
   }
 

@@ -1,7 +1,7 @@
 {
-  "name": "shift-alarm-app",
-  "version": "1.2.77",
-  "description": "4조 3교대 스마트 근무표 및 알람 앱",
+  "name": "realtime",
+  "version": "1.0.0",
+  "description": "실시간 대중교통 및 스마트 캘린더·근무표",
   "main": "index.html",
   "scripts": {
     "build": "node build.js",

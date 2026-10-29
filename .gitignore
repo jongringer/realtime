@@ -1,8 +1,10 @@
 node_modules/
 release.keystore
+*.keystore
 keystore_base64.txt
 *.exe
 *.apk
+qr_realtime.png
 dist/
 cloudflared.exe
 .DS_Store
@@ -11,4 +13,4 @@ scratch/
 .idea/
 android/.idea/
 .agents/
-
+*.idsig

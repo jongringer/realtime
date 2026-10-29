@@ -1,6 +1,6 @@
 {
-  "appId": "com.kbs.shiftwork",
-  "appName": "ShiftAlarm",
+  "appId": "com.kbs.realtime",
+  "appName": "realtime",
   "webDir": "dist",
   "bundledWebRuntime": false,
   "plugins": {

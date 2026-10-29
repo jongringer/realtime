@@ -5,11 +5,11 @@ const baseDir = __dirname;
 const distDir = path.join(baseDir, 'dist');
 
 console.log('========================================================');
-console.log('  웹 에셋 빌드 & 실시간 캐시 무효화 (Cache-Busting) 시작');
+console.log('  realtime 웹 에셋 빌드 & 실시간 캐시 무효화 시작');
 console.log('========================================================');
 
 // 1. 패키지 버전 및 빌드 타임스탬프 계산
-let pkgVersion = '1.2.68';
+let pkgVersion = '1.0.0';
 try {
   const pkg = JSON.parse(fs.readFileSync(path.join(baseDir, 'package.json'), 'utf8'));
   if (pkg.version) pkgVersion = pkg.version;
@@ -47,23 +47,13 @@ const versionInfo = {
   version: pkgVersion,
   buildTimestamp: buildTimestamp,
   buildDate: buildDate,
-  domain: 'kbs-4shift-5855.surge.sh'
+  domain: 'kbs-realtime.surge.sh'
 };
 fs.writeFileSync(path.join(distDir, 'version.json'), JSON.stringify(versionInfo, null, 2), 'utf8');
 console.log('✓ version.json 생성 완료');
 
-// 4-1. master-shifts.json 보존 및 동기화 (기존 파일의 모든 월별 오버라이드 영구 보존)
-const defaultMasterOverrides = {
-  '2026-09-17': { shiftType: '일근대근', time: '', alarm: '', note: '' },
-  '2026-09-18': { shiftType: '일근휴가', time: '', alarm: '', note: '' },
-  '2026-09-19': { shiftType: '야근', time: '', alarm: '', note: '' },
-  '2026-10-23': { shiftType: '일근대근', time: '', alarm: '', note: '' },
-  '2026-10-31': { shiftType: '일근대근', time: '', alarm: '', note: '' },
-  '2026-11-05': { shiftType: '일근휴가', time: '', alarm: '', note: '' },
-  '2026-11-12': { shiftType: '일근대근', time: '', alarm: '', note: '' },
-  '2026-11-20': { shiftType: '일근대근', time: '', alarm: '', note: '' }
-};
-
+// 4-1. master-shifts.json (개인별 클린 초기 상태 유지)
+const defaultMasterOverrides = {};
 let existingOverrides = {};
 const masterShiftsPath = path.join(baseDir, 'master-shifts.json');
 if (fs.existsSync(masterShiftsPath)) {
@@ -75,7 +65,6 @@ if (fs.existsSync(masterShiftsPath)) {
   }
 }
 
-// 기존 파일의 오버라이드를 최우선 보존하고, 누락된 기본 날짜만 채움
 const mergedOverrides = Object.assign({}, defaultMasterOverrides, existingOverrides);
 
 const masterShifts = {
@@ -85,7 +74,7 @@ const masterShifts = {
 };
 fs.writeFileSync(path.join(distDir, 'master-shifts.json'), JSON.stringify(masterShifts, null, 2), 'utf8');
 fs.writeFileSync(path.join(baseDir, 'master-shifts.json'), JSON.stringify(masterShifts, null, 2), 'utf8');
-console.log('✓ master-shifts.json 동기화 완료 (모든 월별 일정 보존됨)');
+console.log('✓ master-shifts.json 동기화 완료');
 
 // 5. 정적 리소스 복사 (css, js, icons, manifest 등)
 const copyItems = [
@@ -110,13 +99,19 @@ copyItems.forEach(item => {
 });
 
 // 6. APK 파일 보존/동기화 (루트에 있으면 dist로 복사, dist에 이미 있으면 보존)
-const rootApk = path.join(baseDir, 'ShiftAlarm.apk');
-const distApk = path.join(distDir, 'ShiftAlarm.apk');
+const rootApk = path.join(baseDir, 'realtime.apk');
+const distApk = path.join(distDir, 'realtime.apk');
 if (fs.existsSync(rootApk)) {
   fs.copyFileSync(rootApk, distApk);
-  console.log('✓ ShiftAlarm.apk 루트에서 dist로 동기화 완료');
+  console.log('✓ realtime.apk 루트에서 dist로 동기화 완료');
 } else if (fs.existsSync(distApk)) {
-  console.log('✓ 기존 dist/ShiftAlarm.apk 보존 완료');
+  console.log('✓ 기존 dist/realtime.apk 보존 완료');
+}
+
+// QR 코드 이미지가 있으면 dist에도 복사 (다운로드 안내용)
+const rootQr = path.join(baseDir, 'qr_realtime.png');
+if (fs.existsSync(rootQr)) {
+  fs.copyFileSync(rootQr, path.join(distDir, 'qr_realtime.png'));
 }
 
 // 7. HTML 파일 캐시 버스팅 및 전역 버전 메타 주입
@@ -133,7 +128,7 @@ function processHtmlFile(srcFileName, destFileName) {
 
   // icon/image 쿼리스트링 치환
   content = content.replace(/(href=["']?icons\/[^"'\s>]+\.(?:png|svg|ico))(\?v=[^"'\s>]*)?/gi, `$1?v=${cacheVersionTag}`);
-  content = content.replace(/(content=["']?https:\/\/kbs-4shift-5855\.surge\.sh\/icons\/[^"'\s>]+\.(?:png|svg|ico))(\?v=[^"'\s>]*)?/gi, `$1?v=${cacheVersionTag}`);
+  content = content.replace(/(content=["']?https:\/\/kbs-realtime\.surge\.sh\/icons\/[^"'\s>]+\.(?:png|svg|ico))(\?v=[^"'\s>]*)?/gi, `$1?v=${cacheVersionTag}`);
 
   // 전역 버전 정보 스크립트 주입
   const metaScript = `\n  <script>\n    window.__APP_VERSION__ = "${pkgVersion}";\n    window.__BUILD_TIMESTAMP__ = ${buildTimestamp};\n    window.__BUILD_DATE__ = "${buildDate}";\n  </script>`;
@@ -155,14 +150,16 @@ processHtmlFile('index.html', 'index.html');
 processHtmlFile('transit.html', 'transit.html');
 processHtmlFile('transit-guide.html', 'transit-guide.html');
 
-// 8. Android 네이티브 assets 동기화 보장 (APK와 웹 100% 동일 유지)
+// 8. Android 네이티브 assets 동기화 보장 (APK는 자체 APK 파일 복사 제외하여 용량 최적화)
 const androidAssetsDir = path.join(baseDir, 'android', 'app', 'src', 'main', 'assets', 'public');
 if (fs.existsSync(androidAssetsDir)) {
-  copyRecursive(distDir, androidAssetsDir);
+  fs.readdirSync(distDir).forEach(childItemName => {
+    if (childItemName.endsWith('.apk')) return;
+    copyRecursive(path.join(distDir, childItemName), path.join(androidAssetsDir, childItemName));
+  });
   console.log('✓ Android 네이티브 assets(public) 동기화 완료');
 }
 
 console.log('========================================================');
-console.log('🎉 최신 웹 에셋 빌드 및 캐시 무효화 완료!');
+console.log('🎉 realtime 최신 웹 에셋 빌드 및 캐시 무효화 완료!');
 console.log('========================================================\n');
-

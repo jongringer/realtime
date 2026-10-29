@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">ShiftAlarm</string>
-    <string name="title_activity_main">ShiftAlarm</string>
-    <string name="package_name">com.kbs.shiftwork</string>
-    <string name="custom_url_scheme">com.kbs.shiftwork</string>
+    <string name="app_name">realtime</string>
+    <string name="title_activity_main">realtime</string>
+    <string name="package_name">com.kbs.realtime</string>
+    <string name="custom_url_scheme">com.kbs.realtime</string>
 </resources>

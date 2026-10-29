@@ -52,62 +52,91 @@ jobs:
           ./gradlew clean assembleRelease --no-daemon --stacktrace
 
       - name: Sign Android Release APK with apksigner
+        env:
+          KS_B64: ${{ secrets.KEYSTORE_BASE64 }}
+          KS_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KS_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_PASS: ${{ secrets.KEY_PASSWORD }}
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > release.keystore
+          REF_LABEL="${GITHUB_REF_NAME:-v1.0.0}"
+          if [ -n "$KS_B64" ]; then
+            echo "$KS_B64" | base64 -d > release.keystore
+            SIGN_ALIAS="$KS_ALIAS"
+            SIGN_KS_PASS="$KS_PASS"
+            SIGN_KEY_PASS="$KEY_PASS"
+          else
+            echo "Generating release keystore automatically..."
+            SIGN_ALIAS="realtime_key"
+            SIGN_KS_PASS="realtime2026!"
+            SIGN_KEY_PASS="realtime2026!"
+            keytool -genkeypair -v \
+              -keystore release.keystore \
+              -alias "$SIGN_ALIAS" \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -storepass "$SIGN_KS_PASS" \
+              -keypass "$SIGN_KEY_PASS" \
+              -dname "CN=RealtimeApp, OU=Mobile, O=Realtime, L=Seoul, S=Seoul, C=KR"
+          fi
           UNSIGNED_APK=$(find android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
           echo "Found unsigned APK: $UNSIGNED_APK"
           BUILD_TOOLS_DIR=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -n 1)
           echo "Using Android Build Tools: $BUILD_TOOLS_DIR"
           $BUILD_TOOLS_DIR/apksigner sign \
             --ks release.keystore \
-            --ks-key-alias "${{ secrets.KEY_ALIAS }}" \
-            --ks-pass "pass:${{ secrets.KEYSTORE_PASSWORD }}" \
-            --key-pass "pass:${{ secrets.KEY_PASSWORD }}" \
-            --out ./ShiftAlarm-${{ github.ref_name }}.apk \
+            --ks-key-alias "$SIGN_ALIAS" \
+            --ks-pass "pass:$SIGN_KS_PASS" \
+            --key-pass "pass:$SIGN_KEY_PASS" \
+            --out ./realtime.apk \
             "$UNSIGNED_APK"
-          $BUILD_TOOLS_DIR/apksigner verify --verbose ./ShiftAlarm-${{ github.ref_name }}.apk
-          echo "✓ 정식 서명 완료: ./ShiftAlarm-${{ github.ref_name }}.apk"
+          cp ./realtime.apk "./realtime-${REF_LABEL}.apk"
+          $BUILD_TOOLS_DIR/apksigner verify --verbose ./realtime.apk
+          echo "✓ 정식 서명 완료: ./realtime.apk"
 
       - name: Publish Signed APK to GitHub Release with QR Code
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          name: "근무표 알람 앱 ${{ github.ref_name }} (정식 서명판)"
+          name: "realtime 앱 ${{ github.ref_name }} (정식 서명판)"
           body: |
-            ### 📱 정식 서명 릴리스 (${{ github.ref_name }})
+            ### 📱 realtime 정식 서명 릴리스 (${{ github.ref_name }})
+            - **앱 이름**: `realtime` (`realtime.apk`)
             - **서명 상태**: Release Keystore 정식 서명 완료 (SHA-256 / RSA)
             - **배포 기준 커밋**: ${{ github.sha }}
 
             ---
 
             ### 📲 스마트폰 카메라로 QR 코드를 스캔하세요 (또는 이미지 터치)
-            > 스마트폰 기본 카메라 앱으로 아래 QR 코드를 비추거나, 이미지를 직접 터치하면 바로 최신 앱이 다운로드됩니다.
+            > 스마트폰 기본 카메라 앱으로 아래 QR 코드를 비추거나, 이미지를 직접 터치하면 바로 최신 `realtime.apk`가 다운로드됩니다.
 
-            [![Download QR Code](https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/ShiftAlarm-${{ github.ref_name }}.apk)](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/ShiftAlarm-${{ github.ref_name }}.apk)
+            [![Download QR Code](https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/realtime.apk)](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/realtime.apk)
 
-            - **📥 APK 직접 다운로드 주소 (클릭 시 다운로드)**:  
-              [https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/ShiftAlarm-${{ github.ref_name }}.apk](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/ShiftAlarm-${{ github.ref_name }}.apk)
-            - **⚡ Surge 미러 다운로드 주소**:  
-              [https://kbs-4shift-5855.surge.sh/ShiftAlarm.apk](https://kbs-4shift-5855.surge.sh/ShiftAlarm.apk)
+            - **📥 GitHub Release APK 다운로드**:
+              [https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/realtime.apk](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/realtime.apk)
+            - **⚡ 실시간 다운로드 미러 링크 (Surge)**:
+              [https://kbs-realtime.surge.sh/realtime.apk](https://kbs-realtime.surge.sh/realtime.apk)
 
             ---
 
             ### 🌐 실시간 공개 웹앱 바로가기 (설치 없이 브라우저로 열기)
-            - ⚡ **Surge 상시 웹앱 (추천)**: [https://kbs-4shift-5855.surge.sh](https://kbs-4shift-5855.surge.sh)
-            - 🔗 **GitHub Pages 웹앱**: [https://jongringer.github.io/shiftalarm/](https://jongringer.github.io/shiftalarm/)
+            - ⚡ **실시간 웹앱 (Surge)**: [https://kbs-realtime.surge.sh](https://kbs-realtime.surge.sh)
+            - 🔗 **GitHub Pages 웹앱**: [https://jongringer.github.io/realtime/](https://jongringer.github.io/realtime/)
           draft: false
           prerelease: false
-          files: ./ShiftAlarm-${{ github.ref_name }}.apk
+          files: |
+            ./realtime.apk
+            ./realtime-${{ github.ref_name }}.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Sync and Deploy Signed APK to Surge.sh Cloud
         run: |
           mkdir -p dist
-          cp ./ShiftAlarm-${{ github.ref_name }}.apk ./dist/ShiftAlarm.apk
+          cp ./realtime.apk ./dist/realtime.apk
           node build.js
-          npx surge ./dist kbs-4shift-5855.surge.sh --token "${{ secrets.SURGE_TOKEN || '81c2062b09ea41b4d328d2d5c79c910a' }}"
+          npx surge ./dist kbs-realtime.surge.sh --token "${{ secrets.SURGE_TOKEN || '81c2062b09ea41b4d328d2d5c79c910a' }}"
         env:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN || 'kbs_shift_1634@shiftwork.app' }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN || '81c2062b09ea41b4d328d2d5c79c910a' }}
-

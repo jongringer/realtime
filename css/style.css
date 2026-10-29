@@ -9225,3 +9225,981 @@ body.dark-theme .btn-dangsan-view-toggle.active {
 
 
 
+
+/* ==========================================================================
+   7. realtime 전용 커스터마이징 스타일 (낮/밤 모드 완벽 대응)
+   - 본인 이름 입력 & 통상근무 / 4교대근무 전환 스위치
+   - 통상근무 순수 달력 + 고시인성 개인 일정 & 휴가 뱃지
+   - 확대된 팝업창 UI (일정/휴가 편집, 프로필/알람 설정, 알람 팝업)
+   - 실시간 대중교통 3곳 상시 노출 즐겨찾기 (국회의사당역·여의도역·19130 KBS)
+   - 정류장 + 버스번호 하이라이트 전광판
+   ========================================================================== */
+
+/* 프로필 입력 유도 강조 */
+.profile-pill-editable {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.profile-pill-editable.is-empty-profile {
+  border: 1.5px dashed #2563eb !important;
+  background: rgba(37, 99, 235, 0.08) !important;
+}
+[data-theme="obsidian"] .profile-pill-editable.is-empty-profile {
+  border-color: #38bdf8 !important;
+  background: rgba(56, 189, 248, 0.12) !important;
+}
+
+/* 상단 근무형태 선택 바 (통상근무 / 4교대근무) */
+.work-mode-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 10px 0;
+  padding: 8px 11px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(15, 23, 42, 0.09);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+  flex-wrap: wrap;
+}
+[data-theme="obsidian"] .work-mode-bar {
+  background: rgba(30, 41, 59, 0.85);
+  border-color: rgba(148, 163, 184, 0.18);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+.work-mode-segmented {
+  display: inline-flex;
+  background: #e2e8f0;
+  padding: 3px;
+  border-radius: 12px;
+  gap: 3px;
+}
+[data-theme="obsidian"] .work-mode-segmented {
+  background: #0f172a;
+}
+
+.work-mode-seg-btn {
+  border: none;
+  background: transparent;
+  color: #475569;
+  font-size: 13.5px;
+  font-weight: 800;
+  padding: 7px 13px;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+[data-theme="obsidian"] .work-mode-seg-btn {
+  color: #94a3b8;
+}
+.work-mode-seg-btn.active {
+  background: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.32);
+}
+[data-theme="obsidian"] .work-mode-seg-btn.active {
+  background: #0284c7;
+  color: #ffffff;
+}
+
+.work-mode-hint {
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  letter-spacing: -0.2px;
+}
+[data-theme="obsidian"] .work-mode-hint {
+  color: #cbd5e1;
+}
+
+/* 달력 월 이동 화살표 버튼 */
+.month-step-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: #ffffff;
+  color: #1e293b;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+[data-theme="obsidian"] .month-step-btn {
+  background: #1e293b;
+  border-color: rgba(148, 163, 184, 0.25);
+  color: #f8fafc;
+}
+
+/* 달력 셀 높이 확장 & 개인 일정/휴가 가독성 극대화 */
+.calendar-day-cell {
+  min-height: 74px !important;
+  padding: 4px 3px 5px !important;
+  justify-content: flex-start !important;
+  gap: 2px !important;
+}
+.calendar-day-cell.mode-regular-cell .day-num {
+  font-size: 14.5px !important;
+  font-weight: 800 !important;
+  margin-bottom: 1px;
+}
+
+/* 휴가 전용 뱃지 (연차/휴가/반차/병가/공가) */
+.shift-tag.shift-vacation,
+.shift-vacation {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  border-radius: 6px;
+  padding: 1px 5px;
+  font-size: 10.5px !important;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.28);
+}
+
+/* 개인 일정 미니 뱃지 (한눈에 잘 보이도록 선명한 컬러바 & 굵은 글씨) */
+.schedule-badge-mini {
+  display: block !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 2px 4px !important;
+  margin-top: 1px !important;
+  border-radius: 5px !important;
+  font-size: 10.8px !important;
+  font-weight: 800 !important;
+  line-height: 1.22 !important;
+  text-align: left !important;
+  background: #dbeafe !important;
+  color: #1e3a8a !important;
+  border-left: 3px solid #2563eb !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  letter-spacing: -0.3px !important;
+}
+[data-theme="obsidian"] .schedule-badge-mini {
+  background: rgba(14, 116, 144, 0.38) !important;
+  color: #e0f2fe !important;
+  border-left-color: #38bdf8 !important;
+}
+.schedule-badge-mini.schedule-more-count {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+  border-left-color: #f59e0b !important;
+  text-align: center !important;
+  font-size: 10px !important;
+}
+[data-theme="obsidian"] .schedule-badge-mini.schedule-more-count {
+  background: rgba(245, 158, 11, 0.22) !important;
+  color: #fde68a !important;
+  border-left-color: #fbbf24 !important;
+}
+
+/* 달력 하단 선택 날짜 일정/휴가 프리뷰 바 확대 */
+.selected-schedule-bar {
+  min-height: 48px !important;
+  padding: 10px 14px !important;
+  border-radius: 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  cursor: pointer;
+}
+.schedule-bar-date {
+  font-size: 15px !important;
+  font-weight: 900 !important;
+  white-space: nowrap;
+}
+.schedule-bar-text {
+  font-size: 14.8px !important;
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+}
+.schedule-bar-vac-tag {
+  display: inline-block;
+  background: #10b981;
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-right: 4px;
+}
+
+@media (max-width: 360px) {
+  .calendar-day-cell {
+    min-height: 66px !important;
+  }
+  .schedule-badge-mini {
+    font-size: 10px !important;
+    padding: 1.5px 3px !important;
+  }
+}
+
+/* ==========================================================================
+   팝업창(모달) 글씨 및 컨트롤 대폭 확대 (.modal-enlarged)
+   ========================================================================== */
+.modal-container.modal-enlarged {
+  width: min(95vw, 450px) !important;
+  max-width: 95vw !important;
+  max-height: 89vh !important;
+  overflow-y: auto !important;
+  padding: 20px 18px !important;
+  border-radius: 24px !important;
+}
+.modal-enlarged .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+}
+.modal-enlarged .modal-title {
+  font-size: 20px !important;
+  font-weight: 900 !important;
+  line-height: 1.3 !important;
+  letter-spacing: -0.4px;
+}
+.modal-enlarged .modal-close-btn {
+  width: 38px !important;
+  height: 38px !important;
+  font-size: 19px !important;
+  border-radius: 50% !important;
+}
+
+.day-section-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.day-section-title {
+  font-size: 16.5px !important;
+  font-weight: 900 !important;
+  color: #0f172a;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+[data-theme="obsidian"] .day-section-title {
+  color: #f8fafc;
+}
+.day-section-desc {
+  font-size: 13.5px !important;
+  line-height: 1.45 !important;
+  color: #475569;
+  margin: 0;
+  font-weight: 600;
+}
+[data-theme="obsidian"] .day-section-desc {
+  color: #cbd5e1;
+}
+
+.modal-divider {
+  height: 1px;
+  background: rgba(148, 163, 184, 0.25);
+  margin: 16px 0;
+}
+
+/* 팝업 내 등록된 개인 일정 카드 */
+.day-schedule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.day-schedule-empty {
+  padding: 15px 12px;
+  border-radius: 13px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  color: #64748b;
+  font-size: 15px !important;
+  font-weight: 700;
+  text-align: center;
+}
+[data-theme="obsidian"] .day-schedule-empty {
+  background: rgba(15, 23, 42, 0.65);
+  border-color: #334155;
+  color: #94a3b8;
+}
+
+.day-schedule-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #eff6ff;
+  border: 1.5px solid #bfdbfe;
+}
+[data-theme="obsidian"] .day-schedule-item {
+  background: rgba(30, 58, 138, 0.32);
+  border-color: rgba(56, 189, 248, 0.35);
+}
+.day-schedule-main {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  min-width: 0;
+  flex: 1;
+}
+.day-schedule-time-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 9px;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  white-space: nowrap;
+}
+.day-schedule-time-badge.all-day {
+  background: #0284c7;
+}
+.day-schedule-title {
+  font-size: 17px !important;
+  font-weight: 800 !important;
+  color: #0f172a;
+  line-height: 1.35;
+  word-break: keep-all;
+}
+[data-theme="obsidian"] .day-schedule-title {
+  color: #f8fafc;
+}
+.day-schedule-del-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(239, 68, 68, 0.14);
+  color: #dc2626;
+  font-size: 16px;
+  font-weight: 900;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+[data-theme="obsidian"] .day-schedule-del-btn {
+  background: rgba(239, 68, 68, 0.24);
+  color: #fca5a5;
+}
+
+/* 팝업 대형 입력창 & 셀렉트 & 버튼 */
+.day-schedule-add-box {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 12px;
+  border-radius: 15px;
+  background: rgba(241, 245, 249, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+[data-theme="obsidian"] .day-schedule-add-box {
+  background: rgba(15, 23, 42, 0.65);
+  border-color: rgba(148, 163, 184, 0.2);
+}
+.day-schedule-time-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 7px;
+}
+.modal-large-select {
+  height: 46px !important;
+  padding: 0 8px !important;
+  border-radius: 11px !important;
+  border: 1.5px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+  font-size: 15.5px !important;
+  font-weight: 800 !important;
+}
+[data-theme="obsidian"] .modal-large-select {
+  background: #1e293b !important;
+  border-color: #475569 !important;
+  color: #f8fafc !important;
+}
+.modal-large-input {
+  width: 100% !important;
+  height: 48px !important;
+  padding: 0 14px !important;
+  border-radius: 12px !important;
+  border: 1.5px solid #94a3b8 !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+  font-size: 16.5px !important;
+  font-weight: 700 !important;
+  box-sizing: border-box !important;
+}
+[data-theme="obsidian"] .modal-large-input {
+  background: #1e293b !important;
+  border-color: #475569 !important;
+  color: #f8fafc !important;
+}
+.modal-large-btn {
+  height: 48px !important;
+  padding: 0 18px !important;
+  border-radius: 13px !important;
+  font-size: 16.5px !important;
+  font-weight: 800 !important;
+  cursor: pointer;
+}
+
+/* 빠른 휴가 1탭 칩 */
+.quick-vacation-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.quick-vac-chip {
+  padding: 8px 13px;
+  border-radius: 11px;
+  border: 1.5px solid #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  color: #065f46;
+  font-size: 14.5px !important;
+  font-weight: 800;
+  cursor: pointer;
+}
+[data-theme="obsidian"] .quick-vac-chip {
+  background: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+  border-color: #059669;
+}
+.quick-vac-chip.chip-clear {
+  border-color: #94a3b8;
+  background: rgba(148, 163, 184, 0.12);
+  color: #475569;
+}
+[data-theme="obsidian"] .quick-vac-chip.chip-clear {
+  color: #cbd5e1;
+}
+
+.day-override-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 설정 모달 내 근무 형태 선택 & 알람 카드 */
+.settings-mode-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.settings-mode-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 13px 10px;
+  border-radius: 14px;
+  border: 2px solid #cbd5e1;
+  background: #f8fafc;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+[data-theme="obsidian"] .settings-mode-btn {
+  background: #1e293b;
+  border-color: #334155;
+  color: #cbd5e1;
+}
+.settings-mode-btn strong {
+  font-size: 16px;
+  font-weight: 900;
+}
+.settings-mode-btn span {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.85;
+}
+.settings-mode-btn.active {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1d4ed8;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.18);
+}
+[data-theme="obsidian"] .settings-mode-btn.active {
+  border-color: #38bdf8;
+  background: rgba(2, 132, 199, 0.25);
+  color: #f0f9ff;
+}
+
+.settings-alarm-card,
+.settings-sub-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 13px 14px;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+[data-theme="obsidian"] .settings-alarm-card,
+[data-theme="obsidian"] .settings-sub-card {
+  background: rgba(15, 23, 42, 0.65);
+  border-color: #334155;
+}
+.settings-alarm-label {
+  font-size: 15.5px;
+  font-weight: 800;
+}
+.settings-time-input {
+  height: 44px !important;
+  font-size: 16.5px !important;
+  font-weight: 800 !important;
+  padding: 0 10px !important;
+  border-radius: 10px !important;
+}
+.settings-Check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.settings-Check-row input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+}
+
+.alarm-popup-title-lg {
+  font-size: 22px !important;
+  font-weight: 900 !important;
+}
+.alarm-popup-desc-lg {
+  font-size: 16.5px !important;
+  line-height: 1.5 !important;
+}
+
+/* ==========================================================================
+   실시간 대중교통 즐겨찾기 3곳 상시 노출 카드 (국회의사당역 · 여의도역 · 19130 KBS)
+   ========================================================================== */
+.fav-Pinned-banner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.fav-jump-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 12.8px;
+  font-weight: 800;
+  text-decoration: none;
+  background: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+  transition: transform 0.14s ease, background 0.14s ease;
+}
+.fav-jump-pill:active {
+  transform: scale(0.96);
+}
+[data-theme="obsidian"] .fav-jump-pill {
+  background: rgba(30, 58, 138, 0.35);
+  color: #bae6fd;
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+.transit-favorites-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.fav-station-card {
+  border-radius: 20px;
+  background: #ffffff;
+  border: 1.5px solid rgba(15, 23, 42, 0.1);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+}
+[data-theme="obsidian"] .fav-station-card {
+  background: #111827;
+  border-color: rgba(148, 163, 184, 0.18);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.42);
+}
+
+.fav-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 13px 15px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid #e2e8f0;
+}
+[data-theme="obsidian"] .fav-card-header {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border-bottom-color: rgba(148, 163, 184, 0.18);
+}
+
+.fav-header-left {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.fav-card-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.3px;
+}
+[data-theme="obsidian"] .fav-card-title {
+  color: #f8fafc;
+}
+.fav-card-sub {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+}
+[data-theme="obsidian"] .fav-card-sub {
+  color: #94a3b8;
+}
+
+.fav-line-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  color: #ffffff;
+}
+.fav-line-9 {
+  background: #b58600;
+}
+.fav-line-5 {
+  background: #8b5cf6;
+}
+.fav-line-bus {
+  background: #1d4ed8;
+}
+
+.fav-line-sub-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px 4px 14px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #334155;
+}
+[data-theme="obsidian"] .fav-line-sub-divider {
+  color: #cbd5e1;
+}
+
+.fav-subway-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 12px;
+}
+@media (max-width: 520px) {
+  .fav-subway-grid {
+    grid-template-columns: 1fr;
+    gap: 9px;
+    padding: 10px;
+  }
+}
+
+.fav-dir-box {
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+[data-theme="obsidian"] .fav-dir-box {
+  background: rgba(30, 41, 59, 0.65);
+  border-color: rgba(148, 163, 184, 0.16);
+}
+.fav-dir-title {
+  font-size: 13.5px;
+  font-weight: 900;
+  color: #1e293b;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+[data-theme="obsidian"] .fav-dir-title {
+  color: #e2e8f0;
+}
+
+.fav-train-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.fav-train-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 11px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+[data-theme="obsidian"] .fav-train-row {
+  background: #0f172a;
+  border-color: rgba(148, 163, 184, 0.16);
+}
+.fav-train-row.fav-row-first {
+  border-left: 3.5px solid #2563eb;
+}
+[data-theme="obsidian"] .fav-train-row.fav-row-first {
+  border-left-color: #38bdf8;
+}
+
+.fav-train-left {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.fav-order-dot {
+  font-size: 11.5px;
+  font-weight: 900;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.dot-first {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+.dot-second {
+  background: #f1f5f9;
+  color: #475569;
+}
+[data-theme="obsidian"] .dot-first {
+  background: rgba(37, 99, 235, 0.3);
+  color: #93c5fd;
+}
+[data-theme="obsidian"] .dot-second {
+  background: rgba(148, 163, 184, 0.18);
+  color: #cbd5e1;
+}
+
+.fav-train-type {
+  font-size: 11.5px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.fav-train-type.type-express {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+[data-theme="obsidian"] .fav-train-type.type-express {
+  background: rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+}
+.fav-train-type.type-normal {
+  background: #e2e8f0;
+  color: #334155;
+}
+[data-theme="obsidian"] .fav-train-type.type-normal {
+  background: #1e293b;
+  color: #cbd5e1;
+}
+
+.fav-train-dest {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #0f172a;
+}
+[data-theme="obsidian"] .fav-train-dest {
+  color: #f8fafc;
+}
+.fav-train-pos {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+}
+[data-theme="obsidian"] .fav-train-pos {
+  color: #94a3b8;
+}
+
+.fav-train-right {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.fav-eta-primary {
+  font-size: calc(18px + var(--time-font-boost, 0px)) !important;
+  font-weight: 900 !important;
+  color: #0284c7;
+}
+[data-theme="obsidian"] .fav-eta-primary {
+  color: #38bdf8;
+}
+.fav-eta-secondary {
+  font-size: calc(15px + var(--time-font-boost, 0px)) !important;
+  font-weight: 800 !important;
+  color: #334155;
+}
+[data-theme="obsidian"] .fav-eta-secondary {
+  color: #cbd5e1;
+}
+.fav-eta-imminent {
+  color: #dc2626 !important;
+}
+[data-theme="obsidian"] .fav-eta-imminent {
+  color: #f87171 !important;
+}
+.fav-eta-clock {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+}
+[data-theme="obsidian"] .fav-eta-clock {
+  color: #94a3b8;
+}
+
+.fav-empty-msg {
+  padding: 12px;
+  text-align: center;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+/* 19130 KBS 버스정류장 상시 카드 */
+.fav-bus-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+}
+.fav-bus-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+[data-theme="obsidian"] .fav-bus-item {
+  background: rgba(30, 41, 59, 0.65);
+  border-color: rgba(148, 163, 184, 0.16);
+}
+.fav-bus-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.fav-bus-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 58px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 900;
+  text-align: center;
+  flex-shrink: 0;
+}
+.fav-bus-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.fav-bus-dir {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+[data-theme="obsidian"] .fav-bus-dir {
+  color: #e2e8f0;
+}
+.fav-bus-pos {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+}
+[data-theme="obsidian"] .fav-bus-pos {
+  color: #94a3b8;
+}
+
+.fav-bus-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
+}
+.fav-bus-eta-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.fav-bus-tag {
+  font-size: 11px;
+  font-weight: 900;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+[data-theme="obsidian"] .fav-bus-tag {
+  background: rgba(37, 99, 235, 0.3);
+  color: #93c5fd;
+}
+.fav-bus-tag-sub {
+  font-size: 11px;
+  font-weight: 800;
+  color: #64748b;
+}
+.fav-bus-raw {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #64748b;
+}
+
+/* [정류장 + 버스번호] 선택 노선 하이라이트 전광판 */
+.lookup-bus-card.is-highlighted-route {
+  border: 2.5px solid #2563eb !important;
+  box-shadow: 0 8px 22px rgba(37, 99, 235, 0.18) !important;
+}
+[data-theme="obsidian"] .lookup-bus-card.is-highlighted-route {
+  border-color: #38bdf8 !important;
+  box-shadow: 0 8px 24px rgba(56, 189, 248, 0.22) !important;
+}
+.highlight-target-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 11.5px;
+  font-weight: 900;
+}

@@ -1,7 +1,7 @@
 {
-  "name": "4조 3교대 스마트 근무표",
-  "short_name": "근무표",
-  "description": "4조 3교대 맞춤형 근무표 및 출퇴근 교통알림",
+  "name": "realtime",
+  "short_name": "realtime",
+  "description": "실시간 대중교통 및 스마트 캘린더·근무표",
   "start_url": "./index.html",
   "display": "standalone",
   "orientation": "portrait",

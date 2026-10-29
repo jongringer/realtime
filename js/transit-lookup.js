@@ -1,30 +1,51 @@
 // ==========================================================================
-// 실시간 정류장 ID(5자리) 및 정류소·지하철역 실시간 도착정보 조회 엔진
-// - 서울시 버스 TOPIS (getStationByUid, getStationByName) 직결
-// - 서울교통공사/서울시 지하철 실시간 도착정보 (realtimeStationArrival) 직결
-// - 숫자 5자리 입력 즉시 해당 정류소 다음·다다음 버스 실시간 카운트다운
-// - '선유' 검색 시 '선유도역(9호선)' 및 버스정류소 실시간 추천
-// - 낮 모드(애플 라이트) 및 밤 모드(옵시디언 다크) 완벽 일체화 디자인
+// 실시간 버스 정류장 · 버스 노선번호 · 지하철역 통합 조회 엔진 (realtime)
+// - 정류장 ID(5자리), 정류장명, 버스번호 단독, [정류장 + 버스번호] 동시 검색 지원
+// - 지하철역 전 호선 상·하행 실시간 열차 도착 카운트다운 지원
+// - 서울시 TOPIS / m.bus.go.kr / 서울시 실시간 지하철 API 직결 + CORS 프록시 백업
 // ==========================================================================
 
 (function() {
   'use strict';
 
+  const SUBWAY_ID_MAP = {
+    '1001': { name: '1호선', cls: 'line-1' },
+    '1002': { name: '2호선', cls: 'line-2' },
+    '1003': { name: '3호선', cls: 'line-3' },
+    '1004': { name: '4호선', cls: 'line-4' },
+    '1005': { name: '5호선', cls: 'line-5' },
+    '1006': { name: '6호선', cls: 'line-6' },
+    '1007': { name: '7호선', cls: 'line-7' },
+    '1008': { name: '8호선', cls: 'line-8' },
+    '1009': { name: '9호선', cls: 'line-9' },
+    '1032': { name: 'GTX-A', cls: 'line-default' },
+    '1063': { name: '경의중앙선', cls: 'line-default' },
+    '1065': { name: '공항철도', cls: 'line-airport' },
+    '1067': { name: '경춘선', cls: 'line-default' },
+    '1075': { name: '수인분당선', cls: 'line-default' },
+    '1077': { name: '신분당선', cls: 'line-sinbundang' },
+    '1092': { name: '우이신설선', cls: 'line-default' },
+    '1093': { name: '서해선', cls: 'line-default' },
+    '1094': { name: '신림선', cls: 'line-default' }
+  };
+
   // 수도권 주요 지하철역 및 호선 데이터베이스
   const SUBWAY_STATIONS = [
-    { name: '선유도', lines: ['9호선'] },
+    { name: '국회의사당', lines: ['9호선'] },
+    { name: '여의도', lines: ['5호선', '9호선'] },
+    { name: '샛강', lines: ['9호선', '신림선'] },
+    { name: '여의나루', lines: ['5호선'] },
     { name: '당산', lines: ['2호선', '9호선'] },
+    { name: '선유도', lines: ['9호선'] },
     { name: '영등포구청', lines: ['2호선', '5호선'] },
+    { name: '영등포시장', lines: ['5호선'] },
+    { name: '영등포', lines: ['1호선'] },
+    { name: '신길', lines: ['1호선', '5호선'] },
+    { name: '대방', lines: ['1호선', '신림선'] },
+    { name: '노량진', lines: ['1호선', '9호선'] },
     { name: '신목동', lines: ['9호선'] },
     { name: '목동', lines: ['5호선'] },
     { name: '오목교', lines: ['5호선'] },
-    { name: '여의도', lines: ['5호선', '9호선'] },
-    { name: '국회의사당', lines: ['9호선'] },
-    { name: '샛강', lines: ['9호선', '신림선'] },
-    { name: '노량진', lines: ['1호선', '9호선'] },
-    { name: '신길', lines: ['1호선', '5호선'] },
-    { name: '영등포', lines: ['1호선'] },
-    { name: '영등포시장', lines: ['5호선'] },
     { name: '문래', lines: ['2호선'] },
     { name: '신도림', lines: ['1호선', '2호선'] },
     { name: '대림', lines: ['2호선', '7호선'] },
@@ -40,7 +61,6 @@
     { name: '용산', lines: ['1호선', '경의중앙선'] },
     { name: '마포', lines: ['5호선'] },
     { name: '공덕', lines: ['5호선', '6호선', '공항철도', '경의중앙선'] },
-    { name: '여의나루', lines: ['5호선'] },
     { name: '마포구청', lines: ['6호선'] },
     { name: '망원', lines: ['6호선'] },
     { name: '상수', lines: ['6호선'] },
@@ -105,256 +125,230 @@
     { name: '화곡', lines: ['5호선'] },
     { name: '우장산', lines: ['5호선'] },
     { name: '발산', lines: ['5호선'] },
-    { name: '마곡', lines: ['5호선'] },
-    { name: '송정', lines: ['5호선'] },
-    { name: '신정', lines: ['5호선'] },
-    { name: '신정네거리', lines: ['2호선'] },
-    { name: '양천구청', lines: ['2호선'] },
-    { name: '도림천', lines: ['2호선'] }
+    { name: '마곡', lines: ['5호선'] }
   ];
 
-  // 주요 버스 노선 데이터베이스 (버스 번호 검색 지원)
-  // 주요 버스 노선 데이터베이스 (버스 번호 검색 시 전체 정류소 스크롤 팝업 지원)
-  const POPULAR_BUS_ROUTES = [
+  // 추가 보강 버스 노선 (마을·경기버스 등)
+  const EXTRA_BUS_ROUTES = [
     {
-      routeNo: '603',
-      routeType: '간선버스',
-      badgeClass: 'badge-blue',
-      summary: '신월동 ↔ 목동역 ↔ 당산역 ↔ 서울역/시청',
+      routeNo: '10부천',
+      aliases: ['10', '10번', '10부천', '부천10'],
+      routeType: '경기일반',
+      badgeClass: 'badge-sky',
+      summary: '부천 옥길·역곡 ↔ 개봉·영등포 ↔ KBS(19130) ↔ 국회의사당역',
       stops: [
-        { arsId: '15383', stNm: '신월동기점', dir: '기점 출발' },
-        { arsId: '15150', stNm: '양천보건소', dir: '목동역 방면' },
-        { arsId: '15162', stNm: '목동역.홍익병원', dir: '목동역 7번출구' },
-        { arsId: '15152', stNm: '목동5단지C상가', dir: '이대목동병원 방면' },
-        { arsId: '15153', stNm: '목동6단지앞', dir: '이대목동병원 방면' },
-        { arsId: '15154', stNm: '이대목동병원.목동6단지앞', dir: '선유도/당산역 방면' },
-        { arsId: '19210', stNm: '선유도역1번출구', dir: '당산역 방면' },
-        { arsId: '19176', stNm: '당산역삼성래미안아파트 (당산역버스정류장)', dir: '귀가/신월동 방면' },
-        { arsId: '19175', stNm: '당산역 (2호선·9호선)', dir: '영등포시장 방면' },
-        { arsId: '19208', stNm: '영등포시장역', dir: '영등포 방면' },
-        { arsId: '19102', stNm: '영등포역 (1호선)', dir: '신길역 방면' },
-        { arsId: '19230', stNm: '신길역', dir: '여의도/마포 방면' },
-        { arsId: '14167', stNm: '마포역 (5호선)', dir: '공덕역 방면' },
-        { arsId: '14169', stNm: '공덕역 (5·6호선)', dir: '충정로 방면' },
-        { arsId: '13140', stNm: '충정로역 (2·5호선)', dir: '서울역 방면' },
-        { arsId: '02007', stNm: '서울역버스환승센터 (1·4호선)', dir: '시청/종로 방면' },
-        { arsId: '02128', stNm: '시청앞.덕수궁 (회차)', dir: '회차 지점' }
+        { arsId: '19130', stNm: 'KBS', dir: '영등포·부천 방면' },
+        { arsId: '19133', stNm: '국회의사당역5번출구', dir: 'KBS·회차 방면' },
+        { arsId: '19161', stNm: '한국경제인협회', dir: '영등포역 방면' },
+        { arsId: '19102', stNm: '영등포역 (1호선)', dir: '신도림·개봉 방면' }
       ]
     },
     {
-      routeNo: '6620',
-      routeType: '지선버스',
-      badgeClass: 'badge-green',
-      summary: '양천공영차고지 ↔ 목동 ↔ 당산역 ↔ 영등포구청',
+      routeNo: '영등포10',
+      aliases: ['영등포10', '영등포10번'],
+      routeType: '마을버스',
+      badgeClass: 'badge-town',
+      summary: '여의도 KBS ↔ 국회의사당역 ↔ 여의도역 ↔ 샛강역 순환',
       stops: [
-        { arsId: '15385', stNm: '양천공영차고지', dir: '기점 출발' },
-        { arsId: '15217', stNm: '신정현대아파트', dir: '신정동 방면' },
-        { arsId: '15161', stNm: '목동역 (5호선)', dir: '오목교/목동단지 방면' },
-        { arsId: '15152', stNm: '목동5단지C상가', dir: '이대병원 방면' },
-        { arsId: '15153', stNm: '목동6단지앞', dir: '양천차고지/당산 방면' },
-        { arsId: '15154', stNm: '이대목동병원.목동6단지앞', dir: '당산역 방면' },
-        { arsId: '15160', stNm: '신목초등학교입구', dir: '선유도 방면' },
-        { arsId: '19210', stNm: '선유도역1번출구', dir: '당산역 방면' },
-        { arsId: '19176', stNm: '당산역삼성래미안아파트 (당산역버스정류장)', dir: '귀가/양천차고지 방면' },
-        { arsId: '19175', stNm: '당산역 (2호선·9호선)', dir: '영등포구청 방면' },
-        { arsId: '19225', stNm: '영등포구청역 (2·5호선)', dir: '영등포구청 방면' },
-        { arsId: '19729', stNm: '영등포구청.우리은행', dir: '문래역 방면' },
-        { arsId: '19194', stNm: '문래역 (2호선)', dir: '회차 지점' }
+        { arsId: '19130', stNm: 'KBS', dir: '여의도역 방면' },
+        { arsId: '19132', stNm: '국회의사당역', dir: 'KBS 방면' },
+        { arsId: '19156', stNm: '여의도역5번출구', dir: '샛강역 방면' },
+        { arsId: '19155', stNm: '여의도역6번출구', dir: '국회의사당 방면' }
       ]
     },
     {
-      routeNo: '6637',
-      routeType: '지선버스',
-      badgeClass: 'badge-green',
-      summary: '광명시 ↔ 개봉역 ↔ 목동단지 ↔ 영등포구청역',
+      routeNo: '영등포11',
+      aliases: ['영등포11', '영등포11번'],
+      routeType: '마을버스',
+      badgeClass: 'badge-town',
+      summary: '여의도 시범아파트 ↔ 여의나루역 ↔ 여의도역 ↔ 대방역',
       stops: [
-        { arsId: '38001', stNm: '노온사동차고지 (광명)', dir: '광명시 기점' },
-        { arsId: '38054', stNm: '광명사거리역 (7호선)', dir: '개봉역 방면' },
-        { arsId: '17172', stNm: '개봉역 (1호선)', dir: '고척동 방면' },
-        { arsId: '17180', stNm: '고척시장', dir: '목동역 방면' },
-        { arsId: '15161', stNm: '목동역 (5호선)', dir: '오목교 방면' },
-        { arsId: '15155', stNm: '오목교역.청학스포츠타운', dir: '목동단지 방면' },
-        { arsId: '15156', stNm: '경인초교.목동5·6단지사잇길', dir: '오목교·광명 방면' },
-        { arsId: '15158', stNm: '양정고등학교', dir: '영등포구청역 방면' },
-        { arsId: '15153', stNm: '목동6단지앞', dir: '이대목동병원 방면' },
-        { arsId: '15154', stNm: '이대목동병원.목동6단지앞', dir: '영등포 방면' },
-        { arsId: '19170', stNm: '당산동진로아파트', dir: '영등포구청 방면' },
-        { arsId: '19729', stNm: '영등포구청.우리은행 (영등포구청6637버스)', dir: '목동·광명 방면' },
-        { arsId: '19225', stNm: '영등포구청역 (2·5호선)', dir: '회차 지점' }
+        { arsId: '19156', stNm: '여의도역5번출구', dir: '시범아파트 방면' },
+        { arsId: '19155', stNm: '여의도역6번출구', dir: '대방역 방면' },
+        { arsId: '19139', stNm: '여의나루역1번출구', dir: '시범아파트 방면' }
       ]
     },
     {
       routeNo: '양천01',
+      aliases: ['양천01', '양천01번'],
       routeType: '마을버스',
       badgeClass: 'badge-town',
-      summary: '당산역 ↔ 선유도역 ↔ 이대목동병원 ↔ 목동역',
+      summary: '당산역 ↔ 선유도역 ↔ 이대목동병원 ↔ 오목교역 ↔ 목동역',
       stops: [
-        { arsId: '19176', stNm: '당산역삼성래미안아파트 (당산역버스정류장)', dir: '목동역 방면' },
+        { arsId: '19176', stNm: '당산역삼성래미안아파트', dir: '목동역 방면' },
         { arsId: '19210', stNm: '선유도역1번출구', dir: '목동 방면' },
-        { arsId: '19215', stNm: '안양천입구', dir: '이대목동병원 방면' },
         { arsId: '15154', stNm: '이대목동병원.목동6단지앞', dir: '당산역/목동 방면' },
-        { arsId: '15153', stNm: '목동6단지아파트', dir: '파리공원 방면' },
-        { arsId: '15152', stNm: '목동5단지아파트', dir: '파리공원 방면' },
-        { arsId: '15157', stNm: '파리공원', dir: '목동이대병원입구 방면' },
-        { arsId: '15165', stNm: '목동이대병원입구', dir: '오목교역 방면' },
         { arsId: '15155', stNm: '오목교역 (5호선)', dir: '목동역 방면' },
         { arsId: '15161', stNm: '목동역 (5호선)', dir: '종점' }
       ]
     },
     {
       routeNo: '양천02',
+      aliases: ['양천02', '양천02번'],
       routeType: '마을버스',
       badgeClass: 'badge-town',
       summary: '오목교역 ↔ 경인초교 ↔ 양정고 ↔ 이대목동병원',
       stops: [
         { arsId: '15155', stNm: '오목교역 (5호선)', dir: '기점' },
-        { arsId: '15168', stNm: '현대백화점목동점', dir: '경인초교 방면' },
         { arsId: '15156', stNm: '경인초교.목동5·6단지사잇길', dir: '오목교역 방면' },
         { arsId: '15158', stNm: '양정고등학교', dir: '목동단지 방면' },
-        { arsId: '15159', stNm: '목동6단지후문', dir: '이대목동병원 방면' },
         { arsId: '15154', stNm: '이대목동병원.목동6단지앞', dir: '종점' }
       ]
     },
     {
       routeNo: '700',
+      aliases: ['700', '700부천', '부천700'],
       routeType: '부천버스',
       badgeClass: 'badge-sky',
-      summary: '부천 상동 ↔ 부천역 ↔ 목동 ↔ 당산역 ↔ 여의도',
+      summary: '부천 상동 ↔ 목동 ↔ 당산역 ↔ 여의도환승센터',
       stops: [
-        { arsId: '15153', stNm: '목동6단지앞', dir: '당산역 방면' },
-        { arsId: '15154', stNm: '이대목동병원.목동6단지앞', dir: '당산역 방면' },
-        { arsId: '19176', stNm: '당산역삼성래미안아파트 (당산역버스정류장)', dir: '부천 방면' },
-        { arsId: '19175', stNm: '당산역 (2호선·9호선)', dir: '여의도 방면' }
+        { arsId: '19007', stNm: '여의도환승센터', dir: '당산·부천 방면' },
+        { arsId: '19175', stNm: '당산역', dir: '여의도 방면' },
+        { arsId: '19176', stNm: '당산역삼성래미안아파트', dir: '부천 방면' },
+        { arsId: '15154', stNm: '이대목동병원.목동6단지앞', dir: '당산역 방면' }
       ]
     }
   ];
 
-  // 수도권 및 출퇴근 핵심 지역 주요 버스 정류소 데이터베이스 (오프라인/즉시 검색 지원)
+  // 여의도·KBS·국회의사당 및 서울 주요 환승 거점 정류소 DB (즉시 자동완성 백업)
   const LOCAL_POPULAR_STATIONS = [
-    // [선유도 일대 정류소]
-    { arsId: '19210', stNm: '선유도역1번출구', keywords: ['선유', '선유도', '선유도역', '19210', '양천01', '603'] },
-    { arsId: '19212', stNm: '선유도역.롯데홈쇼핑', keywords: ['선유', '선유도', '선유도역', '19212', '롯데홈쇼핑', '당산방면'] },
-    { arsId: '19211', stNm: '선유도역', keywords: ['선유', '선유도', '선유도역', '19211', '염창방면'] },
-    { arsId: '19141', stNm: '양평한신아파트.선유도역', keywords: ['선유', '선유도', '선유도역', '19141', '양평한신'] },
-    { arsId: '19213', stNm: '선유고등학교', keywords: ['선유', '선유고', '선유고등학교', '19213'] },
-    { arsId: '19214', stNm: '선유중학교', keywords: ['선유', '선유중', '선유중학교', '19214'] },
-    { arsId: '19284', stNm: '선유도공원입구', keywords: ['선유', '선유도', '선유도공원', '19284'] },
-
-    // [목동 / 양천 / 경인 일대 정류소]
-    { arsId: '15158', stNm: '양정고등학교', keywords: ['양정', '양정고', '15158', '6637', '양천02', '목동'] },
-    { arsId: '15156', stNm: '경인초교.목동아파트5.6단지사잇길', keywords: ['경인', '경인초', '15156', '6637', '양천02', '목동'] },
-    { arsId: '15154', stNm: '이대목동병원.목동6단지앞', keywords: ['이대', '이대목동병원', '15154', '목동6단지', '양천01', '603', '6620', '6637'] },
-    { arsId: '15153', stNm: '목동6단지앞', keywords: ['목동', '목동6단지', '15153', '양천01', '603', '6620'] },
-    { arsId: '15155', stNm: '목동5단지C상가.목동운동장', keywords: ['목동', '목동5단지', '15155', '목동운동장'] },
-    { arsId: '15160', stNm: '신목초등학교입구', keywords: ['신목', '신목초', '15160', '목동', '603'] },
-    { arsId: '15161', stNm: '월촌중학교', keywords: ['월촌', '월촌중', '15161', '목동'] },
-    { arsId: '15282', stNm: '목동운동장남문.야구장.아이스링크', keywords: ['목동', '목동운동장', '15282'] },
-    { arsId: '15283', stNm: '목동아파트5단지', keywords: ['목동', '목동5단지', '15283'] },
-
-    // [당산 일대 정류소]
+    { arsId: '19130', stNm: 'KBS', keywords: ['kbs', 'KBS', '한국방송', '본관', '19130', '162', '5615', '5618', '10부천', '70-2'] },
+    { arsId: '19150', stNm: 'KBS별관', keywords: ['kbs', 'KBS별관', '별관', '19150', '162', '261', '262'] },
+    { arsId: '19151', stNm: '샛강역3번출구.KBS별관', keywords: ['kbs', 'KBS별관', '샛강역', '19151'] },
+    { arsId: '19132', stNm: '국회의사당역', keywords: ['국회', '국회의사당', '국회의사당역', '19132', '9호선'] },
+    { arsId: '19133', stNm: '국회의사당역5번출구', keywords: ['국회', '국회의사당', '국회의사당역', '5번출구', '19133', '162', '260', '461'] },
+    { arsId: '19131', stNm: '국회의사당역1번출구', keywords: ['국회', '국회의사당', '국회의사당역', '1번출구', '19131'] },
+    { arsId: '19134', stNm: '국회의사당', keywords: ['국회', '국회의사당', '19134'] },
+    { arsId: '19007', stNm: '여의도환승센터 (1~2번승강장)', keywords: ['여의도', '여의도환승센터', '환승센터', '19007', '260', '262', '360'] },
+    { arsId: '19008', stNm: '여의도환승센터 (3~4번승강장)', keywords: ['여의도', '여의도환승센터', '환승센터', '19008', '260', '360', '662'] },
+    { arsId: '19017', stNm: '여의도환승센터', keywords: ['여의도', '여의도환승센터', '환승센터', '19017', '261'] },
+    { arsId: '19156', stNm: '여의도역5번출구', keywords: ['여의도', '여의도역', '5번출구', '19156', '162', '261', '262', '461'] },
+    { arsId: '19155', stNm: '여의도역6번출구', keywords: ['여의도', '여의도역', '6번출구', '19155', '162', '5615', '5618'] },
+    { arsId: '19161', stNm: '한국경제인협회 (전경련회관)', keywords: ['전경련', '한국경제인협회', '여의도', '19161', '162', '360'] },
+    { arsId: '19282', stNm: '더현대서울', keywords: ['더현대', '더현대서울', '여의도', '19282'] },
+    { arsId: '19284', stNm: '파크원타워.LG트윈타워', keywords: ['파크원', 'lg트윈타워', '여의도', '19284'] },
+    { arsId: '19139', stNm: '여의나루역1번출구', keywords: ['여의나루', '여의나루역', '한강공원', '19139'] },
+    { arsId: '19140', stNm: '여의나루역2번출구', keywords: ['여의나루', '여의나루역', '19140'] },
     { arsId: '19175', stNm: '당산역', keywords: ['당산', '당산역', '19175', '2호선', '9호선'] },
-    { arsId: '19176', stNm: '당산역삼성래미안아파트', keywords: ['당산', '당산역', '당산역버스정류장', '19176', '삼성래미안', '603', '6620', '양천01'] },
-    { arsId: '19173', stNm: '당산역1번출구', keywords: ['당산', '당산역', '19173', '1번출구'] },
-    { arsId: '19218', stNm: '당산역2번출구', keywords: ['당산', '당산역', '19218', '2번출구'] },
-
-    // [영등포구청 일대 정류소]
-    { arsId: '19729', stNm: '영등포구청.우리은행', keywords: ['영등포구청', '영등포구청6637', '영등포구청6637버스', '19729', '6637'] },
-
-    // [여의도 / 국회 일대 정류소]
-    { arsId: '19143', stNm: '국회의사당역', keywords: ['국회', '국회의사당', '19143', '9호선'] },
-    { arsId: '19144', stNm: '여의도순복음교회', keywords: ['여의도', '순복음교회', '19144'] },
-    { arsId: '19145', stNm: '국회의사당', keywords: ['국회', '국회의사당', '19145'] },
-    { arsId: '19156', stNm: '여의도역', keywords: ['여의도', '여의도역', '19156', '5호선', '9호선'] }
+    { arsId: '19176', stNm: '당산역삼성래미안아파트', keywords: ['당산', '당산역', '19176', '603', '6620'] },
+    { arsId: '19102', stNm: '영등포역', keywords: ['영등포', '영등포역', '19102'] },
+    { arsId: '02004', stNm: '서울역버스환승센터', keywords: ['서울역', '서울역환승센터', '02004'] },
+    { arsId: '02007', stNm: '서울역버스환승센터', keywords: ['서울역', '서울역환승센터', '02007'] }
   ];
 
-  // 9호선 선유도역 공식 시간표 데이터 (당산·여의도·중앙보훈병원 방면 일반열차)
+  // 9호선 선유도역 시간표 백업
   const SEONYUDO_WEEKDAY_TIMETABLE = {
-    5: [34, 48, 59],
-    6: [11, 23, 35, 43, 50, 59],
-    7: [5, 11, 18, 24, 30, 37, 43, 49, 56],
-    8: [2, 8, 15, 21, 27, 34, 40, 46, 53],
-    9: [2, 11, 22, 33, 44, 55],
-    10: [6, 17, 28, 39, 50],
-    11: [1, 13, 25, 36, 47, 58],
-    12: [9, 20, 31, 42, 53],
-    13: [4, 15, 26, 38, 50],
-    14: [1, 12, 23, 34, 45, 56],
-    15: [7, 18, 29, 40, 51],
-    16: [2, 10, 14, 26, 37, 39, 49, 59],
-    17: [5, 12, 19, 26, 33, 40, 46, 53],
-    18: [0, 7, 14, 21, 27, 34, 41, 48, 55],
-    19: [2, 8, 15, 22, 31, 40, 49, 58],
-    20: [7, 18, 29, 40, 51],
-    21: [2, 13, 24, 35, 46, 57],
-    22: [8, 19, 30, 41, 52],
-    23: [3, 14, 25, 36, 47, 57],
-    24: [7, 18, 30, 43, 56]
+    5: [34, 48, 59], 6: [11, 23, 35, 43, 50, 59], 7: [5, 11, 18, 24, 30, 37, 43, 49, 56],
+    8: [2, 8, 15, 21, 27, 34, 40, 46, 53], 9: [2, 11, 22, 33, 44, 55], 10: [6, 17, 28, 39, 50],
+    11: [1, 13, 25, 36, 47, 58], 12: [9, 20, 31, 42, 53], 13: [4, 15, 26, 38, 50],
+    14: [1, 12, 23, 34, 45, 56], 15: [7, 18, 29, 40, 51], 16: [2, 10, 14, 26, 37, 39, 49, 59],
+    17: [5, 12, 19, 26, 33, 40, 46, 53], 18: [0, 7, 14, 21, 27, 34, 41, 48, 55],
+    19: [2, 8, 15, 22, 31, 40, 49, 58], 20: [7, 18, 29, 40, 51], 21: [2, 13, 24, 35, 46, 57],
+    22: [8, 19, 30, 41, 52], 23: [3, 14, 25, 36, 47, 57], 24: [7, 18, 30, 43, 56]
+  };
+  const SEONYUDO_WEEKEND_TIMETABLE = {
+    5: [36, 47, 57], 6: [9, 21, 33, 45, 57], 7: [9, 21, 33, 45, 57], 8: [9, 21, 33, 45, 57],
+    9: [9, 21, 32, 42, 53], 10: [4, 15, 26, 37, 48, 59], 11: [10, 21, 32, 43, 54],
+    12: [5, 16, 27, 38, 49], 13: [0, 11, 22, 33, 44, 55], 14: [6, 17, 28, 39, 50],
+    15: [1, 12, 23, 34, 45, 56], 16: [7, 18, 29, 40, 51], 17: [2, 13, 24, 35, 46, 57],
+    18: [8, 19, 30, 41, 52], 19: [3, 14, 25, 36, 47, 58], 20: [9, 20, 31, 42, 53],
+    21: [4, 15, 26, 37, 50], 22: [3, 16, 30, 44, 56], 23: [11, 27, 41, 55]
   };
 
-  const SEONYUDO_WEEKEND_TIMETABLE = {
-    5: [36, 47, 57],
-    6: [9, 21, 33, 45, 57],
-    7: [9, 21, 33, 45, 57],
-    8: [9, 21, 33, 45, 57],
-    9: [9, 21, 32, 42, 53],
-    10: [4, 15, 26, 37, 48, 59],
-    11: [10, 21, 32, 43, 54],
-    12: [5, 16, 27, 38, 49],
-    13: [0, 11, 22, 33, 44, 55],
-    14: [6, 17, 28, 39, 50],
-    15: [1, 12, 23, 34, 45, 56],
-    16: [7, 18, 29, 40, 51],
-    17: [2, 13, 24, 35, 46, 57],
-    18: [8, 19, 30, 41, 52],
-    19: [3, 14, 25, 36, 47, 58],
-    20: [9, 20, 31, 42, 53],
-    21: [4, 15, 26, 37, 50],
-    22: [3, 16, 30, 44, 56],
-    23: [11, 27, 41, 55]
-  };
+  function mapRouteBadgeClass(typeStr, busNo) {
+    const t = String(typeStr || '');
+    const n = String(busNo || '');
+    if (t.includes('공항') || /^60\d{2}$/.test(n)) return 'badge-airport';
+    if (t.includes('마을')) return 'badge-town';
+    if (t.includes('광역') || t.includes('직행') || /^9\d{3}$/.test(n)) return 'badge-red';
+    if (t.includes('경기') || t.includes('부천') || n.includes('부천') || n.startsWith('70-2')) return 'badge-sky';
+    if (t.includes('지선') || /^[1-8]\d{3}$/.test(n)) return 'badge-green';
+    if (t.includes('간선') || /^\d{3}$/.test(n)) return 'badge-blue';
+    return 'badge-green';
+  }
+
+  function buildMergedBusRoutes() {
+    const list = [];
+    const seen = new Set();
+
+    const preloaded = (typeof window !== 'undefined' && window.BUS_ROUTES_PRELOADED_DB) ? window.BUS_ROUTES_PRELOADED_DB : {};
+    Object.keys(preloaded).forEach(key => {
+      const item = preloaded[key];
+      if (!item || !Array.isArray(item.stops)) return;
+      const shortNo = String(item.busNo || key).replace(/\(.*\)$/, '').trim();
+      const aliases = [shortNo, String(key).trim(), `${shortNo}번`];
+      if (shortNo === '70-2') aliases.push('70-2부천', '부천70-2');
+      list.push({
+        routeNo: shortNo,
+        busRouteId: item.busRouteId || '',
+        routeType: item.type ? `${item.type}버스` : '노선버스',
+        badgeClass: mapRouteBadgeClass(item.type, shortNo),
+        summary: item.desc || '',
+        aliases,
+        stops: item.stops.map(s => ({
+          arsId: String(s.arsId || '').trim(),
+          stNm: String(s.name || s.stNm || '').trim(),
+          dir: String(s.dir || '운행 방면').trim()
+        })).filter(s => s.arsId && s.arsId !== '0' && s.arsId !== '~')
+      });
+      seen.add(shortNo);
+    });
+
+    EXTRA_BUS_ROUTES.forEach(r => {
+      if (!seen.has(r.routeNo)) {
+        list.push({
+          ...r,
+          aliases: r.aliases || [r.routeNo, `${r.routeNo}번`]
+        });
+        seen.add(r.routeNo);
+      }
+    });
+
+    return list;
+  }
 
   class TransitLookupController {
     constructor() {
       this.busApiKey = '0f40f3c7a3220ef7d0f45825f4364e47d05d10fa087632a03db7c8c2222aae63';
       this.subwayApiKey = '476a79484b6a6f6e3833504f4f6d4e';
 
-      this.currentType = 'bus'; // 'bus' | 'subway'
-      this.currentId = '15158';   // 디폴트로 15158(양정고등학교) 선택
-      this.currentName = '양정고등학교';
+      this.busRoutes = buildMergedBusRoutes();
+      this.currentType = 'bus';
+      this.currentId = '19130';
+      this.currentName = 'KBS';
+      this.highlightBusNo = '';
       this.lastBusData = null;
       this.lastSubwayData = null;
-      this.userInitiatedScroll = false; // 오직 사용자가 직접 터치/클릭했을 때만 스크롤 허용!
+      this.userInitiatedScroll = false;
 
-      this.filterType = 'all'; // 'all' | 'town' | 'blue' | 'green' | 'red'
-      this.sortType = 'arrival'; // 'arrival' | 'number'
+      this.filterType = 'all';
+      this.sortType = 'arrival';
 
       this.autoRefreshInterval = 15;
       this.refreshCountdown = 15;
       this.tickerTimer = null;
       this.debounceTimer = null;
       this.isFetching = false;
+      this.currentModalRoute = null;
 
       this.cache = {
         bus: {},
-        subway: {}
+        subway: {},
+        dynamicRoute: {}
       };
-      this.showAllDangsanRoutes = false; // 당산역(19176) 기본 603·6620 2개 표출 및 전체보기 토글 플래그
       window.transitLookupInstance = this;
 
       this.initDom();
       this.initEvents();
       this.renderQuickChips();
-
-      // 디폴트로 15158(양정고등학교) 자동 로딩 (초기 스크롤 방지)
       this.loadDefaultStation();
     }
 
     loadDefaultStation() {
-      // 1순위 기본값: 15158 (양정고등학교) - 사용자가 직접 선택할 때만 스크롤되도록 플래그 false 유지
       this.userInitiatedScroll = false;
       setTimeout(() => {
-        this.lookupBusByArs('15158', '양정고등학교');
-      }, 60);
+        this.lookupBusByArs('19130', 'KBS');
+      }, 80);
     }
 
     initDom() {
@@ -372,22 +366,21 @@
     initEvents() {
       if (!this.inputQuery) return;
 
-      // 실시간 입력 감지
       this.inputQuery.addEventListener('input', (e) => {
         const val = e.target.value.trim();
         if (this.btnClearQuery) {
           this.btnClearQuery.style.display = val ? 'flex' : 'none';
         }
 
-        // 5자리 숫자 입력 시 즉시 자동 조회
-        const cleanDigits = val.replace(/[^0-9]/g, '');
-        if (cleanDigits.length === 5 && val === cleanDigits) {
+        // 순수 5자리 숫자(또는 19-130 형식) 단독 입력 시 즉시 조회
+        if (/^\d{2}-?\d{3}$/.test(val)) {
+          const cleanDigits = val.replace(/[^0-9]/g, '');
           this.hideSuggestions();
+          this.highlightBusNo = '';
           this.lookupBusByArs(cleanDigits);
           return;
         }
 
-        // 텍스트 검색 시 자동완성 디바운스
         clearTimeout(this.debounceTimer);
         if (val.length >= 1) {
           this.debounceTimer = setTimeout(() => {
@@ -398,7 +391,6 @@
         }
       });
 
-      // 엔터 키 입력 시 조회
       this.inputQuery.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           e.preventDefault();
@@ -408,14 +400,12 @@
         }
       });
 
-      // 검색 버튼 클릭
       if (this.btnSearch) {
         this.btnSearch.addEventListener('click', () => {
           this.executeSearch();
         });
       }
 
-      // 입력 지우기 버튼
       if (this.btnClearQuery) {
         this.btnClearQuery.addEventListener('click', () => {
           this.inputQuery.value = '';
@@ -425,14 +415,12 @@
         });
       }
 
-      // 상단 새로고침 버튼
       if (this.btnRefresh) {
         this.btnRefresh.addEventListener('click', () => {
           this.refreshCurrent();
         });
       }
 
-      // 외부 클릭 시 드롭다운 닫기
       document.addEventListener('click', (e) => {
         if (!e.target.closest('.lookup-search-container')) {
           this.hideSuggestions();
@@ -440,19 +428,13 @@
       });
     }
 
-    // ==========================================
-    // 화면 자동 스크롤: 사용자가 직접 선택했을 때만 1회 즉각 이동
-    // (위로 다시 올린 상태에서는 절대 자동으로 내려가지 않음)
-    // ==========================================
     scrollToResult(smooth = true) {
       setTimeout(() => {
-        const target = document.querySelector('.lookup-cards-container') ||
-                       document.querySelector('.seonyudo-timetable-card') ||
-                       document.querySelector('.lookup-board-wrap') ||
+        const target = document.querySelector('.lookup-board-wrap') ||
                        document.getElementById('lookupResultContainer');
         if (target) {
           const rect = target.getBoundingClientRect();
-          const targetY = window.pageYOffset + rect.top - 16;
+          const targetY = window.pageYOffset + rect.top - 14;
           window.scrollTo({
             top: Math.max(0, targetY),
             behavior: smooth ? 'smooth' : 'auto'
@@ -462,38 +444,167 @@
     }
 
     // ==========================================
-    // 버스 노선 정류장 전체보기 팝업 모달 관리 (사용자 요청)
+    // 버스 노선 매칭 & 실시간 노선 조회
+    // ==========================================
+    cleanBusToken(raw) {
+      return String(raw || '').replace(/번$|버스$/g, '').trim();
+    }
+
+    isLikelyBusRouteToken(token) {
+      const clean = this.cleanBusToken(token);
+      if (!clean) return false;
+      // 5자리 정류장 번호는 제외 (단, 5자리 버스번호는 서울에 없음; 4자리 이하 숫자 또는 지역마을/70-2/10부천 등)
+      if (/^\d{5}$/.test(clean) || /^\d{2}-\d{3}$/.test(clean)) return false;
+      if (/^\d{1,4}(-\d{1,2})?$/.test(clean)) return true;
+      if (/^(양천|영등포|마포|강서|구로|관악|동작|서초|종로|용산|성북|서대문|은평)\d{1,2}$/.test(clean)) return true;
+      if (/^\d{1,3}(부천|인천|김포|광명|안양|고양)$/.test(clean)) return true;
+      if (/^[MNmnGg]\d{3,4}$/.test(clean)) return true;
+      return this.busRoutes.some(r => this.routeMatchesExact(r, clean));
+    }
+
+    routeMatchesExact(route, q) {
+      const clean = this.cleanBusToken(q).toLowerCase();
+      if (!clean) return false;
+      if (route.routeNo.toLowerCase() === clean) return true;
+      return (route.aliases || []).some(a => a.toLowerCase() === clean);
+    }
+
+    findRoutesByQuery(q) {
+      const clean = this.cleanBusToken(q).toLowerCase();
+      if (!clean) return [];
+      return this.busRoutes.filter(r => {
+        if (this.routeMatchesExact(r, clean)) return true;
+        return r.routeNo.toLowerCase().startsWith(clean);
+      });
+    }
+
+    busItemMatchesHighlight(busRtNm, targetRouteNo) {
+      if (!targetRouteNo || !busRtNm) return false;
+      const a = String(busRtNm).replace(/\s+/g, '').toLowerCase();
+      const b = this.cleanBusToken(targetRouteNo).replace(/\s+/g, '').toLowerCase();
+      if (a === b) return true;
+      const aDigits = a.replace(/\(.*\)/, '');
+      const bDigits = b.replace(/\(.*\)/, '');
+      if (aDigits === bDigits) return true;
+      // 예: '10부천' vs '10' 또는 '70-2부천' vs '70-2'
+      if (a.replace(/부천|경기/g, '') === b.replace(/부천|경기/g, '')) return true;
+      return false;
+    }
+
+    // [정류장 + 버스번호] 공백/쉼표 구분 복합 검색어 파서
+    parseCombinedStopAndRoute(rawVal) {
+      const normalized = String(rawVal || '').replace(/[,/·]+/g, ' ').trim();
+      const parts = normalized.split(/\s+/).filter(Boolean);
+      if (parts.length < 2) return null;
+
+      // 토큰 중 버스번호 후보와 정류장 후보 분리
+      for (let i = parts.length - 1; i >= 0; i--) {
+        const candidate = parts[i];
+        if (this.isLikelyBusRouteToken(candidate)) {
+          const otherTokens = parts.filter((_, idx) => idx !== i).join(' ').trim();
+          if (otherTokens) {
+            return {
+              stopQuery: otherTokens,
+              routeQuery: this.cleanBusToken(candidate)
+            };
+          }
+        }
+      }
+      return null;
+    }
+
+    // m.bus.go.kr 실시간 버스노선 정류장 동적 조회 (APK 및 직결 환경에서 전국/서울 모든 버스번호 대응)
+    async fetchBusRouteDynamic(routeQuery) {
+      const cleanNo = this.cleanBusToken(routeQuery);
+      if (!cleanNo) return null;
+      if (this.cache.dynamicRoute[cleanNo]) return this.cache.dynamicRoute[cleanNo];
+
+      try {
+        const listUrl = `http://m.bus.go.kr/mBus/bus/getBusRouteList.bms?strSrch=${encodeURIComponent(cleanNo)}`;
+        const controller = new AbortController();
+        const tid = setTimeout(() => controller.abort(), 3500);
+        const res = await fetch(listUrl, { cache: 'no-store', signal: controller.signal });
+        clearTimeout(tid);
+        if (!res.ok) return null;
+        const data = await res.json();
+        const list = data && data.resultList;
+        if (!Array.isArray(list) || list.length === 0) return null;
+
+        const exact = list.find(it => String(it.busRouteNm || '').trim() === cleanNo)
+          || list.find(it => String(it.busRouteNm || '').replace(/\(.*\)/, '').trim() === cleanNo)
+          || list[0];
+        if (!exact || !exact.busRouteId) return null;
+
+        const posUrl = `http://m.bus.go.kr/mBus/bus/getRouteAndPos.bms?busRouteId=${encodeURIComponent(exact.busRouteId)}`;
+        const controller2 = new AbortController();
+        const tid2 = setTimeout(() => controller2.abort(), 4000);
+        const posRes = await fetch(posUrl, { cache: 'no-store', signal: controller2.signal });
+        clearTimeout(tid2);
+        if (!posRes.ok) return null;
+        const posData = await posRes.json();
+        const rawStops = posData && posData.resultList;
+        if (!Array.isArray(rawStops) || rawStops.length === 0) return null;
+
+        const typeMap = { '1': '공항버스', '2': '마을버스', '3': '간선버스', '4': '지선버스', '5': '순환버스', '6': '광역버스', '7': '인천버스', '8': '경기버스' };
+        const rType = typeMap[String(exact.routeType)] || '노선버스';
+        const routeObj = {
+          routeNo: String(exact.busRouteNm || cleanNo).trim(),
+          busRouteId: String(exact.busRouteId),
+          routeType: rType,
+          badgeClass: mapRouteBadgeClass(rType, exact.busRouteNm || cleanNo),
+          summary: `${exact.stStationNm || ''} ↔ ${exact.edStationNm || ''}`,
+          aliases: [cleanNo, String(exact.busRouteNm || '').trim()],
+          stops: rawStops
+            .filter(s => s.arsId && s.arsId !== '0' && s.arsId !== '~')
+            .map(s => ({
+              arsId: String(s.arsId).replace(/[^0-9]/g, ''),
+              stNm: String(s.stationNm || '').trim(),
+              dir: s.sectNm ? String(s.sectNm).trim() : (s.direction ? `${s.direction} 방면` : '운행 방면')
+            }))
+            .filter(s => s.arsId.length === 5)
+        };
+
+        this.cache.dynamicRoute[cleanNo] = routeObj;
+        if (!this.busRoutes.some(r => r.routeNo === routeObj.routeNo)) {
+          this.busRoutes.push(routeObj);
+        }
+        return routeObj;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // ==========================================
+    // 버스 노선 전체 정류장 모달 (정류장 즉시 필터 포함)
     // ==========================================
     ensureBusRouteModal() {
       if (document.getElementById('modalBusRouteStops')) return;
 
       const modalHtml = `
-        <div class="modal-overlay modal-bus-route-overlay" id="modalBusRouteStops" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.75); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); z-index:100000; justify-content:center; align-items:center; padding:12px;">
-          <div class="modal-container bus-route-stops-modal" style="background:#ffffff; width:100%; max-width:480px; max-height:85vh; border-radius:22px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.4); display:flex; flex-direction:column; overflow:hidden; border:1px solid #cbd5e1;">
-            
-            <div class="modal-header" style="background:linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color:#ffffff; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
+        <div class="modal-overlay modal-bus-route-overlay" id="modalBusRouteStops" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.76); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); z-index:100000; justify-content:center; align-items:center; padding:12px;">
+          <div class="modal-container bus-route-stops-modal" style="background:#ffffff; width:100%; max-width:480px; max-height:86vh; border-radius:22px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.45); display:flex; flex-direction:column; overflow:hidden; border:1px solid #cbd5e1;">
+            <div class="modal-header" style="background:linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color:#ffffff; padding:15px 16px; display:flex; justify-content:space-between; align-items:center;">
               <div style="min-width:0; flex:1;">
-                <h4 id="modalBusRouteTitle" style="font-size:16px; font-weight:900; margin:0; display:flex; align-items:center; gap:8px;">
-                  <span class="modal-bus-route-badge badge-blue">603번</span> 간선버스
-                </h4>
-                <p id="modalBusRouteSummary" style="font-size:11.5px; color:#94a3b8; margin:4px 0 0 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                  신월동 ↔ 당산역 ↔ 서울역
-                </p>
+                <h4 id="modalBusRouteTitle" style="font-size:17px; font-weight:900; margin:0; display:flex; align-items:center; gap:8px; flex-wrap:wrap;"></h4>
+                <p id="modalBusRouteSummary" style="font-size:12.5px; color:#cbd5e1; margin:4px 0 0 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></p>
               </div>
-              <button type="button" class="modal-close-btn" onclick="window.transitLookupInstance.closeBusRouteModal()" style="background:rgba(255,255,255,0.15); border:none; color:#ffffff; font-size:16px; width:32px; height:32px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0;">✕</button>
+              <button type="button" class="modal-close-btn" onclick="window.transitLookupInstance.closeBusRouteModal()" style="background:rgba(255,255,255,0.16); border:none; color:#ffffff; font-size:17px; width:34px; height:34px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0;">✕</button>
             </div>
 
-            <div style="padding:9px 14px; background:#f1f5f9; border-bottom:1px solid #e2e8f0; font-size:12px; color:#334155; font-weight:700; display:flex; align-items:center; gap:6px;">
-              <span>💡</span>
-              <span>정류장을 선택하면 해당 정류장의 실시간 도착정보가 열립니다.</span>
+            <div style="padding:10px 14px; background:#f1f5f9; border-bottom:1px solid #e2e8f0; display:flex; flex-direction:column; gap:7px;">
+              <div style="font-size:12.5px; color:#334155; font-weight:800;">
+                💡 탑승할 정류장을 누르면 해당 정류장의 실시간 버스 도착정보가 열립니다.
+              </div>
+              <input type="text" id="inputRouteStopFilter" placeholder="정류장 이름 또는 5자리 번호로 빠른 필터 (예: KBS, 여의도, 19130)"
+                     style="width:100%; height:40px; padding:0 12px; border-radius:10px; border:1.5px solid #cbd5e1; font-size:14.5px; font-weight:700; color:#0f172a; background:#ffffff; box-sizing:border-box;">
             </div>
 
-            <div class="modal-body" id="modalBusRouteStopsList" style="padding:14px; overflow-y:auto; flex:1; max-height:55vh; display:flex; flex-direction:column; gap:8px; background:#f8fafc;">
+            <div class="modal-body" id="modalBusRouteStopsList" style="padding:12px 14px; overflow-y:auto; flex:1; max-height:54vh; display:flex; flex-direction:column; gap:8px; background:#f8fafc;">
             </div>
 
-            <div class="modal-footer" style="padding:10px 16px; background:#ffffff; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-size:11px; color:#64748b;">서울시 TOPIS 실시간 연동</span>
-              <button type="button" class="btn-primary" onclick="window.transitLookupInstance.closeBusRouteModal()" style="background:#0284c7; color:#ffffff; border:none; padding:7px 18px; border-radius:10px; font-weight:800; font-size:13px; cursor:pointer;">닫기</button>
+            <div class="modal-footer" style="padding:11px 16px; background:#ffffff; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:12px; color:#64748b; font-weight:700;">서울시 TOPIS 실시간 도착 연동</span>
+              <button type="button" class="btn-primary" onclick="window.transitLookupInstance.closeBusRouteModal()" style="background:#0284c7; color:#ffffff; border:none; padding:8px 20px; border-radius:10px; font-weight:800; font-size:14px; cursor:pointer;">닫기</button>
             </div>
           </div>
         </div>
@@ -507,66 +618,88 @@
           if (e.target === modalEl) this.closeBusRouteModal();
         });
       }
+
+      const filterInput = document.getElementById('inputRouteStopFilter');
+      if (filterInput) {
+        filterInput.addEventListener('input', (e) => {
+          this.renderModalStopsList(e.target.value.trim());
+        });
+      }
     }
 
-    openBusRouteModal(routeNo) {
-      const cleanNo = String(routeNo || '').replace(/번$|버스$/, '').trim();
-      const route = POPULAR_BUS_ROUTES.find(r => r.routeNo === cleanNo || r.routeNo === routeNo);
+    renderModalStopsList(filterKeyword = '') {
+      const stopsContainer = document.getElementById('modalBusRouteStopsList');
+      const route = this.currentModalRoute;
+      if (!stopsContainer || !route) return;
+
+      const kw = String(filterKeyword || '').toLowerCase();
+      const filteredStops = kw
+        ? route.stops.filter(s => s.stNm.toLowerCase().includes(kw) || s.arsId.includes(kw) || (s.dir || '').toLowerCase().includes(kw))
+        : route.stops;
+
+      if (filteredStops.length === 0) {
+        stopsContainer.innerHTML = `<div style="padding:24px 12px; text-align:center; color:#64748b; font-size:14px; font-weight:700;">'${this.escapeHtml(filterKeyword)}' 조건에 맞는 경유 정류장이 없습니다.</div>`;
+        return;
+      }
+
+      stopsContainer.innerHTML = filteredStops.map((stop, idx) => {
+        const isYeouidoFav = stop.arsId === '19130' || stop.arsId === '19132' || stop.arsId === '19133' || stop.arsId === '19007' || stop.arsId === '19008' || stop.arsId === '19156';
+        return `
+          <div class="route-stop-timeline-item ${isYeouidoFav ? 'stop-highlight' : ''}"
+               onclick="window.transitLookupInstance.selectStopFromModal('${stop.arsId}', '${this.escapeHtml(stop.stNm)}', '${this.escapeHtml(route.routeNo)}')">
+            <div class="stop-node-wrap">
+              <span class="stop-node-seq">${idx + 1}</span>
+            </div>
+            <div class="stop-info-body">
+              <div class="stop-name-row">
+                <strong class="stop-name">${this.escapeHtml(stop.stNm)}</strong>
+                <span class="stop-ars-pill">ARS ${stop.arsId}</span>
+              </div>
+              <div class="stop-dir-row">
+                <span class="stop-dir-tag">${this.escapeHtml(stop.dir || '운행 방면')} 방면</span>
+                <span class="stop-action-btn">${this.escapeHtml(route.routeNo)}번 도착보기 ➔</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async openBusRouteModal(routeNo, initialStopFilter = '') {
+      const cleanNo = this.cleanBusToken(routeNo);
+      let route = this.busRoutes.find(r => this.routeMatchesExact(r, cleanNo));
+      if (!route) {
+        this.showLoading(`🚍 [${cleanNo}번] 버스 노선 및 경유 정류장 조회 중...`);
+        route = await this.fetchBusRouteDynamic(cleanNo);
+      }
       if (!route) {
         this.searchByNameAndShowResults(routeNo);
         return;
       }
 
+      this.currentModalRoute = route;
       this.ensureBusRouteModal();
       const modal = document.getElementById('modalBusRouteStops');
       if (!modal) return;
 
       const headerTitle = document.getElementById('modalBusRouteTitle');
       const headerSummary = document.getElementById('modalBusRouteSummary');
-      const stopsContainer = document.getElementById('modalBusRouteStopsList');
+      const filterInput = document.getElementById('inputRouteStopFilter');
 
       if (headerTitle) {
-        headerTitle.innerHTML = `<span class="modal-bus-route-badge ${route.badgeClass}">${route.routeNo}번</span> ${route.routeType} 전체 정류장`;
+        headerTitle.innerHTML = `<span class="modal-bus-route-badge ${route.badgeClass}">${this.escapeHtml(route.routeNo)}번</span> ${this.escapeHtml(route.routeType)} 정류장 선택`;
       }
       if (headerSummary) {
         headerSummary.textContent = `${route.summary} (총 ${route.stops.length}개 정류소)`;
       }
-
-      if (stopsContainer) {
-        const stopsHtml = route.stops.map((stop, idx) => {
-          const isDangsan = String(stop.arsId).includes('19176');
-          const isGuchung = String(stop.arsId).includes('19729');
-          const isHighlight = isDangsan || isGuchung;
-          return `
-            <div class="route-stop-timeline-item ${isHighlight ? 'stop-highlight' : ''}" 
-                 onclick="window.transitLookupInstance.selectStopFromModal('${stop.arsId}', '${this.escapeHtml(stop.stNm)}')">
-              <div class="stop-node-wrap">
-                <span class="stop-node-seq">${idx + 1}</span>
-              </div>
-              <div class="stop-info-body">
-                <div class="stop-name-row">
-                  <strong class="stop-name">${this.escapeHtml(stop.stNm)}</strong>
-                  <span class="stop-ars-pill">ARS ${stop.arsId}</span>
-                </div>
-                <div class="stop-dir-row">
-                  <span class="stop-dir-tag">${this.escapeHtml(stop.dir || '운행 방면')}</span>
-                  <span class="stop-action-btn">도착정보 보기 ➔</span>
-                </div>
-              </div>
-            </div>
-          `;
-        }).join('');
-
-        stopsContainer.innerHTML = stopsHtml;
+      if (filterInput) {
+        filterInput.value = initialStopFilter || '';
       }
+
+      this.renderModalStopsList(initialStopFilter || '');
 
       modal.style.display = 'flex';
       modal.classList.add('active');
-
-      // 모바일/브라우저 뒤로가기 버튼 히스토리 연동
-      if (!this._isClosingModalFromPopstate) {
-        window.history.pushState({ modalOpen: true, modalId: 'modalBusRouteStops' }, '');
-      }
     }
 
     closeBusRouteModal() {
@@ -575,105 +708,227 @@
         modal.style.display = 'none';
         modal.classList.remove('active');
       }
-      if (!this._isClosingModalFromPopstate && window.history.state && window.history.state.modalOpen) {
-        this._isClosingModalFromPopstate = true;
-        window.history.back();
-        setTimeout(() => {
-          this._isClosingModalFromPopstate = false;
-        }, 150);
-      }
     }
 
-    selectStopFromModal(arsId, stNm) {
+    selectStopFromModal(arsId, stNm, routeNo = '') {
       this.closeBusRouteModal();
       this.userInitiatedScroll = true;
+      this.highlightBusNo = routeNo || '';
       setTimeout(() => {
-        this.lookupBusByArs(arsId, stNm);
+        this.lookupBusByArs(arsId, stNm, routeNo || '');
         this.scrollToResult();
-      }, 50);
+      }, 40);
     }
 
-    toggleDangsanRoutes() {
-      this.showAllDangsanRoutes = !this.showAllDangsanRoutes;
-      if (this.lastBusData && this.currentId) {
-        this.renderBusBoard(this.currentId, this.currentName, this.lastBusData);
-      }
-    }
-
-    executeSearch() {
+    // ==========================================
+    // 통합 검색 실행 라우터 (정류장 / 버스번호 / 정류장+버스번호 / 지하철역)
+    // ==========================================
+    async executeSearch() {
       const val = this.inputQuery.value.trim();
       if (!val) {
         this.inputQuery.focus();
         return;
       }
 
-      this.userInitiatedScroll = true; // 사용자 직접 검색 시 스크롤 허용!
+      this.userInitiatedScroll = true;
       this.hideSuggestions();
 
-      // 1. 숫자 5자리인 경우 -> 버스 ARS 즉시 조회
-      const cleanDigits = val.replace(/[^0-9]/g, '');
-      if (cleanDigits.length === 5) {
-        this.lookupBusByArs(cleanDigits);
+      // 1. [정류장 + 버스번호] 복합 검색어 처리 (예: "19130 162", "KBS 5618", "여의도환승센터 260")
+      const combined = this.parseCombinedStopAndRoute(val);
+      if (combined) {
+        await this.executeCombinedStopAndRouteSearch(combined.stopQuery, combined.routeQuery);
+        return;
+      }
+
+      // 2. 순수 5자리 정류장 번호 (예: "19130", "19-130")
+      if (/^\d{2}-?\d{3}$/.test(val)) {
+        const cleanDigits = val.replace(/[^0-9]/g, '');
+        this.highlightBusNo = '';
+        await this.lookupBusByArs(cleanDigits);
         this.scrollToResult();
         return;
       }
 
-      // 1-1. 버스 번호 검색인 경우 (예: "603", "6620", "6637", "양천01", "603번" 등) -> 팝업 모달로 전 정류장 스크롤 노출!
-      const normalizedRouteNo = val.replace(/번$|버스$/, '').trim();
-      const matchedRoute = POPULAR_BUS_ROUTES.find(r => r.routeNo === val || r.routeNo === normalizedRouteNo);
-      if (matchedRoute) {
-        this.openBusRouteModal(matchedRoute.routeNo);
+      // 3. 버스 노선번호 단독 매칭 (예: "162", "5618", "70-2", "10부천", "603번")
+      const cleanRouteCandidate = this.cleanBusToken(val);
+      const exactRoute = this.busRoutes.find(r => this.routeMatchesExact(r, cleanRouteCandidate));
+      if (exactRoute) {
+        await this.openBusRouteModal(exactRoute.routeNo);
         return;
       }
+      if (this.isLikelyBusRouteToken(val)) {
+        const dynamicRoute = await this.fetchBusRouteDynamic(cleanRouteCandidate);
+        if (dynamicRoute) {
+          await this.openBusRouteModal(dynamicRoute.routeNo);
+          return;
+        }
+      }
 
-      // 2. 지하철역 단독 정확 매칭 검사
+      // 4. 지하철역 단독 정확 매칭 (예: "국회의사당역", "여의도역", "당산")
       const cleanSubwayName = val.replace(/역$/, '').trim();
       const exactSubway = SUBWAY_STATIONS.find(s => s.name === cleanSubwayName || s.name === val);
       if (exactSubway && (val.endsWith('역') || val === exactSubway.name)) {
-        this.lookupSubway(exactSubway.name);
+        // 단, 'KBS'처럼 버스정류장 전용 키워드가 아닌 지하철역인 경우
+        await this.lookupSubway(exactSubway.name);
         this.scrollToResult();
         return;
       }
 
-      // 3. 문자열 키워드 검색 ("선유", "당산", "목동" 등 다중 매칭 지원)
-      this.searchByNameAndShowResults(val);
+      // 5. 정류소명 / 키워드 통합 검색
+      await this.searchByNameAndShowResults(val);
+    }
+
+    async executeCombinedStopAndRouteSearch(stopQuery, routeQuery) {
+      const cleanRoute = this.cleanBusToken(routeQuery);
+      const stopDigits = stopQuery.replace(/[^0-9]/g, '');
+
+      // 정류장 파트가 5자리 ARS 번호인 경우 즉시 해당 정류장 + 버스번호 하이라이트 조회!
+      if (/^\d{2}-?\d{3}$/.test(stopQuery) && stopDigits.length === 5) {
+        this.highlightBusNo = cleanRoute;
+        await this.lookupBusByArs(stopDigits, '', cleanRoute);
+        this.scrollToResult();
+        return;
+      }
+
+      this.showLoading(`🚏 '${stopQuery}' 정류장의 [${cleanRoute}번] 버스 실시간 도착정보 검색 중...`);
+      this.scrollToResult();
+
+      // 1) 노선 DB(내장 + 동적)에서 해당 정류장명을 포함하는 경유 정류소 탐색
+      let route = this.busRoutes.find(r => this.routeMatchesExact(r, cleanRoute));
+      if (!route) {
+        route = await this.fetchBusRouteDynamic(cleanRoute);
+      }
+
+      const stopKw = stopQuery.replace(/정류장$|정류소$/g, '').trim().toLowerCase();
+      let candidateStops = [];
+
+      if (route && Array.isArray(route.stops)) {
+        candidateStops = route.stops.filter(s =>
+          s.stNm.toLowerCase().includes(stopKw) || stopKw.includes(s.stNm.toLowerCase()) || s.arsId.includes(stopKw)
+        );
+      }
+
+      // 2) 노선 DB에 없거나 못 찾았으면 로컬/TOPIS 정류소 검색 후 실제 도착정보에 해당 노선이 있는지 확인
+      if (candidateStops.length === 0) {
+        const localHits = LOCAL_POPULAR_STATIONS.filter(p =>
+          p.stNm.toLowerCase().includes(stopKw) || p.keywords.some(k => k.toLowerCase().includes(stopKw))
+        );
+        const onlineHits = await this.fetchStationsByName(stopKw);
+        const merged = [...localHits];
+        (onlineHits || []).forEach(ob => {
+          if (ob.arsId && ob.arsId !== '0' && !merged.some(m => m.arsId === ob.arsId)) {
+            merged.push({ arsId: String(ob.arsId).replace(/[^0-9]/g, ''), stNm: ob.stNm });
+          }
+        });
+
+        // 상위 5개 정류소에 대해 병렬로 도착정보를 조회해 cleanRoute 버스가 정차하는 정류소 필터링
+        const probeTargets = merged.slice(0, 5);
+        const probed = await Promise.all(probeTargets.map(async (st) => {
+          const items = await this.fetchBusArrivalByUid(st.arsId);
+          const matchedBus = (items || []).find(b => this.busItemMatchesHighlight(b.rtNm, cleanRoute));
+          if (matchedBus) {
+            return {
+              arsId: st.arsId,
+              stNm: st.stNm,
+              dir: matchedBus.adirection || matchedBus.nxtStn || '운행 방면',
+              items
+            };
+          }
+          return null;
+        }));
+        candidateStops = probed.filter(Boolean);
+      }
+
+      if (candidateStops.length === 1) {
+        const target = candidateStops[0];
+        this.highlightBusNo = cleanRoute;
+        await this.lookupBusByArs(target.arsId, target.stNm, cleanRoute);
+        return;
+      }
+
+      if (candidateStops.length > 1) {
+        // 상·하행 등 여러 정류장이 매칭된 경우 방향 선택 리스트 노출 (클릭 즉시 해당 버스 우선 표시)
+        this.renderCombinedStopChoices(stopQuery, cleanRoute, candidateStops);
+        return;
+      }
+
+      // 못 찾은 경우 노선 모달이 있으면 필터와 함께 열어주거나 일반 검색으로 전환
+      if (route) {
+        await this.openBusRouteModal(route.routeNo, stopKw);
+      } else {
+        await this.searchByNameAndShowResults(`${stopQuery}`);
+      }
+    }
+
+    renderCombinedStopChoices(stopQuery, routeNo, stops) {
+      if (!this.resultContainer) return;
+      const cards = stops.slice(0, 10).map(st => {
+        const formattedArs = this.formatArsId(st.arsId);
+        return `
+          <button type="button" class="search-item-card card-bus-type" data-ars="${st.arsId}" data-name="${this.escapeHtml(st.stNm)}" data-route="${this.escapeHtml(routeNo)}">
+            <div class="card-left">
+              <span class="card-type-badge badge-bus">🚍 ${this.escapeHtml(routeNo)}번 정차</span>
+              <div class="card-title-group">
+                <span class="card-title"><strong>${this.escapeHtml(st.stNm)}</strong></span>
+                <span class="card-ars-label">ARS ${formattedArs} · ${this.escapeHtml(st.dir || '운행 방면')} 방면</span>
+              </div>
+            </div>
+            <div class="card-right">
+              <span class="station-ars-badge station-ars-badge-blue">${st.arsId}</span>
+              <span class="card-arrow">›</span>
+            </div>
+          </button>
+        `;
+      }).join('');
+
+      this.resultContainer.innerHTML = `
+        <div class="lookup-board-wrap">
+          <div class="lookup-board-header search-results-header">
+            <div class="station-meta-info">
+              <div class="station-name-row">
+                <span class="station-icon">🎯</span>
+                <h4 class="station-title">'${this.escapeHtml(stopQuery)}' · ${this.escapeHtml(routeNo)}번 정차 정류소</h4>
+                <span class="station-ars-badge station-ars-badge-blue">${stops.length}곳</span>
+              </div>
+              <p class="search-result-desc">원하시는 진행 방향의 정류장을 선택하면 <strong>${this.escapeHtml(routeNo)}번</strong> 실시간 도착정보가 최상단에 표시됩니다.</p>
+            </div>
+          </div>
+          <div class="search-results-grid">${cards}</div>
+        </div>
+      `;
+
+      this.resultContainer.querySelectorAll('.search-item-card').forEach(btn => {
+        btn.addEventListener('click', () => {
+          this.userInitiatedScroll = true;
+          const ars = btn.getAttribute('data-ars');
+          const nm = btn.getAttribute('data-name');
+          const rt = btn.getAttribute('data-route');
+          this.highlightBusNo = rt || '';
+          this.lookupBusByArs(ars, nm, rt || '');
+          this.scrollToResult();
+        });
+      });
     }
 
     async searchByNameAndShowResults(query) {
-      this.showLoading(`'${query}' 관련 지하철역, 버스노선 및 정류소 검색 중...`);
+      this.showLoading(`'${query}' 관련 정류장, 버스 노선 및 지하철역 검색 중...`);
       this.scrollToResult();
 
       try {
         const cleanQuery = query.trim();
+        const lowerQuery = cleanQuery.toLowerCase();
         const cleanSubway = cleanQuery.replace(/역$/, '').trim();
 
-        // 1. 버스 노선 번호 매칭 (예: 603, 6620, 6637, 양천01 등)
-        const matchedRoutes = POPULAR_BUS_ROUTES.filter(r => 
-          r.routeNo === cleanQuery || cleanQuery.includes(r.routeNo) || r.routeNo.includes(cleanQuery)
+        const matchedRoutes = this.findRoutesByQuery(cleanQuery);
+        const subwayMatches = SUBWAY_STATIONS.filter(s =>
+          s.name.includes(cleanSubway) || (cleanSubway.length >= 2 && cleanSubway.includes(s.name))
         );
 
-        // 2. 지하철역 매칭
-        const subwayMatches = SUBWAY_STATIONS.filter(s => 
-          s.name.includes(cleanSubway) || cleanSubway.includes(s.name)
+        const localMatches = LOCAL_POPULAR_STATIONS.filter(p =>
+          p.keywords.some(k => k.toLowerCase().includes(lowerQuery) || lowerQuery.includes(k.toLowerCase())) ||
+          p.stNm.toLowerCase().includes(lowerQuery) || p.arsId.includes(cleanQuery)
         );
 
-        // 3. 내장 인기 정류소 DB 매칭 (오프라인 100% 보장: 선유, 당산, 목동 등)
-        const localMatches = LOCAL_POPULAR_STATIONS.filter(p => 
-          p.keywords.some(k => k.includes(cleanQuery) || cleanQuery.includes(k)) ||
-          p.stNm.includes(cleanQuery) || p.arsId.includes(cleanQuery)
-        );
-
-        // 4. 버스 노선 매칭이 있는 경우 해당 노선의 경유 정류소도 목록에 보강
-        const routeStops = [];
-        matchedRoutes.forEach(r => {
-          r.stops.forEach(s => {
-            if (!routeStops.some(rs => rs.arsId === s.arsId) && !localMatches.some(lm => lm.arsId === s.arsId)) {
-              routeStops.push({ arsId: s.arsId, stNm: s.stNm, routeBadge: `${r.routeNo}번 경유` });
-            }
-          });
-        });
-
-        // 5. 공공 TOPIS API 정류소 검색 (실시간 온라인 보완)
         let onlineBusMatches = [];
         try {
           const fetched = await this.fetchStationsByName(cleanQuery);
@@ -682,22 +937,20 @@
           }
         } catch (e) {}
 
-        // 중복 제거 및 병합 (로컬 DB + 노선 경유 정류소 우선)
-        const mergedBusList = [...localMatches, ...routeStops];
+        const mergedBusList = [...localMatches];
         onlineBusMatches.forEach(ob => {
-          if (!mergedBusList.some(m => m.arsId === ob.arsId)) {
-            mergedBusList.push({ arsId: ob.arsId, stNm: ob.stNm });
+          const cleanArs = String(ob.arsId).replace(/[^0-9]/g, '');
+          if (cleanArs && !mergedBusList.some(m => m.arsId === cleanArs)) {
+            mergedBusList.push({ arsId: cleanArs, stNm: ob.stNm });
           }
         });
 
         const totalResultsCount = matchedRoutes.length + subwayMatches.length + mergedBusList.length;
-
         if (totalResultsCount === 0) {
-          this.showError(`'${query}'에 해당하는 버스 노선, 지하철역, 정류소를 찾을 수 없습니다. 버스 번호(예: 603, 6620)나 정류장 5자리 번호를 확인해 주세요.`);
+          this.showError(`'${query}'에 해당하는 정류장, 버스번호 또는 지하철역을 찾지 못했습니다. (예: 19130, KBS 162, 5618, 여의도역)`);
           return;
         }
 
-        // 단 1개 정류소만 정확 매칭된 경우 즉시 진입
         if (subwayMatches.length === 1 && mergedBusList.length === 0 && matchedRoutes.length === 0) {
           await this.lookupSubway(subwayMatches[0].name);
           this.scrollToResult();
@@ -705,26 +958,22 @@
         }
         if (subwayMatches.length === 0 && mergedBusList.length === 1 && matchedRoutes.length === 0) {
           const single = mergedBusList[0];
+          this.highlightBusNo = '';
           await this.lookupBusByArs(single.arsId, single.stNm);
           this.scrollToResult();
           return;
         }
 
-        // 결과 목록 카드 렌더링
-        this.renderSearchResultsList(query, subwayMatches, mergedBusList, matchedRoutes);
+        this.renderSearchResultsList(query, subwayMatches, mergedBusList.slice(0, 20), matchedRoutes.slice(0, 8));
         this.scrollToResult();
       } catch (err) {
         this.showError('검색 중 오류가 발생했습니다: ' + err.message);
       }
     }
 
-    // ==========================================
-    // 검색 결과 목록 카드 렌더링 (다중 검색 시)
-    // ==========================================
     renderSearchResultsList(query, subways, busStations, matchedRoutes = []) {
       if (!this.resultContainer) return;
-
-      const totalCount = (matchedRoutes ? matchedRoutes.length : 0) + subways.length + busStations.length;
+      const totalCount = matchedRoutes.length + subways.length + busStations.length;
 
       let html = `
         <div class="lookup-board-wrap">
@@ -733,110 +982,74 @@
               <div class="station-name-row">
                 <span class="station-icon">🔍</span>
                 <h4 class="station-title">'${this.escapeHtml(query)}' 검색 결과</h4>
-                <span class="station-ars-badge station-ars-badge-blue">${totalCount}곳 발견</span>
+                <span class="station-ars-badge station-ars-badge-blue">${totalCount}건</span>
               </div>
-              <p class="search-result-desc">확인하고 싶은 버스 노선, 정류소 또는 지하철역을 누르면 실시간 전광판이 열립니다.</p>
+              <p class="search-result-desc">확인할 버스 노선, 정류소 또는 지하철역을 누르면 실시간 도착정보가 표시됩니다.</p>
             </div>
           </div>
           <div class="search-results-grid">
       `;
 
-      // 1. 버스 노선 검색 결과 (사용자 요청: 버스 번호 검색)
-      if (matchedRoutes && matchedRoutes.length > 0) {
-        matchedRoutes.forEach(r => {
-          html += `
-            <div class="search-item-card card-route-highlight" style="cursor:pointer;" onclick="window.transitLookupInstance.openBusRouteModal('${r.routeNo}')">
-              <div class="card-left">
-                <span class="card-type-badge ${r.badgeClass}">🚍 ${r.routeNo}번</span>
-                <div class="card-title-group">
-                  <span class="card-title"><strong>${r.routeNo}번 ${r.routeType}</strong></span>
-                  <span class="badge-sub-highlight">${r.summary}</span>
-                </div>
-              </div>
-              <div class="card-right">
-                <button type="button" class="btn-primary" style="background:#0284c7; color:#fff; border:none; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:800; pointer-events:none;">정류장 전체보기 ➔</button>
+      matchedRoutes.forEach(r => {
+        html += `
+          <div class="search-item-card card-route-highlight" style="cursor:pointer;" onclick="window.transitLookupInstance.openBusRouteModal('${this.escapeHtml(r.routeNo)}')">
+            <div class="card-left">
+              <span class="card-type-badge ${r.badgeClass}">🚍 ${this.escapeHtml(r.routeNo)}번</span>
+              <div class="card-title-group">
+                <span class="card-title"><strong>${this.escapeHtml(r.routeNo)}번 ${this.escapeHtml(r.routeType)}</strong></span>
+                <span class="badge-sub-highlight">${this.escapeHtml(r.summary)}</span>
               </div>
             </div>
-          `;
-          if (r.stops && r.stops.length > 0) {
-            r.stops.forEach(st => {
-              const formattedArs = this.formatArsId(st.arsId);
-              html += `
-                <button type="button" class="search-item-card card-bus-type" data-type="bus" data-ars="${st.arsId}" data-name="${this.escapeHtml(st.stNm)}">
-                  <div class="card-left">
-                    <span class="card-type-badge badge-bus">🚏 ${r.routeNo} 정류소</span>
-                    <div class="card-title-group">
-                      <span class="card-title">${this.escapeHtml(st.stNm)}</span>
-                      <span class="card-ars-label">ARS ${formattedArs} · ${st.dir}</span>
-                    </div>
-                  </div>
-                  <div class="card-right">
-                    <span class="station-ars-badge station-ars-badge-blue">${st.arsId}</span>
-                    <span class="card-arrow">›</span>
-                  </div>
-                </button>
-              `;
-            });
-          }
-        });
-      }
-
-      // 2. 지하철역 결과
-      if (subways.length > 0) {
-        subways.forEach(s => {
-          const lineBadges = s.lines.map(line => `<span class="badge-subway-line badge-${this.getSubwayLineClass(line)}">${line}</span>`).join(' ');
-          const isSeonyu = (s.name === '선유도');
-          html += `
-            <button type="button" class="search-item-card card-subway-type" data-type="subway" data-name="${s.name}">
-              <div class="card-left">
-                <span class="card-type-badge badge-subway">🚇 지하철</span>
-                <div class="card-title-group">
-                  <span class="card-title"><strong>${s.name}역</strong></span>
-                  ${isSeonyu ? `<span class="badge-sub-highlight">당산방면 시간표 직결</span>` : ''}
-                </div>
-              </div>
-              <div class="card-right">
-                ${lineBadges}
-                <span class="card-arrow">›</span>
-              </div>
-            </button>
-          `;
-        });
-      }
-
-      // 3. 버스 정류소 결과
-      if (busStations.length > 0) {
-        busStations.forEach(b => {
-          const formattedArs = this.formatArsId(b.arsId);
-          html += `
-            <button type="button" class="search-item-card card-bus-type" data-type="bus" data-ars="${b.arsId}" data-name="${this.escapeHtml(b.stNm)}">
-              <div class="card-left">
-                <span class="card-type-badge badge-bus">🚏 정류소</span>
-                <div class="card-title-group">
-                  <span class="card-title">${this.escapeHtml(b.stNm)}</span>
-                  <span class="card-ars-label">ARS ${formattedArs}</span>
-                </div>
-              </div>
-              <div class="card-right">
-                <span class="station-ars-badge station-ars-badge-blue">${b.arsId}</span>
-                <span class="card-arrow">›</span>
-              </div>
-            </button>
-          `;
-        });
-      }
-
-      html += `
+            <div class="card-right">
+              <button type="button" class="btn-primary" style="background:#0284c7; color:#fff; border:none; padding:5px 11px; border-radius:8px; font-size:12px; font-weight:800; pointer-events:none;">정류장 선택 ➔</button>
+            </div>
           </div>
-        </div>
-      `;
+        `;
+      });
 
+      subways.forEach(s => {
+        const lineBadges = s.lines.map(line => `<span class="badge-subway-line badge-${this.getSubwayLineClass(line)}">${line}</span>`).join(' ');
+        html += `
+          <button type="button" class="search-item-card card-subway-type" data-type="subway" data-name="${this.escapeHtml(s.name)}">
+            <div class="card-left">
+              <span class="card-type-badge badge-subway">🚇 지하철</span>
+              <div class="card-title-group">
+                <span class="card-title"><strong>${this.escapeHtml(s.name)}역</strong></span>
+              </div>
+            </div>
+            <div class="card-right">
+              ${lineBadges}
+              <span class="card-arrow">›</span>
+            </div>
+          </button>
+        `;
+      });
+
+      busStations.forEach(b => {
+        const formattedArs = this.formatArsId(b.arsId);
+        html += `
+          <button type="button" class="search-item-card card-bus-type" data-type="bus" data-ars="${b.arsId}" data-name="${this.escapeHtml(b.stNm)}">
+            <div class="card-left">
+              <span class="card-type-badge badge-bus">🚏 정류소</span>
+              <div class="card-title-group">
+                <span class="card-title">${this.escapeHtml(b.stNm)}</span>
+                <span class="card-ars-label">ARS ${formattedArs}</span>
+              </div>
+            </div>
+            <div class="card-right">
+              <span class="station-ars-badge station-ars-badge-blue">${b.arsId}</span>
+              <span class="card-arrow">›</span>
+            </div>
+          </button>
+        `;
+      });
+
+      html += `</div></div>`;
       this.resultContainer.innerHTML = html;
 
-      // 카드 클릭 이벤트 바인딩
-      this.resultContainer.querySelectorAll('.search-item-card').forEach(card => {
+      this.resultContainer.querySelectorAll('.search-item-card[data-type]').forEach(card => {
         card.addEventListener('click', () => {
-          this.userInitiatedScroll = true; // 사용자 직접 선택 시 스크롤 허용!
+          this.userInitiatedScroll = true;
           const type = card.getAttribute('data-type');
           if (type === 'subway') {
             const name = card.getAttribute('data-name');
@@ -846,6 +1059,7 @@
             const ars = card.getAttribute('data-ars');
             const name = card.getAttribute('data-name');
             this.inputQuery.value = ars;
+            this.highlightBusNo = '';
             this.lookupBusByArs(ars, name);
           }
           this.scrollToResult();
@@ -854,47 +1068,70 @@
     }
 
     // ==========================================
-    // 실시간 자동완성 (추천 목록) 드롭다운
+    // 실시간 자동완성 드롭다운
     // ==========================================
     async handleAutocomplete(query) {
       if (!this.dropdown) return;
       const cleanQuery = query.trim();
+      const lowerQuery = cleanQuery.toLowerCase();
+
+      // 복합 입력 (예: "KBS 162", "19130 5618") 시 안내 아이템 최상단 제공
+      const combined = this.parseCombinedStopAndRoute(cleanQuery);
+      if (combined) {
+        this.dropdown.innerHTML = `
+          <div class="suggestion-group-title">🎯 정류장 + 버스번호 동시 조회</div>
+          <div class="suggestion-item suggestion-route" id="suggCombinedDirect">
+            <div class="sugg-left">
+              <span class="sugg-icon">🚍</span>
+              <div class="sugg-subway-info">
+                <span class="sugg-name"><strong>[${this.escapeHtml(combined.stopQuery)}] 정류장의 ${this.escapeHtml(combined.routeQuery)}번 버스</strong></span>
+                <span class="sugg-tag-highlight">누르면 해당 정류장의 ${this.escapeHtml(combined.routeQuery)}번 실시간 도착정보로 직행합니다</span>
+              </div>
+            </div>
+            <div class="sugg-right"><span class="bus-badge badge-blue">실시간 조회</span></div>
+          </div>
+        `;
+        this.dropdown.style.display = 'block';
+        const btn = document.getElementById('suggCombinedDirect');
+        if (btn) {
+          btn.addEventListener('click', () => {
+            this.hideSuggestions();
+            this.userInitiatedScroll = true;
+            this.executeCombinedStopAndRouteSearch(combined.stopQuery, combined.routeQuery);
+          });
+        }
+        return;
+      }
+
       const cleanSubway = cleanQuery.replace(/역$/, '').trim();
-
-      // 1. 버스 노선 추천 (사용자 요청: 버스 번호로도 검색)
-      const matchedRoutes = POPULAR_BUS_ROUTES.filter(r => 
-        r.routeNo === cleanQuery || cleanQuery.includes(r.routeNo) || r.routeNo.includes(cleanQuery)
-      );
-
-      // 2. 지하철역 추천 필터링 (최대 4개)
-      const subways = SUBWAY_STATIONS.filter(s => 
-        s.name.includes(cleanSubway) || cleanSubway.includes(s.name)
+      const matchedRoutes = this.findRoutesByQuery(cleanQuery).slice(0, 5);
+      const subways = SUBWAY_STATIONS.filter(s =>
+        s.name.includes(cleanSubway) || (cleanSubway.length >= 2 && cleanSubway.includes(s.name))
       ).slice(0, 4);
 
-      // 3. 내장 핵심 정류소 DB에서 키워드 매칭 (선유, 당산, 목동, 양정, 경인 등 즉시 반응)
-      const localMatches = LOCAL_POPULAR_STATIONS.filter(p => 
-        p.keywords.some(k => k.includes(cleanQuery) || cleanQuery.includes(k)) ||
-        p.stNm.includes(cleanQuery) || p.arsId.includes(cleanQuery)
+      const localMatches = LOCAL_POPULAR_STATIONS.filter(p =>
+        p.keywords.some(k => k.toLowerCase().includes(lowerQuery) || lowerQuery.includes(k.toLowerCase())) ||
+        p.stNm.toLowerCase().includes(lowerQuery) || p.arsId.includes(cleanQuery)
       );
 
-      // 4. 온라인 버스 정류소 실시간 API 검색 (비동기)
       let onlineBusStations = [];
-      try {
-        const fetched = await this.fetchStationsByName(cleanQuery);
-        if (Array.isArray(fetched)) {
-          onlineBusStations = fetched.filter(b => b.arsId && b.arsId !== '0');
-        }
-      } catch (e) {}
+      if (!/^\d+$/.test(cleanQuery) || cleanQuery.length >= 4) {
+        try {
+          const fetched = await this.fetchStationsByName(cleanQuery);
+          if (Array.isArray(fetched)) {
+            onlineBusStations = fetched.filter(b => b.arsId && b.arsId !== '0');
+          }
+        } catch (e) {}
+      }
 
-      // 로컬 DB와 온라인 검색 병합 (로컬 DB 우선 순위)
       const mergedBuses = [...localMatches];
       onlineBusStations.forEach(ob => {
-        if (!mergedBuses.some(m => m.arsId === ob.arsId)) {
-          mergedBuses.push({ arsId: ob.arsId, stNm: ob.stNm });
+        const cleanArs = String(ob.arsId).replace(/[^0-9]/g, '');
+        if (cleanArs && !mergedBuses.some(m => m.arsId === cleanArs)) {
+          mergedBuses.push({ arsId: cleanArs, stNm: ob.stNm });
         }
       });
-
-      const displayBuses = mergedBuses.slice(0, 8);
+      const displayBuses = mergedBuses.slice(0, 7);
 
       if (matchedRoutes.length === 0 && subways.length === 0 && displayBuses.length === 0) {
         this.hideSuggestions();
@@ -902,41 +1139,34 @@
       }
 
       let html = '';
-
-      // 버스 노선 섹션
       if (matchedRoutes.length > 0) {
         html += `<div class="suggestion-group-title">🚍 버스 노선 (${matchedRoutes.length})</div>`;
         matchedRoutes.forEach(r => {
           html += `
-            <div class="suggestion-item suggestion-route" data-type="route" data-route="${r.routeNo}">
+            <div class="suggestion-item suggestion-route" data-type="route" data-route="${this.escapeHtml(r.routeNo)}">
               <div class="sugg-left">
                 <span class="sugg-icon">🚍</span>
                 <div class="sugg-subway-info">
-                  <span class="sugg-name"><strong>${r.routeNo}번 버스</strong></span>
-                  <span class="sugg-tag-highlight">${r.summary}</span>
+                  <span class="sugg-name"><strong>${this.escapeHtml(r.routeNo)}번 버스</strong></span>
+                  <span class="sugg-tag-highlight">${this.escapeHtml(r.summary)}</span>
                 </div>
               </div>
-              <div class="sugg-right">
-                <span class="bus-badge ${r.badgeClass}">${r.routeType}</span>
-              </div>
+              <div class="sugg-right"><span class="bus-badge ${r.badgeClass}">${this.escapeHtml(r.routeType)}</span></div>
             </div>
           `;
         });
       }
 
-      // 지하철역 섹션
       if (subways.length > 0) {
         html += `<div class="suggestion-group-title">🚇 지하철역 (${subways.length})</div>`;
         subways.forEach(s => {
           const lineBadges = s.lines.map(line => `<span class="badge-subway-line badge-${this.getSubwayLineClass(line)}">${line}</span>`).join(' ');
-          const isSeonyu = (s.name === '선유도');
           html += `
-            <div class="suggestion-item suggestion-subway" data-type="subway" data-name="${s.name}">
+            <div class="suggestion-item suggestion-subway" data-type="subway" data-name="${this.escapeHtml(s.name)}">
               <div class="sugg-left">
                 <span class="sugg-icon">🚇</span>
                 <div class="sugg-subway-info">
-                  <span class="sugg-name"><strong>${s.name}역</strong></span>
-                  ${isSeonyu ? `<span class="sugg-tag-highlight">당산방면 시간표 직결</span>` : ''}
+                  <span class="sugg-name"><strong>${this.escapeHtml(s.name)}역</strong></span>
                 </div>
               </div>
               <div class="sugg-right">${lineBadges}</div>
@@ -945,7 +1175,6 @@
         });
       }
 
-      // 버스 정류소 섹션
       if (displayBuses.length > 0) {
         html += `<div class="suggestion-group-title">🚏 버스 정류소 (${displayBuses.length})</div>`;
         displayBuses.forEach(b => {
@@ -959,9 +1188,7 @@
                   <span class="sugg-ars">ARS ${formattedArs}</span>
                 </div>
               </div>
-              <div class="sugg-right">
-                <span class="sugg-badge-ars">${b.arsId}</span>
-              </div>
+              <div class="sugg-right"><span class="sugg-badge-ars">${b.arsId}</span></div>
             </div>
           `;
         });
@@ -970,10 +1197,9 @@
       this.dropdown.innerHTML = html;
       this.dropdown.style.display = 'block';
 
-      // 드롭다운 클릭 이벤트 바인딩
       this.dropdown.querySelectorAll('.suggestion-item').forEach(item => {
         item.addEventListener('click', () => {
-          this.userInitiatedScroll = true; // 사용자 직접 선택 시 스크롤 허용!
+          this.userInitiatedScroll = true;
           const type = item.getAttribute('data-type');
           if (type === 'route') {
             const routeNo = item.getAttribute('data-route');
@@ -991,6 +1217,7 @@
             const name = item.getAttribute('data-name');
             this.inputQuery.value = ars;
             this.hideSuggestions();
+            this.highlightBusNo = '';
             this.lookupBusByArs(ars, name);
           }
           this.scrollToResult();
@@ -1006,13 +1233,17 @@
     }
 
     // ==========================================
-    // 버스 실시간 도착정보 조회 (ARS 5자리)
+    // 버스 정류장 실시간 도착정보 조회
     // ==========================================
-    async lookupBusByArs(arsId, customName = '') {
+    async lookupBusByArs(arsId, customName = '', highlightRoute = undefined) {
       const cleanArs = String(arsId).replace(/[^0-9]/g, '');
       if (cleanArs.length !== 5) {
-        this.showError('올바른 5자리 정류장 번호를 입력해 주세요 (예: 15154)');
+        this.showError('올바른 5자리 정류장 번호를 입력해 주세요 (예: 19130)');
         return;
+      }
+
+      if (highlightRoute !== undefined) {
+        this.highlightBusNo = highlightRoute;
       }
 
       this.currentType = 'bus';
@@ -1033,11 +1264,8 @@
         const resolvedName = customName || (busItems[0] && busItems[0].stNm) || (matchedLocal && matchedLocal.stNm) || `정류소 (${this.formatArsId(cleanArs)})`;
         this.currentName = resolvedName;
 
-        // 최근 기록 저장
         this.saveRecentHistory('bus', cleanArs, resolvedName);
         this.renderQuickChips();
-
-        // 버스 전광판 렌더링
         this.renderBusBoard(cleanArs, resolvedName, busItems);
         this.startTicker();
       } catch (err) {
@@ -1046,7 +1274,7 @@
     }
 
     // ==========================================
-    // 지하철 실시간 도착정보 조회 (역 이름)
+    // 지하철역 실시간 도착정보 조회
     // ==========================================
     async lookupSubway(stationName) {
       const cleanName = stationName.replace(/역$/, '').trim();
@@ -1057,7 +1285,6 @@
       this.currentName = cleanName + '역';
       this.refreshCountdown = this.autoRefreshInterval;
 
-      // 9호선 선유도역의 경우 당산방면 공식 시간표를 0초 딜레이로 즉시 먼저 표출!
       if (cleanName === '선유도') {
         this.saveRecentHistory('subway', cleanName, '선유도역');
         this.renderQuickChips();
@@ -1071,23 +1298,17 @@
         const arrivals = await this.fetchSubwayRealtime(cleanName);
         this.lastSubwayData = arrivals;
 
-        if (!arrivals || arrivals.length === 0) {
-          if (cleanName !== '선유도') {
-            this.showEmptySubway(cleanName);
-            return;
-          }
+        if ((!arrivals || arrivals.length === 0) && cleanName !== '선유도') {
+          this.showEmptySubway(cleanName);
+          return;
         }
 
-        // 최근 기록 저장
         this.saveRecentHistory('subway', cleanName, cleanName + '역');
         this.renderQuickChips();
-
-        // 지하철 전광판 렌더링
         this.renderSubwayBoard(cleanName, arrivals || []);
         this.startTicker();
       } catch (err) {
         if (cleanName === '선유도') {
-          // 선유도역은 API 지연/실패 시에도 공식 시간표로 정상 운행 정보 지속 제공
           this.renderSubwayBoard(cleanName, this.lastSubwayData || []);
           this.startTicker();
         } else {
@@ -1102,14 +1323,11 @@
       }
       const day = date.getDay();
       if (day === 0 || day === 6) return true;
-      const m = String(date.getMonth() + 1).padStart(2, '0');
-      const d = String(date.getDate()).padStart(2, '0');
-      const md = `${m}-${d}`;
-      const fixed = ['01-01','03-01','05-05','06-06','08-15','10-03','10-09','12-25'];
-      return fixed.includes(md);
+      const md = `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      return ['01-01', '03-01', '05-05', '06-06', '08-15', '10-03', '10-09', '12-25'].includes(md);
     }
 
-    getSeonyudoUpcomingTrains(now = new Date(), count = 4) {
+    getSeonyudoUpcomingTrains(now = new Date(), count = 2) {
       const isHoliday = this.isWeekendOrHoliday(now);
       const schedule = isHoliday ? SEONYUDO_WEEKEND_TIMETABLE : SEONYUDO_WEEKDAY_TIMETABLE;
       const rawH = now.getHours();
@@ -1117,37 +1335,19 @@
       const currentMinutes = currentH * 60 + now.getMinutes();
       const currentSec = now.getSeconds();
       const nowMs = now.getTime();
-
       const results = [];
       const hours = Object.keys(schedule).map(Number).sort((a, b) => a - b);
 
       for (const h of hours) {
-        const mins = schedule[h];
-        for (const m of mins) {
-          const trainMin = h * 60 + m;
-          const diffSec = (trainMin - currentMinutes) * 60 - currentSec;
+        for (const m of schedule[h]) {
+          const diffSec = (h * 60 + m - currentMinutes) * 60 - currentSec;
           if (diffSec >= -30) {
-            let dest = '중앙보훈병원';
-            if (h === 24 && !isHoliday) {
-              if (m === 18) dest = '삼전(종착)';
-              else if (m === 30) dest = '신논현(종착)';
-              else if (m === 43) dest = '동작(종착)';
-              else if (m === 56) dest = '당산(종착) 막차';
-            } else if (h === 23 && isHoliday) {
-              if (m === 27) dest = '신논현(종착)';
-              else if (m === 41) dest = '동작(종착)';
-              else if (m === 55) dest = '당산(종착) 막차';
-            }
-
             const displayH = (h === 24) ? '00' : String(h).padStart(2, '0');
             const displayM = String(m).padStart(2, '0');
-
             results.push({
               departureTime: `${displayH}:${displayM}`,
-              endStationName: dest,
+              endStationName: '중앙보훈병원',
               sec: Math.max(0, diffSec),
-              remainMinutes: Math.floor(Math.max(0, diffSec) / 60),
-              remainSeconds: Math.max(0, diffSec) % 60,
               targetTime: nowMs + Math.max(0, diffSec) * 1000
             });
             if (results.length >= count) break;
@@ -1155,34 +1355,14 @@
         }
         if (results.length >= count) break;
       }
-
-      // 심야 첫차 처리 (새벽 1시~4시)
-      if (results.length === 0 && (rawH >= 1 && rawH < 5)) {
-        const firstH = hours[0];
-        const firstM = schedule[firstH][0];
-        const displayH = String(firstH).padStart(2, '0');
-        const displayM = String(firstM).padStart(2, '0');
-        const firstTrainMin = firstH * 60 + firstM;
-        const diffSec = (firstTrainMin - (rawH * 60 + now.getMinutes())) * 60 - currentSec;
-        results.push({
-          departureTime: `${displayH}:${displayM}`,
-          endStationName: '중앙보훈병원',
-          sec: Math.max(0, diffSec),
-          remainMinutes: Math.floor(Math.max(0, diffSec) / 60),
-          remainSeconds: Math.max(0, diffSec) % 60,
-          targetTime: nowMs + Math.max(0, diffSec) * 1000,
-          isFirstTrain: true
-        });
-      }
-
       return results;
     }
 
     // ==========================================
-    // 실시간 갱신 & 티커
+    // 실시간 갱신 & 1초 카운트다운 티커
     // ==========================================
     refreshCurrent() {
-      this.userInitiatedScroll = false; // 자동 갱신 시에는 화면 스크롤 금지
+      this.userInitiatedScroll = false;
       if (this.btnRefresh) this.btnRefresh.classList.add('spinning');
       const finish = () => {
         if (this.btnRefresh) {
@@ -1191,7 +1371,7 @@
       };
 
       if (this.currentType === 'bus' && this.currentId) {
-        this.lookupBusByArs(this.currentId, this.currentName).finally(finish);
+        this.lookupBusByArs(this.currentId, this.currentName, this.highlightBusNo).finally(finish);
       } else if (this.currentType === 'subway' && this.currentId) {
         this.lookupSubway(this.currentId).finally(finish);
       } else {
@@ -1206,25 +1386,14 @@
       }, 1000);
     }
 
-    stopTicker() {
-      if (this.tickerTimer) {
-        clearInterval(this.tickerTimer);
-        this.tickerTimer = null;
-      }
-    }
-
     tickCountdowns() {
       const now = Date.now();
-
-      // 초 단위 실시간 카운트다운 엘리먼트들 갱신
       const liveEls = document.querySelectorAll('#lookupResultContainer .live-bus-sec');
       liveEls.forEach(el => {
         const targetTime = parseInt(el.getAttribute('data-target-time'), 10);
         if (!targetTime || isNaN(targetTime)) return;
-
         const remainSec = Math.max(0, Math.floor((targetTime - now) / 1000));
-        const walkSec = 300;
-        const catchClass = (remainSec >= walkSec) ? 'transit-catchable' : 'transit-uncatchable';
+        const catchClass = (remainSec >= 300) ? 'transit-catchable' : 'transit-uncatchable';
         if (remainSec <= 0) {
           el.innerHTML = `<span class="tag-arrive-now transit-uncatchable">⚡ 곧 도착</span>`;
         } else if (remainSec < 60) {
@@ -1237,15 +1406,9 @@
         }
       });
 
-      // 자동 새로고침 카운트다운
-      if (this.refreshCountdown > 0) {
-        this.refreshCountdown--;
-      }
-
+      if (this.refreshCountdown > 0) this.refreshCountdown--;
       const countdownEl = document.getElementById('lookupAutoRefreshCountdown');
-      if (countdownEl) {
-        countdownEl.textContent = `${this.refreshCountdown}초`;
-      }
+      if (countdownEl) countdownEl.textContent = `${this.refreshCountdown}초`;
 
       if (this.refreshCountdown <= 0) {
         this.refreshCountdown = this.autoRefreshInterval;
@@ -1272,106 +1435,66 @@
             this.renderSubwayBoard(this.currentId, arrivals, true);
           }
         }
-      } catch (e) {
-        // 조용히 대기
-      } finally {
+      } catch (e) {} finally {
         this.isFetching = false;
       }
     }
 
     // ==========================================
-    // 렌더링: 버스 도착 전광판
+    // 렌더링: 버스 도착 전광판 (모든 정류장 범용 + 검색 노선 하이라이트)
     // ==========================================
-    renderBusBoard(arsId, stationName, busList, isSilent = false) {
+    renderBusBoard(arsId, stationName, busList) {
       if (!this.resultContainer) return;
 
       const formattedArs = this.formatArsId(arsId);
-      const currentTimeStr = new Date().toLocaleTimeString('ko-KR', { hour12: false });
       const nowMs = Date.now();
+      const targetHighlight = this.highlightBusNo || '';
 
-      // 필터링 적용
       let filtered = [...busList];
-      // 19729 영등포구청 정류소: 6637 버스만 단독 노출 (사용자 요청)
-      if (String(arsId).includes('19729')) {
-        filtered = filtered.filter(b => b.rtNm === '6637');
-      } else {
-        if (this.filterType === 'town') {
-          filtered = filtered.filter(b => b.routeType === '마을' || (b.rtNm && b.rtNm.includes('마을')) || (b.rtNm && b.rtNm.startsWith('양천')));
-        } else if (this.filterType === 'blue') {
-          filtered = filtered.filter(b => b.routeType === '간선' || (b.routeType && b.routeType.includes('간선')));
-        } else if (this.filterType === 'green') {
-          filtered = filtered.filter(b => b.routeType === '지선' || (b.routeType && b.routeType.includes('지선')));
-        } else if (this.filterType === 'red') {
-          filtered = filtered.filter(b => b.routeType === '광역' || b.routeType === '직행' || (b.routeType && b.routeType.includes('광역')));
-        }
+      if (this.filterType === 'town') {
+        filtered = filtered.filter(b => String(b.routeType) === '2' || (b.rtNm && /(마을|양천|영등포|마포|강서|구로|관악|동작)/.test(b.rtNm)));
+      } else if (this.filterType === 'blue') {
+        filtered = filtered.filter(b => String(b.routeType) === '3' || this.getBusBadgeClass(b.routeType, b.rtNm) === 'badge-blue');
+      } else if (this.filterType === 'green') {
+        filtered = filtered.filter(b => String(b.routeType) === '4' || this.getBusBadgeClass(b.routeType, b.rtNm) === 'badge-green');
+      } else if (this.filterType === 'red') {
+        filtered = filtered.filter(b => String(b.routeType) === '6' || this.getBusBadgeClass(b.routeType, b.rtNm) === 'badge-red' || this.getBusBadgeClass(b.routeType, b.rtNm) === 'badge-sky');
       }
 
-      // 정렬 및 필터 적용: 당산역(19176) 정류소 조회 시 기본 603, 6620 2개만 표출 (사용자 요청)
-      const isDangsanTarget = (String(arsId).includes('19176') || String(stationName).includes('당산'));
-      let dangsanHiddenCount = 0;
-      if (isDangsanTarget) {
-        if (!this.showAllDangsanRoutes) {
-          const onlyPriority = filtered.filter(b => b.rtNm === '603' || b.rtNm === '6620');
-          dangsanHiddenCount = filtered.length - onlyPriority.length;
-          filtered = onlyPriority;
+      filtered.sort((a, b) => {
+        if (targetHighlight) {
+          const hA = this.busItemMatchesHighlight(a.rtNm, targetHighlight) ? 0 : 1;
+          const hB = this.busItemMatchesHighlight(b.rtNm, targetHighlight) ? 0 : 1;
+          if (hA !== hB) return hA - hB;
         }
-      }
-
-      const getDangsanPriorityRank = (rtNm) => {
-        const clean = String(rtNm || '').trim();
-        if (clean === '603') return 1;
-        if (clean === '6620') return 2;
-        return 999;
-      };
-
-      if (this.sortType === 'arrival') {
-        filtered.sort((a, b) => {
-          if (isDangsanTarget) {
-            const pA = getDangsanPriorityRank(a.rtNm);
-            const pB = getDangsanPriorityRank(b.rtNm);
-            if (pA !== pB) return pA - pB;
-          }
+        if (this.sortType === 'arrival') {
           const tA = parseInt(a.traTime1, 10) || 999999;
           const tB = parseInt(b.traTime1, 10) || 999999;
           return tA - tB;
-        });
-      } else {
-        filtered.sort((a, b) => {
-          if (isDangsanTarget) {
-            const pA = getDangsanPriorityRank(a.rtNm);
-            const pB = getDangsanPriorityRank(b.rtNm);
-            if (pA !== pB) return pA - pB;
-          }
-          return (a.rtNm || '').localeCompare(b.rtNm || '', undefined, { numeric: true });
-        });
-      }
+        }
+        return (a.rtNm || '').localeCompare(b.rtNm || '', undefined, { numeric: true });
+      });
 
-      // 버스 카드 목록 생성
       let cardsHtml = '';
       if (filtered.length === 0) {
-        cardsHtml = `
-          <div class="lookup-no-results">
-            <span>선택한 필터에 해당하는 운행 버스가 없습니다.</span>
-          </div>
-        `;
+        cardsHtml = `<div class="lookup-no-results"><span>선택한 필터에 해당하는 운행 버스가 없습니다.</span></div>`;
       } else {
         cardsHtml = filtered.map(bus => {
+          const isHighlighted = targetHighlight && this.busItemMatchesHighlight(bus.rtNm, targetHighlight);
           const badgeClass = this.getBusBadgeClass(bus.routeType, bus.rtNm);
-          const routeTypeMap = { '1': '공항버스', '2': '마을버스', '3': '간선버스', '4': '지선버스', '5': '순환버스', '6': '광역버스' };
+          const routeTypeMap = { '1': '공항버스', '2': '마을버스', '3': '간선버스', '4': '지선버스', '5': '순환버스', '6': '광역버스', '7': '인천버스', '8': '경기버스' };
           let typeName = routeTypeMap[bus.routeType] || bus.routeType;
           if (!typeName || /^\d+$/.test(String(typeName).trim())) {
             typeName = this.guessRouteType(bus.rtNm);
           }
-          const nextStop = bus.nxtStn ? `${bus.nxtStn} 방면` : '운행 노선';
+          const dirText = bus.adirection ? `${bus.adirection} 방면` : (bus.nxtStn ? `${bus.nxtStn} 방면` : '');
 
-          // 첫 번째 버스 도착정보
           const tra1 = parseInt(bus.traTime1, 10);
           const targetTime1 = (!isNaN(tra1) && tra1 > 0) ? (nowMs + tra1 * 1000) : null;
           const busMsg1 = bus.arrmsg1 || '운행 정보 없음';
           const plate1 = this.formatPlateHighlight(bus.plainNo1);
           const isTerm1 = busMsg1.includes('종료') || busMsg1.includes('대기') || busMsg1.includes('출발');
 
-          // 두 번째 버스 도착정보
           const tra2 = parseInt(bus.traTime2, 10);
           const targetTime2 = (!isNaN(tra2) && tra2 > 0) ? (nowMs + tra2 * 1000) : null;
           const busMsg2 = bus.arrmsg2 || '도착 예정 없음';
@@ -1384,26 +1507,24 @@
           const styleBoost = (savedBoost > 0) ? `--time-font-boost:${savedBoost}px;` : '';
 
           return `
-            <div class="lookup-bus-card" data-zoom-key="${busZoomKey}" data-zoom-name="${bus.rtNm}번" style="${styleBoost}">
-              <!-- 상단 헤더: 노선 번호 + 노선 유형 + 도착시간 줌 컨트롤 (+ / ↺) -->
+            <div class="lookup-bus-card ${isHighlighted ? 'is-highlighted-route' : ''}" data-zoom-key="${busZoomKey}" data-zoom-name="${this.escapeHtml(bus.rtNm)}번" style="${styleBoost}">
               <div class="bus-card-top-header">
                 <div class="bus-route-main-info">
-                  <span class="bus-badge ${badgeClass}">${bus.rtNm}</span>
-                  <span class="bus-type-tag">${typeName}</span>
+                  <span class="bus-badge ${badgeClass}">${this.escapeHtml(bus.rtNm)}</span>
+                  <span class="bus-type-tag">${this.escapeHtml(typeName)}${dirText ? ` · ${this.escapeHtml(dirText)}` : ''}</span>
+                  ${isHighlighted ? `<span class="highlight-target-pill">🎯 선택 노선</span>` : ''}
                 </div>
                 <div class="bus-time-zoom-ctrl">
-                  <button type="button" class="btn-time-zoom-btn btn-time-zoom-plus" onclick="window.transitManager && window.transitManager.increaseTimeFontSize(event, '${busZoomKey}')" title="${bus.rtNm}번 도착시간 글씨 확대" aria-label="${bus.rtNm}번 도착시간 글씨 확대">
+                  <button type="button" class="btn-time-zoom-btn btn-time-zoom-plus" onclick="window.transitManager && window.transitManager.increaseTimeFontSize(event, '${busZoomKey}')" title="${this.escapeHtml(bus.rtNm)}번 글씨 확대">
                     <span class="zoom-btn-icon">＋</span>
                   </button>
-                  <button type="button" class="btn-time-zoom-btn btn-time-zoom-reset" onclick="window.transitManager && window.transitManager.resetTimeFontSize(event, '${busZoomKey}')" title="${bus.rtNm}번 도착시간 글씨 원래대로 복귀" aria-label="${bus.rtNm}번 도착시간 글씨 원래대로 복귀">
+                  <button type="button" class="btn-time-zoom-btn btn-time-zoom-reset" onclick="window.transitManager && window.transitManager.resetTimeFontSize(event, '${busZoomKey}')" title="글씨 원래대로">
                     <span class="zoom-btn-icon">↺</span>
                   </button>
                 </div>
               </div>
 
-              <!-- 하단 도착 정보: 다음 버스 & 다다음 버스 와이드 블록 -->
               <div class="bus-card-arrival-list">
-                <!-- 다음 버스 -->
                 <div class="bus-arrival-block first-bus-block">
                   <div class="arr-main-info">
                     <span class="arr-badge arr-first">다음</span>
@@ -1425,7 +1546,6 @@
                   </div>
                 </div>
 
-                <!-- 다다음 버스 -->
                 <div class="bus-arrival-block second-bus-block">
                   <div class="arr-main-info">
                     <span class="arr-badge arr-second">다다음</span>
@@ -1453,16 +1573,15 @@
 
       const boardHtml = `
         <div class="lookup-board-wrap lookup-selected-station-sector">
-          <!-- 특정 정류장 헤더: 정류장 번호와 정류장 이름을 선명하게 노출 -->
           <div class="lookup-bus-station-header">
             <div class="station-meta-left">
               <span class="station-ars-badge">🚏 ${formattedArs}</span>
               <h3 class="station-name-text">${this.escapeHtml(stationName)}</h3>
             </div>
             <div class="station-meta-right">
-              ${isDangsanTarget ? `
-                <button type="button" id="btnToggleDangsanRoutes" class="btn-dangsan-view-toggle ${this.showAllDangsanRoutes ? 'active' : ''}">
-                  ${this.showAllDangsanRoutes ? '603·6620만 보기 ▲' : `전체보기 (+${dangsanHiddenCount}) ▼`}
+              ${targetHighlight ? `
+                <button type="button" id="btnClearHighlightBus" class="btn-dangsan-view-toggle active" title="노선 고정 해제">
+                  🎯 ${this.escapeHtml(targetHighlight)}번 우선 ✕
                 </button>
               ` : `
                 <span class="station-route-count"><strong>${busList.length}개</strong> 노선</span>
@@ -1471,7 +1590,26 @@
             </div>
           </div>
 
-          <!-- 버스 번호 및 도착 예정 시각 카드 (동일 섹터 내 통합) -->
+          <div class="lookup-filter-toolbar" style="display:flex; justify-content:space-between; align-items:center; gap:6px; padding:8px 12px; flex-wrap:wrap;">
+            <div style="display:flex; gap:5px; flex-wrap:wrap;">
+              ${[
+                { id: 'all', label: '전체' },
+                { id: 'blue', label: '간선' },
+                { id: 'green', label: '지선' },
+                { id: 'red', label: '광역·경기' },
+                { id: 'town', label: '마을' }
+              ].map(f => `
+                <button type="button" class="btn-filter ${this.filterType === f.id ? 'active' : ''}" data-filter="${f.id}"
+                        style="padding:4px 10px; border-radius:999px; font-size:12px; font-weight:800; border:1px solid ${this.filterType === f.id ? '#0284c7' : '#cbd5e1'}; background:${this.filterType === f.id ? '#0284c7' : 'transparent'}; color:${this.filterType === f.id ? '#fff' : 'inherit'}; cursor:pointer;">
+                  ${f.label}
+                </button>
+              `).join('')}
+            </div>
+            <button type="button" id="btnToggleSort" style="padding:4px 10px; border-radius:8px; font-size:12px; font-weight:800; border:1px solid #cbd5e1; background:transparent; color:inherit; cursor:pointer;">
+              ${this.sortType === 'arrival' ? '⏱️ 도착순' : '🔢 번호순'}
+            </button>
+          </div>
+
           <div class="lookup-cards-container">
             ${cardsHtml}
           </div>
@@ -1484,15 +1622,14 @@
         this.userInitiatedScroll = false;
       }
 
-      // 당산역 전체보기 토글 버튼 이벤트 바인딩
-      const btnDangsanToggle = document.getElementById('btnToggleDangsanRoutes');
-      if (btnDangsanToggle) {
-        btnDangsanToggle.addEventListener('click', () => {
-          this.toggleDangsanRoutes();
+      const btnClearHl = document.getElementById('btnClearHighlightBus');
+      if (btnClearHl) {
+        btnClearHl.addEventListener('click', () => {
+          this.highlightBusNo = '';
+          this.renderBusBoard(arsId, stationName, busList);
         });
       }
 
-      // 필터 버튼 이벤트 바인딩
       this.resultContainer.querySelectorAll('.btn-filter').forEach(btn => {
         btn.addEventListener('click', () => {
           this.filterType = btn.getAttribute('data-filter');
@@ -1500,7 +1637,6 @@
         });
       });
 
-      // 정렬 토글 이벤트 바인딩
       const btnSort = document.getElementById('btnToggleSort');
       if (btnSort) {
         btnSort.addEventListener('click', () => {
@@ -1511,282 +1647,148 @@
     }
 
     // ==========================================
-    // 렌더링: 지하철 실시간 운행 전광판
+    // 렌더링: 지하철 실시간 운행 전광판 (다중 호선 그룹화 + 초단위 카운트다운)
     // ==========================================
-    renderSubwayBoard(stationName, arrivals, isSilent = false) {
+    renderSubwayBoard(stationName, arrivals) {
       if (!this.resultContainer) return;
 
       const currentTimeStr = new Date().toLocaleTimeString('ko-KR', { hour12: false });
       const safeArrivals = Array.isArray(arrivals) ? arrivals : [];
+      const nowMs = Date.now();
 
-      // 상행(내선)과 하행(외선)으로 그룹화
-      const upTrains = safeArrivals.filter(a => a.updnLine === '상행' || a.updnLine === '내선');
-      const downTrains = safeArrivals.filter(a => a.updnLine === '하행' || a.updnLine === '외선');
-
-      const renderTrainGroup = (title, list, icon) => {
-        if (!list || list.length === 0) {
-          return `
-            <div class="subway-direction-box">
-              <div class="subway-dir-header">
-                <span class="dir-icon">${icon}</span>
-                <span class="dir-title">${title}</span>
-              </div>
-              <div class="subway-empty-msg">실시간 운행 중인 열차가 없습니다.</div>
-            </div>
-          `;
-        }
-
-        // 실시간 열차 최대 2대 (다음 열차, 다다음 열차)만 간결하게 노출
-        const trainsHtml = list.slice(0, 2).map((item, idx) => {
-          const isExpress = item.btrainSttus === '급행' || (item.trainLineNm && item.trainLineNm.includes('급행'));
-          const isFirst = (idx === 0);
-          const arriveMsg = item.arvlMsg2 || item.arvlMsg3 || '도착 대기';
-          const lineNm = item.trainLineNm || (item.bstatnNm ? `${item.bstatnNm}행` : '열차');
-
-          return `
-            <div class="subway-train-item ${isFirst ? 'is-next-train' : ''}">
-              <div class="train-seq-badge ${isFirst ? 'seq-first' : 'seq-second'}">
-                ${isFirst ? '다음 열차' : '다다음 열차'}
-              </div>
-              <div class="train-destination">
-                <span class="train-head">${this.escapeHtml(lineNm)}</span>
-                ${isExpress ? `<span class="badge-express-train">⚡ 급행</span>` : `<span class="badge-normal-train">일반</span>`}
-              </div>
-              <div class="train-arrival-status">
-                <span class="train-msg ${this.isImminentSubway(arriveMsg) ? 'status-imminent' : ''}">${this.escapeHtml(arriveMsg)}</span>
-              </div>
-            </div>
-          `;
-        }).join('');
-
-        return `
-          <div class="subway-direction-box">
-            <div class="subway-dir-header">
-              <span class="dir-icon">${icon}</span>
-              <span class="dir-title">${title}</span>
-              <span class="dir-count">다음 2대</span>
-            </div>
-            <div class="subway-train-list">
-              ${trainsHtml}
-            </div>
-          </div>
-        `;
-      };
-
-      // 🚇 9호선 선유도역 전용: 실시간 열차 최우선 표출 + 다음/다다음 딱 2대만 노출!
-      if (stationName === '선유도') {
-        const isHoliday = this.isWeekendOrHoliday(new Date());
-        const seonyudoSchedule = this.getSeonyudoUpcomingTrains(new Date(), 2);
-        const nowMs = Date.now();
-
-        // 상행 열차: 실시간 데이터 우선 매핑 (부족분은 시간표로 보완하여 딱 2대)
-        const combinedUpRows = [];
-
-        if (upTrains && upTrains.length > 0) {
-          upTrains.slice(0, 2).forEach((tr, idx) => {
-            const isFirst = (idx === 0);
-            const isExpress = tr.btrainSttus === '급행' || (tr.trainLineNm && tr.trainLineNm.includes('급행'));
-            const arriveMsg = tr.arvlMsg2 || tr.arvlMsg3 || '운행중';
-            const lineNm = tr.trainLineNm || (tr.bstatnNm ? `${tr.bstatnNm}행` : '중앙보훈병원행');
-            const rawSec = parseInt(tr.barvlDt, 10);
-            const targetTime = (!isNaN(rawSec) && rawSec > 0) ? (nowMs + rawSec * 1000) : null;
-
-            combinedUpRows.push(`
-              <div class="timetable-train-row ${isFirst ? 'is-next-immediate' : ''}">
-                <div class="tt-left">
-                  <span class="tt-seq-tag ${isFirst ? 'seq-first' : 'seq-second'}">${isFirst ? '다음 열차' : '다다음 열차'}</span>
-                  <span class="badge-live-train" style="background:#ef4444; color:#fff; font-size:11px; font-weight:800; padding:2px 6px; border-radius:4px; margin-right:4px;">⚡ 실시간</span>
-                  ${isExpress ? `<span class="badge-express-train">⚡ 급행</span>` : `<span class="badge-normal-train">일반</span>`}
-                  <span class="tt-dest-text">${this.escapeHtml(lineNm)}</span>
-                </div>
-                <div class="tt-right">
-                  ${targetTime ? `
-                    <span class="live-bus-sec" data-target-time="${targetTime}">
-                      ${this.formatSecondsHtml(rawSec)}
-                    </span>
-                  ` : `
-                    <span class="train-msg ${this.isImminentSubway(arriveMsg) ? 'status-imminent' : ''}" style="font-weight:800; font-size:15px; color:#0284c7;">
-                      ${this.escapeHtml(arriveMsg)}
-                    </span>
-                  `}
-                </div>
-              </div>
-            `);
-          });
-        }
-
-        // 실시간 열차가 2대 미만인 경우 시간표 열차로 보완하여 총 2대 구성
-        if (combinedUpRows.length < 2 && seonyudoSchedule.length > 0) {
-          for (const tr of seonyudoSchedule) {
-            if (combinedUpRows.length >= 2) break;
-            const isFirst = (combinedUpRows.length === 0);
-            combinedUpRows.push(`
-              <div class="timetable-train-row ${isFirst ? 'is-next-immediate' : ''}">
-                <div class="tt-left">
-                  <span class="tt-seq-tag ${isFirst ? 'seq-first' : 'seq-second'}">${isFirst ? '다음 열차' : '다다음 열차'}</span>
-                  <span class="tt-dep-time"><strong>${tr.departureTime}</strong></span>
-                  <span class="badge-normal-train">일반</span>
-                  <span class="tt-dest-text">${this.escapeHtml(tr.endStationName)}행</span>
-                </div>
-                <div class="tt-right">
-                  <span class="live-bus-sec" data-target-time="${tr.targetTime}">
-                    ${this.formatSecondsHtml(tr.sec)}
-                  </span>
-                </div>
-              </div>
-            `);
-          }
-        }
-
-        let upcomingHtml = '';
-        if (combinedUpRows.length > 0) {
-          upcomingHtml = combinedUpRows.join('');
-        } else {
-          upcomingHtml = `<div class="subway-empty-msg">오늘 운행이 종료되었습니다 (첫차 05:34).</div>`;
-        }
-
-        // 전체 시간표 테이블 생성
-        const scheduleData = isHoliday ? SEONYUDO_WEEKEND_TIMETABLE : SEONYUDO_WEEKDAY_TIMETABLE;
-        const currentHour = new Date().getHours();
-        const fullRowsHtml = Object.keys(scheduleData).map(hStr => {
-          const h = Number(hStr);
-          const isCurH = (h === currentHour || (h === 24 && currentHour === 0));
-          const dispH = (h === 24) ? '00' : String(h).padStart(2, '0');
-          const minList = scheduleData[h].map(m => String(m).padStart(2, '0')).join(' · ');
-          return `
-            <div class="full-schedule-row ${isCurH ? 'cur-hour-row' : ''}">
-              <span class="f-hour">${dispH}시</span>
-              <span class="f-mins">${minList}</span>
-            </div>
-          `;
-        }).join('');
-
-        const subwayZoomKey = 'lookup_subway_seonyudo';
-        const savedSubBoost = (typeof window !== 'undefined' && window.transitManager)
-          ? window.transitManager.getFontBoostForKey(subwayZoomKey)
-          : parseInt(localStorage.getItem('transit_time_boost_' + subwayZoomKey) || '0', 10);
-        const subStyleBoost = (savedSubBoost > 0) ? `--time-font-boost:${savedSubBoost}px;` : '';
-
-        const boardHtml = `
-          <div class="lookup-board-wrap" data-zoom-key="${subwayZoomKey}" data-zoom-name="선유도역" style="${subStyleBoost}">
-            <!-- 선유도역 정보 헤더 -->
-            <div class="lookup-board-header subway-theme-header">
-              <div class="station-meta-info">
-                <div class="station-name-row">
-                  <span class="station-icon">🚇</span>
-                  <h4 class="station-title">9호선 선유도역</h4>
-                  <span class="station-ars-badge" style="background:#c89d5c;">실시간 도착정보 우선</span>
-                  <span class="badge-dangsan-target">당산역 방면 1정거장(2분)</span>
-                  <div class="bus-time-zoom-ctrl" style="margin-left:auto;">
-                    <button type="button" class="btn-time-zoom-btn btn-time-zoom-plus" onclick="window.transitManager && window.transitManager.increaseTimeFontSize(event, '${subwayZoomKey}')" title="선유도역 도착시간 글씨 확대" aria-label="선유도역 도착시간 글씨 확대">
-                      <span class="zoom-btn-icon">＋</span>
-                    </button>
-                    <button type="button" class="btn-time-zoom-btn btn-time-zoom-reset" onclick="window.transitManager && window.transitManager.resetTimeFontSize(event, '${subwayZoomKey}')" title="선유도역 도착시간 글씨 원래대로 복귀" aria-label="선유도역 도착시간 글씨 원래대로 복귀">
-                      <span class="zoom-btn-icon">↺</span>
-                    </button>
-                  </div>
-                </div>
-                <div class="station-sub-row">
-                  <span class="station-route-count">실시간 열차 우선 매핑 (다음 2대 노출)</span>
-                  <span class="station-update-time">수신: ${currentTimeStr}</span>
-                  <span class="station-auto-ticker">🔄 <strong id="lookupAutoRefreshCountdown">${this.refreshCountdown}초</strong> 갱신</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- 1. 당산방면 일반열차 (실시간 우선 2대 노출) -->
-            <div class="seonyudo-timetable-card">
-              <div class="timetable-header-row">
-                <div class="tt-title-wrap">
-                  <span class="tt-icon">🧭</span>
-                  <h4 class="tt-title">당산 · 여의도 · 중앙보훈병원 방면 열차 (다음 2대)</h4>
-                </div>
-                <span class="badge-tt-mode">실시간 우선</span>
-              </div>
-
-              <div class="timetable-train-list">
-                ${upcomingHtml}
-              </div>
-
-              <!-- 오늘 전체 시간표 펼치기 토글 버튼 -->
-              <button type="button" class="btn-toggle-timetable" id="btnToggleSeonyudoTimetable">
-                📋 당산방면 공식 시간표 전체보기 (${isHoliday ? '주말·공휴일' : '평일'}) <span id="toggleTtArrow">펼치기 ▼</span>
-              </button>
-              <div class="seonyudo-full-schedule-box" id="seonyudoFullScheduleBox" style="display: none;">
-                <div class="full-schedule-header">
-                  <span>9호선 선유도역 → 당산·중앙보훈병원 방면 (${isHoliday ? '주말·공휴일' : '평일'})</span>
-                </div>
-                <div class="full-schedule-list">
-                  ${fullRowsHtml}
-                </div>
-              </div>
-            </div>
-
-            <!-- 2. 하행 (신목동 · 개화 방면) 열차 운행 현황 (최대 2대) -->
-            <div class="subway-board-grid">
-              ${renderTrainGroup('하행 (신목동·가양·개화 방면)', downTrains, '⬇️')}
-            </div>
-          </div>
-        `;
-
-        this.resultContainer.innerHTML = boardHtml;
-        if (this.userInitiatedScroll) {
-          this.scrollToResult();
-          this.userInitiatedScroll = false;
-        }
-
-        // 토글 버튼 이벤트 바인딩
-        const btnToggle = document.getElementById('btnToggleSeonyudoTimetable');
-        const scheduleBox = document.getElementById('seonyudoFullScheduleBox');
-        const arrowSpan = document.getElementById('toggleTtArrow');
-        if (btnToggle && scheduleBox) {
-          btnToggle.addEventListener('click', () => {
-            const isHidden = (scheduleBox.style.display === 'none');
-            scheduleBox.style.display = isHidden ? 'block' : 'none';
-            if (arrowSpan) arrowSpan.textContent = isHidden ? '접기 ▲' : '펼치기 ▼';
-          });
-        }
-        return;
-      }
-
-      // 일반 지하철역 전광판 렌더링
       const subwayStationKey = 'lookup_subway_' + stationName;
       const savedStationBoost = (typeof window !== 'undefined' && window.transitManager)
         ? window.transitManager.getFontBoostForKey(subwayStationKey)
         : parseInt(localStorage.getItem('transit_time_boost_' + subwayStationKey) || '0', 10);
       const stationStyleBoost = (savedStationBoost > 0) ? `--time-font-boost:${savedStationBoost}px;` : '';
 
+      // 호선별 그룹화 (예: 여의도역 -> 9호선 / 5호선, 당산역 -> 2호선 / 9호선)
+      const lineGroups = new Map();
+      safeArrivals.forEach(item => {
+        const sid = String(item.subwayId || '1000');
+        if (!lineGroups.has(sid)) lineGroups.set(sid, []);
+        lineGroups.get(sid).push(item);
+      });
+
+      if (lineGroups.size === 0 && stationName === '선유도') {
+        lineGroups.set('1009', []);
+      }
+
+      const renderTrainItems = (list, fallbackSchedule = []) => {
+        const merged = [];
+        list.slice(0, 2).forEach(item => {
+          const isExpress = item.btrainSttus === '급행' || (item.trainLineNm && item.trainLineNm.includes('급행'));
+          const rawSec = parseInt(item.barvlDt, 10);
+          const targetTime = (!isNaN(rawSec) && rawSec > 0) ? (nowMs + rawSec * 1000) : null;
+          const arriveMsg = item.arvlMsg2 || item.arvlMsg3 || '운행중';
+          const lineNm = item.trainLineNm || (item.bstatnNm ? `${item.bstatnNm}행` : '열차');
+          merged.push({ isExpress, rawSec, targetTime, arriveMsg, lineNm });
+        });
+
+        if (merged.length < 2 && fallbackSchedule.length > 0) {
+          for (const sc of fallbackSchedule) {
+            if (merged.length >= 2) break;
+            merged.push({
+              isExpress: false,
+              rawSec: sc.sec,
+              targetTime: sc.targetTime,
+              arriveMsg: `${sc.departureTime} 출발`,
+              lineNm: `${sc.endStationName}행 (${sc.departureTime})`
+            });
+          }
+        }
+
+        if (merged.length === 0) {
+          return `<div class="subway-empty-msg">현재 수신된 실시간 열차 정보가 없습니다.</div>`;
+        }
+
+        return merged.map((tr, idx) => {
+          const isFirst = (idx === 0);
+          return `
+            <div class="subway-train-item ${isFirst ? 'is-next-train' : ''}">
+              <div class="train-seq-badge ${isFirst ? 'seq-first' : 'seq-second'}">
+                ${isFirst ? '다음' : '다다음'}
+              </div>
+              <div class="train-destination">
+                <span class="train-head">${this.escapeHtml(tr.lineNm)}</span>
+                ${tr.isExpress ? `<span class="badge-express-train">⚡ 급행</span>` : `<span class="badge-normal-train">일반</span>`}
+              </div>
+              <div class="train-arrival-status">
+                ${tr.targetTime ? `
+                  <span class="live-bus-sec" data-target-time="${tr.targetTime}">
+                    ${this.formatSecondsHtml(tr.rawSec)}
+                  </span>
+                ` : `
+                  <span class="train-msg ${this.isImminentSubway(tr.arriveMsg) ? 'status-imminent' : ''}">${this.escapeHtml(tr.arriveMsg)}</span>
+                `}
+              </div>
+            </div>
+          `;
+        }).join('');
+      };
+
+      let lineSectionsHtml = '';
+      Array.from(lineGroups.entries()).sort((a, b) => a[0].localeCompare(b[0])).forEach(([sid, items]) => {
+        const lineMeta = SUBWAY_ID_MAP[sid] || { name: '지하철', cls: 'line-default' };
+        const upTrains = items.filter(a => a.updnLine === '상행' || a.updnLine === '내선');
+        const downTrains = items.filter(a => a.updnLine === '하행' || a.updnLine === '외선');
+        const upFallback = (stationName === '선유도' && sid === '1009') ? this.getSeonyudoUpcomingTrains(new Date(), 2) : [];
+
+        lineSectionsHtml += `
+          <div class="subway-line-section" style="margin-top:10px;">
+            <div style="display:flex; align-items:center; gap:8px; padding:4px 4px 8px 4px;">
+              <span class="badge-subway-line badge-${lineMeta.cls}" style="font-size:13px; padding:3px 10px;">${lineMeta.name}</span>
+              <span style="font-size:13.5px; font-weight:800;">${this.escapeHtml(stationName)}역 상·하행 실시간 도착</span>
+            </div>
+            <div class="subway-board-grid">
+              <div class="subway-direction-box">
+                <div class="subway-dir-header">
+                  <span class="dir-icon">⬆️</span>
+                  <span class="dir-title">상행 / 내선 방면</span>
+                </div>
+                <div class="subway-train-list">
+                  ${renderTrainItems(upTrains, upFallback)}
+                </div>
+              </div>
+              <div class="subway-direction-box">
+                <div class="subway-dir-header">
+                  <span class="dir-icon">⬇️</span>
+                  <span class="dir-title">하행 / 외선 방면</span>
+                </div>
+                <div class="subway-train-list">
+                  ${renderTrainItems(downTrains)}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
       const boardHtml = `
         <div class="lookup-board-wrap" data-zoom-key="${subwayStationKey}" data-zoom-name="${this.escapeHtml(stationName)}역" style="${stationStyleBoost}">
-          <!-- 지하철역 정보 헤더 -->
           <div class="lookup-board-header subway-theme-header">
             <div class="station-meta-info">
               <div class="station-name-row">
                 <span class="station-icon">🚇</span>
                 <h4 class="station-title">${this.escapeHtml(stationName)}역</h4>
-                <span class="station-ars-badge subway-badge-tag">실시간 열차 운행정보</span>
+                <span class="station-ars-badge subway-badge-tag">실시간 열차</span>
                 <div class="bus-time-zoom-ctrl" style="margin-left:auto;">
-                  <button type="button" class="btn-time-zoom-btn btn-time-zoom-plus" onclick="window.transitManager && window.transitManager.increaseTimeFontSize(event, '${subwayStationKey}')" title="${this.escapeHtml(stationName)}역 도착시간 글씨 확대" aria-label="${this.escapeHtml(stationName)}역 도착시간 글씨 확대">
+                  <button type="button" class="btn-time-zoom-btn btn-time-zoom-plus" onclick="window.transitManager && window.transitManager.increaseTimeFontSize(event, '${subwayStationKey}')" title="글씨 확대">
                     <span class="zoom-btn-icon">＋</span>
                   </button>
-                  <button type="button" class="btn-time-zoom-btn btn-time-zoom-reset" onclick="window.transitManager && window.transitManager.resetTimeFontSize(event, '${subwayStationKey}')" title="${this.escapeHtml(stationName)}역 도착시간 글씨 원래대로 복귀" aria-label="${this.escapeHtml(stationName)}역 도착시간 글씨 원래대로 복귀">
+                  <button type="button" class="btn-time-zoom-btn btn-time-zoom-reset" onclick="window.transitManager && window.transitManager.resetTimeFontSize(event, '${subwayStationKey}')" title="글씨 복귀">
                     <span class="zoom-btn-icon">↺</span>
                   </button>
                 </div>
               </div>
               <div class="station-sub-row">
-                <span class="station-route-count">실시간 열차 <strong>${safeArrivals.length}대 감지</strong></span>
+                <span class="station-route-count">실시간 열차 <strong>${safeArrivals.length}대</strong></span>
                 <span class="station-update-time">수신: ${currentTimeStr}</span>
-                <span class="station-auto-ticker">🔄 <strong id="lookupAutoRefreshCountdown">${this.refreshCountdown}초</strong> 갱신</span>
+                <span class="station-auto-ticker">🔄 <strong id="lookupAutoRefreshCountdown">${this.refreshCountdown}초</strong></span>
               </div>
             </div>
           </div>
-
-          <!-- 상행/하행 방향별 열차 도착 안내 -->
-          <div class="subway-board-grid">
-            ${renderTrainGroup('상행 / 내선 방면', upTrains, '⬆️')}
-            ${renderTrainGroup('하행 / 외선 방면', downTrains, '⬇️')}
-          </div>
+          ${lineSectionsHtml}
         </div>
       `;
 
@@ -1798,175 +1800,64 @@
     }
 
     // ==========================================
-    // 최근 검색 / 빠른 선택 칩 (3대 핵심 거점 단독 줄 분리)
+    // 빠른 선택 칩 & 최근 검색 기록
     // ==========================================
     renderQuickChips() {
       if (!this.chipsContainer) return;
 
       const history = this.getRecentHistory();
-      
-      // 최상위 5대 핵심 거점 (각 항목이 독립된 1행을 차지하는 와이드 카드)
-      // 1: 15158 양정고 (6637 영등포구청역 방면)
-      // 2: 19729 영등포구청6637버스 (양정고 다음 배치, 6637 단독 노출)
-      // 3: 19176 당산역버스정류장 (603 · 6620 귀가 방면)
-      // 4: 15156 경인초교 (당산역 다음 배치, 6637 오목교방면)
-      // 5: 9호선 선유도역 (실시간 우선 및 시간표)
-      const topPriorityCards = [
-        {
-          type: 'bus',
-          id: '15158',
-          name: '양정고등학교',
-          badgeText: '🚏 15158',
-          badgeClass: 'badge-blue',
-          titleText: '양정고등학교',
-          routeTag: '6637 영등포구청역 방면',
-          statusText: '영등포구청역 방향'
-        },
-        {
-          type: 'bus',
-          id: '19729',
-          name: '영등포구청.우리은행',
-          badgeText: '🚏 19729',
-          badgeClass: 'badge-blue',
-          titleText: '영등포구청6637버스',
-          routeTag: '6637 목동방면 (6637 전용)',
-          statusText: '영등포구청'
-        },
-        {
-          type: 'bus',
-          id: '19176',
-          name: '당산역삼성래미안아파트',
-          badgeText: '🚏 19176',
-          badgeClass: 'badge-blue',
-          titleText: '당산역버스정류장',
-          routeTag: '603 · 6620 방면',
-          statusText: '당산역'
-        },
-        {
-          type: 'bus',
-          id: '15156',
-          name: '경인초교',
-          badgeText: '🚏 15156',
-          badgeClass: 'badge-blue',
-          titleText: '경인초교 · 목동5·6단지',
-          routeTag: '6637 오목교방면',
-          statusText: '오목교방면'
-        },
-        {
-          type: 'subway',
-          id: '선유도',
-          name: '선유도역',
-          badgeText: '🚇 9호선',
-          badgeClass: 'badge-line-9',
-          titleText: '선유도역',
-          routeTag: '당산방면 실시간 & 시간표',
-          statusText: '실시간 즉시 확인',
-          isSubwayAccent: true
-        }
+      const defaultChips = [
+        { type: 'bus', id: '19130', name: 'KBS (19130)' },
+        { type: 'subway', id: '국회의사당', name: '국회의사당역' },
+        { type: 'subway', id: '여의도', name: '여의도역(5·9)' },
+        { type: 'bus', id: '19007', name: '여의도환승센터' },
+        { type: 'bus', id: '19133', name: '국회의사당역5번출구' },
+        { type: 'subway', id: '당산', name: '당산역(2·9)' }
       ];
 
-      // 4대 핵심 거점 수직 스택 카드 HTML (모두 깔끔하게 2줄 통일)
-      const priorityStackHtml = topPriorityCards.map(p => {
-        const isActive = (this.currentId === p.id);
-        return `
-          <button type="button" class="quick-priority-card ${p.type === 'bus' ? 'chip-prio-bus' : 'chip-prio-subway'} ${isActive ? 'is-active-target' : ''}"
-                  data-type="${p.type}" data-id="${p.id}" data-name="${this.escapeHtml(p.name)}">
-            <div class="prio-card-left">
-              <div class="prio-line-1">
-                <span class="prio-tag-badge ${p.badgeClass}">${p.badgeText}</span>
-                <strong class="prio-name">${p.titleText}</strong>
-              </div>
-              <div class="prio-line-2">
-                <span class="${p.type === 'bus' ? 'prio-route-tag' : 'prio-subway-tag'}">${p.routeTag}</span>
-              </div>
-            </div>
-            <div class="prio-card-right">
-              <span class="prio-status-text ${p.isSubwayAccent ? 'prio-text-accent' : ''}">${p.statusText}</span>
-              <span class="prio-chevron">›</span>
-            </div>
-          </button>
-        `;
-      }).join('');
-
-      // 기타 보조 추천 및 최근 검색 칩들
-      const otherDefaultChips = [
-        { type: 'bus', id: '15154', name: '이대목동병원' },
-        { type: 'subway', id: '당산', name: '당산역(2·9)' },
-        { type: 'bus', id: '19210', name: '선유도역1번' },
-        { type: 'bus', id: '19212', name: '선유도역' }
-      ];
-
-      // 최근 검색 기록 중 상위 4개와 중복되지 않는 항목들 필터링
-      const filteredHistory = history.filter(h => h.id !== '15158' && h.id !== '15156' && h.id !== '선유도' && h.id !== '19176');
-      const secondaryMerged = [...filteredHistory];
-      otherDefaultChips.forEach(def => {
-        if (!secondaryMerged.some(m => m.type === def.type && m.id === def.id)) {
-          secondaryMerged.push(def);
+      const merged = [...defaultChips];
+      history.forEach(h => {
+        if (!merged.some(m => m.type === h.type && m.id === h.id)) {
+          merged.push(h);
         }
       });
 
-      const secondaryChipsHtml = secondaryMerged.slice(0, 6).map(chip => {
+      const chipsHtml = merged.slice(0, 9).map(chip => {
         const isBus = (chip.type === 'bus');
+        const isActive = (this.currentType === chip.type && this.currentId === chip.id);
         const icon = isBus ? '🚏' : '🚇';
-        const label = isBus ? `[${chip.id}] ${chip.name}` : `${chip.name}`;
+        const label = isBus && !String(chip.name).includes(chip.id) ? `[${chip.id}] ${chip.name}` : chip.name;
         return `
-          <button type="button" class="quick-chip-btn ${isBus ? 'chip-bus' : 'chip-subway'}"
-                  data-type="${chip.type}" data-id="${chip.id}" data-name="${this.escapeHtml(chip.name)}">
+          <button type="button" class="quick-chip-btn ${isBus ? 'chip-bus' : 'chip-subway'} ${isActive ? 'active' : ''}"
+                  data-type="${chip.type}" data-id="${this.escapeHtml(chip.id)}" data-name="${this.escapeHtml(chip.name)}">
             <span class="chip-icon">${icon}</span>
-            <span class="chip-text">${label}</span>
+            <span class="chip-text">${this.escapeHtml(label)}</span>
           </button>
         `;
       }).join('');
 
-      // 전체 빠른 선택 컨테이너 렌더링
       this.chipsContainer.innerHTML = `
-        <div class="quick-priority-column">
-          ${priorityStackHtml}
-        </div>
-        <div class="quick-sub-chips-row">
-          <span class="quick-chips-sublabel">추천·최근:</span>
+        <div class="quick-sub-chips-row" style="margin-top:4px;">
+          <span class="quick-chips-sublabel">빠른선택:</span>
           <div class="quick-chips-scroll-sub">
-            ${secondaryChipsHtml}
+            ${chipsHtml}
           </div>
         </div>
       `;
 
-      // 1. 상위 4대 핵심 카드 클릭 이벤트 (사용자가 직접 클릭할 때만 스크롤 허용)
-      this.chipsContainer.querySelectorAll('.quick-priority-card').forEach(card => {
-        card.addEventListener('click', () => {
-          this.userInitiatedScroll = true; // 사용자가 직접 선택했을 때만 스크롤 활성화!
-          this.chipsContainer.querySelectorAll('.quick-priority-card').forEach(c => c.classList.remove('is-active-target'));
-          card.classList.add('is-active-target');
-
-          const type = card.getAttribute('data-type');
-          const id = card.getAttribute('data-id');
-          const name = card.getAttribute('data-name');
-          if (type === 'bus') {
-            this.inputQuery.value = id;
-            if (this.btnClearQuery) this.btnClearQuery.style.display = 'flex';
-            this.lookupBusByArs(id, name);
-          } else {
-            this.inputQuery.value = name;
-            if (this.btnClearQuery) this.btnClearQuery.style.display = 'flex';
-            this.lookupSubway(id);
-          }
-          this.scrollToResult();
-        });
-      });
-
-      // 2. 보조 칩 클릭 이벤트 (사용자가 직접 클릭할 때만 스크롤 허용)
       this.chipsContainer.querySelectorAll('.quick-chip-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          this.userInitiatedScroll = true; // 사용자가 직접 선택했을 때만 스크롤 활성화!
+          this.userInitiatedScroll = true;
           const type = btn.getAttribute('data-type');
           const id = btn.getAttribute('data-id');
-          const name = btn.getAttribute('data-name');
+          const name = btn.getAttribute('data-name').replace(/\s*\(\d+\)$/, '');
           if (type === 'bus') {
             this.inputQuery.value = id;
             if (this.btnClearQuery) this.btnClearQuery.style.display = 'flex';
+            this.highlightBusNo = '';
             this.lookupBusByArs(id, name);
           } else {
-            this.inputQuery.value = name;
+            this.inputQuery.value = id + '역';
             if (this.btnClearQuery) this.btnClearQuery.style.display = 'flex';
             this.lookupSubway(id);
           }
@@ -1977,7 +1868,7 @@
 
     getRecentHistory() {
       try {
-        const raw = localStorage.getItem('shift_recent_transits');
+        const raw = localStorage.getItem('realtime_recent_transits');
         return raw ? JSON.parse(raw) : [];
       } catch (e) {
         return [];
@@ -1990,22 +1881,20 @@
         history = history.filter(h => !(h.type === type && h.id === id));
         history.unshift({ type, id, name });
         if (history.length > 8) history = history.slice(0, 8);
-        localStorage.setItem('shift_recent_transits', JSON.stringify(history));
+        localStorage.setItem('realtime_recent_transits', JSON.stringify(history));
       } catch (e) {}
     }
 
     // ==========================================
-    // API 통신 레이어 (직결 + 프록시 안전 fallback)
+    // API 통신 레이어 (직결 + CORS 프록시 백업)
     // ==========================================
-
-    // 1. 서울시 정류소명 검색 API
     async fetchStationsByName(name) {
       const cleanName = String(name).trim();
       const directUrl = `http://ws.bus.go.kr/api/rest/stationinfo/getStationByName?serviceKey=${this.busApiKey}&stSrch=${encodeURIComponent(cleanName)}&resultType=json`;
 
       try {
         const controller = new AbortController();
-        const tid = setTimeout(() => controller.abort(), 4000);
+        const tid = setTimeout(() => controller.abort(), 3800);
         const res = await fetch(directUrl, { cache: 'no-store', signal: controller.signal });
         clearTimeout(tid);
         if (res.ok) {
@@ -2015,7 +1904,6 @@
         }
       } catch (e) {}
 
-      // CORS fallback
       try {
         const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(directUrl)}`;
         const res = await fetch(proxyUrl, { cache: 'no-store' });
@@ -2029,15 +1917,13 @@
       return [];
     }
 
-    // 2. ARS별 전체 버스 도착정보 API (getStationByUid)
     async fetchBusArrivalByUid(arsId) {
       const cleanArs = String(arsId).replace(/[^0-9]/g, '');
       const directUrl = `http://ws.bus.go.kr/api/rest/stationinfo/getStationByUid?serviceKey=${this.busApiKey}&arsId=${cleanArs}&resultType=json`;
 
-      // 1차 Direct
       try {
         const controller = new AbortController();
-        const tid = setTimeout(() => controller.abort(), 4000);
+        const tid = setTimeout(() => controller.abort(), 3800);
         const res = await fetch(directUrl, { cache: 'no-store', signal: controller.signal });
         clearTimeout(tid);
         if (res.ok) {
@@ -2050,7 +1936,6 @@
         }
       } catch (e) {}
 
-      // 2차 CORS 프록시
       try {
         const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(directUrl)}`;
         const res = await fetch(proxyUrl, { cache: 'no-store' });
@@ -2067,15 +1952,13 @@
       return this.cache.bus[cleanArs] || [];
     }
 
-    // 3. 지하철 실시간 도착정보 API (realtimeStationArrival)
     async fetchSubwayRealtime(stationName) {
       const cleanName = stationName.replace(/역$/, '').trim();
-      const directUrl = `http://swopenAPI.seoul.go.kr/api/subway/${this.subwayApiKey}/json/realtimeStationArrival/0/10/${encodeURIComponent(cleanName)}`;
+      const directUrl = `http://swopenAPI.seoul.go.kr/api/subway/${this.subwayApiKey}/json/realtimeStationArrival/0/20/${encodeURIComponent(cleanName)}`;
 
-      // 1차 Direct
       try {
         const controller = new AbortController();
-        const tid = setTimeout(() => controller.abort(), 4000);
+        const tid = setTimeout(() => controller.abort(), 3800);
         const res = await fetch(directUrl, { cache: 'no-store', signal: controller.signal });
         clearTimeout(tid);
         if (res.ok) {
@@ -2084,14 +1967,10 @@
             this.cache.subway[cleanName] = data.realtimeArrivalList;
             return data.realtimeArrivalList;
           }
-          console.warn('[TransitLookup] 지하철 실시간 데이터 없음:', cleanName, data?.code || data?.errorMessage?.code);
           return [];
         }
-      } catch (e) {
-        console.warn('[TransitLookup] 지하철 직결 실패, 프록시 시도:', e?.message || e);
-      }
+      } catch (e) {}
 
-      // 2차 CORS 프록시
       try {
         const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(directUrl)}`;
         const res = await fetch(proxyUrl, { cache: 'no-store' });
@@ -2108,7 +1987,7 @@
     }
 
     // ==========================================
-    // UI 상태 헬퍼 함수들
+    // UI 상태 및 포맷 헬퍼
     // ==========================================
     showLoading(text) {
       if (!this.resultContainer) return;
@@ -2152,26 +2031,20 @@
         <div class="lookup-state-box">
           <div class="state-icon">🚇</div>
           <div class="lookup-state-title">${this.escapeHtml(stationName)}역 운행 정보</div>
-          <div class="lookup-state-text">현재 실시간 운행 중인 열차 도착 정보를 수신할 수 없습니다 (심야 시간 등).</div>
+          <div class="lookup-state-text">현재 실시간 운행 중인 열차 도착 정보를 수신할 수 없습니다 (심야 운행 종료 등).</div>
         </div>
       `;
     }
 
-    // ==========================================
-    // 유틸리티 및 포맷터
-    // ==========================================
     formatEtaTime(ts) {
       if (!ts) return '';
       const d = new Date(ts);
-      const h = String(d.getHours()).padStart(2, '0');
-      const m = String(d.getMinutes()).padStart(2, '0');
-      return `${h}:${m}`;
+      return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
     }
 
     formatArsId(ars) {
       const s = String(ars).replace(/[^0-9]/g, '');
-      if (s.length === 5) return `${s.slice(0, 2)}-${s.slice(2)}`;
-      return s;
+      return s.length === 5 ? `${s.slice(0, 2)}-${s.slice(2)}` : s;
     }
 
     formatSecondsHtml(sec, walkSec = 300) {
@@ -2188,10 +2061,7 @@
       if (!plate) return '';
       const str = String(plate).trim();
       const m = str.match(/^(.*?)(\d{4})$/);
-      if (m) {
-        return `🚌 <strong class="plate-digit">${m[2]}</strong>`;
-      }
-      return `🚌 ${str}`;
+      return m ? `🚌 <strong class="plate-digit">${m[2]}</strong>` : `🚌 ${str}`;
     }
 
     cleanArrivalMsg(msg) {
@@ -2208,51 +2078,24 @@
     getBusBadgeClass(routeType, rtNm) {
       const t = String(routeType || '').trim();
       const n = String(rtNm || '').trim();
-
-      // 1. 핵심 주요 버스 우선 매핑 (오분류 원천 방지)
-      // 🔵 603번: 파란색 (간선버스)
-      if (n === '603') return 'badge-blue';
-
-      // 🩵 700번 부천버스: 연한 하늘색
-      if (n === '700' || n.includes('부천') || n === '부천700') return 'badge-sky';
-
-      // 🌿 6637, 6620번: 옅은 초록색 (지선버스)
-      if (n === '6637' || n === '6620') return 'badge-green';
-
-      // 🌲 양천01 등 마을버스: 짙은 초록색
-      if (n.startsWith('양천') || t === '2' || t.includes('마을') || n.includes('마을')) return 'badge-town';
-
-      // ✈️ 공항버스: routeType 1 또는 6000번대 공항리무진 (6001~6030, 6100~6300 등 4자리) -> 브라운 색
-      if (t === '1' || t.includes('공항') || n.includes('공항') || /^60\d{2}$/.test(n) || /^61\d{2}$/.test(n) || /^62\d{2}$/.test(n) || /^63\d{2}$/.test(n)) {
-        return 'badge-airport';
-      }
-
-      // 마을버스 (기타 일반)
-      if (t === '2' || t.includes('마을')) return 'badge-town';
-
-      // 지선버스: 4자리 지선버스 또는 routeType 4 -> 옅은 초록색
-      if (t === '4' || t.includes('지선') || /^[1-7]\d{3}$/.test(n)) return 'badge-green';
-
-      // 간선버스: 3자리 간선버스 또는 routeType 3 -> 파란색
+      if (n.includes('부천') || n === '700' || n.startsWith('70-2') || t === '8') return 'badge-sky';
+      if (t === '2' || t.includes('마을') || /^(양천|영등포|마포|강서|구로|관악|동작|서초|종로|용산)/.test(n)) return 'badge-town';
+      if (t === '1' || t.includes('공항') || /^6[0-3]\d{2}$/.test(n)) return 'badge-airport';
+      if (t === '6' || t.includes('광역') || t.includes('직행') || /^9\d{3}$/.test(n) || /^[MmGg]\d{4}$/.test(n)) return 'badge-red';
+      if (t === '4' || t.includes('지선') || /^[1-8]\d{3}$/.test(n)) return 'badge-green';
       if (t === '3' || t.includes('간선') || /^\d{3}$/.test(n)) return 'badge-blue';
-
-      // 광역버스: 9로 시작하는 4자리 또는 routeType 6 -> 빨간색
-      if (t === '6' || t.includes('광역') || t.includes('직행') || /^9\d{3}$/.test(n)) return 'badge-red';
-
-      return (n.length === 4) ? 'badge-green' : 'badge-green';
+      return 'badge-green';
     }
 
     guessRouteType(rtNm) {
-      if (!rtNm) return '일반';
+      if (!rtNm) return '일반버스';
       const n = String(rtNm).trim();
-      if (n === '603') return '간선버스';
-      if (n === '700' || n.includes('부천')) return '부천버스';
-      if (n === '6637' || n === '6620') return '지선버스';
-      if (n.startsWith('양천') || n.includes('마을')) return '마을버스';
-      if (n.startsWith('60') && n.length === 4) return '공항버스';
-      if (n.includes('공항')) return '공항버스';
-      if (n.length === 3) return '간선버스';
-      if (n.length === 4) return '지선버스';
+      if (n.includes('부천') || n.startsWith('70-2')) return '경기버스';
+      if (/^(양천|영등포|마포|강서|구로|관악|동작|서초)/.test(n)) return '마을버스';
+      if (/^60\d{2}$/.test(n)) return '공항버스';
+      if (/^9\d{3}$/.test(n)) return '광역버스';
+      if (/^\d{3}$/.test(n)) return '간선버스';
+      if (/^\d{4}$/.test(n)) return '지선버스';
       return '일반버스';
     }
 
@@ -2287,7 +2130,6 @@
     }
   }
 
-  // DOM 로드 완료 시 인스턴스 초기화
   document.addEventListener('DOMContentLoaded', () => {
     window.transitLookup = new TransitLookupController();
   });
