@@ -38,6 +38,7 @@ jobs:
           publish_dir: ./dist
           publish_branch: gh-pages
           force_orphan: true
+          cname: ""
 
       - name: Deploy to Surge.sh Cloud (kbs-4shift-5855.surge.sh)
         run: |

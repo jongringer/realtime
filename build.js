@@ -78,9 +78,11 @@ const copyItems = [
   'icons',
   'manifest.json',
   'favicon.ico',
-  'favicon.png',
-  'CNAME'
+  'favicon.png'
 ];
+
+// GitHub Pages용 .nojekyll 생성 (에셋 404 방지)
+fs.writeFileSync(path.join(distDir, '.nojekyll'), '', 'utf8');
 
 copyItems.forEach(item => {
   const srcPath = path.join(baseDir, item);

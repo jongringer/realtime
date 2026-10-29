@@ -93,8 +93,8 @@ jobs:
             ---
 
             ### 🌐 실시간 공개 웹앱 바로가기 (설치 없이 브라우저로 열기)
-            - 🔗 **GitHub Pages 웹앱**: [https://jongringer.github.io/apk/](https://jongringer.github.io/apk/)
-            - ⚡ **Surge 상시 웹앱**: [https://kbs-4shift-5855.surge.sh](https://kbs-4shift-5855.surge.sh)
+            - ⚡ **Surge 상시 웹앱 (추천)**: [https://kbs-4shift-5855.surge.sh](https://kbs-4shift-5855.surge.sh)
+            - 🔗 **GitHub Pages 웹앱**: [https://jongringer.github.io/shiftalarm/](https://jongringer.github.io/shiftalarm/)
           draft: false
           prerelease: false
           files: ./ShiftAlarm-${{ github.ref_name }}.apk
