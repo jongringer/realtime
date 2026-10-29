@@ -1,4 +1,4 @@
-name: Deploy GitHub Pages and Surge.sh Cloud
+name: Deploy GitHub Pages
 
 on:
   push:
@@ -25,15 +25,16 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
       - name: Install Dependencies & Build Web Assets
         run: |
           npm ci || npm install
+          curl -fsSL "https://github.com/${{ github.repository }}/releases/latest/download/realtime.apk" -o ./realtime.apk || true
           node build.js
 
       - name: Setup Official GitHub Pages
@@ -51,7 +52,7 @@ jobs:
         uses: actions/deploy-pages@v4
         continue-on-error: true
 
-      - name: Deploy to gh-pages Branch (Legacy Mirror)
+      - name: Deploy to gh-pages Branch (Mirror)
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -59,10 +60,3 @@ jobs:
           publish_branch: gh-pages
           force_orphan: true
           cname: ""
-
-      - name: Deploy to Surge.sh Cloud (kbs-realtime.surge.sh)
-        run: |
-          npx surge ./dist kbs-realtime.surge.sh --token "${{ secrets.SURGE_TOKEN || '81c2062b09ea41b4d328d2d5c79c910a' }}"
-        env:
-          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN || 'kbs_shift_1634@shiftwork.app' }}
-          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN || '81c2062b09ea41b4d328d2d5c79c910a' }}

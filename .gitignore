@@ -3,6 +3,7 @@ release.keystore
 *.keystore
 keystore_base64.txt
 *.exe
+*.apk
 dist/
 cloudflared.exe
 .DS_Store

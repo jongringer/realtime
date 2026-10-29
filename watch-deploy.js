@@ -6,7 +6,7 @@ const baseDir = __dirname;
 const distDir = path.join(baseDir, 'dist');
 const token = process.env.SURGE_TOKEN || '81c2062b09ea41b4d328d2d5c79c910a';
 const email = process.env.SURGE_LOGIN || 'kbs_shift_1634@shiftwork.app';
-const domain = 'kbs-4shift-5855.surge.sh';
+const domain = 'kbs-realtime.surge.sh';
 
 console.log('========================================================');
 console.log('  ⚡ 실시간 코드 감시 & 자동 즉각 배포기 (Live Auto-Deploy)');

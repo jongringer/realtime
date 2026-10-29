@@ -2,20 +2,27 @@ name: Build and Release Signed Android APK
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: "realtime-apk-release"
+  cancel-in-progress: false
+
 jobs:
-  build:
+  build-and-release:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
@@ -29,27 +36,97 @@ jobs:
           distribution: 'zulu'
           java-version: '21'
 
-      - name: Install Dependencies & Build Web Assets
+      - name: Determine Next Sequential Release Version
+        id: ver
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          node - <<'EOF'
+          const fs = require('fs');
+          const { execSync } = require('child_process');
+
+          function parseVer(v) {
+            const clean = String(v || '1.0.0').replace(/^v/i, '').trim();
+            const parts = clean.split('.').map(n => parseInt(n, 10) || 0);
+            return [parts[0] || 1, parts[1] || 0, parts[2] || 0];
+          }
+          function cmpVer(a, b) {
+            for (let i = 0; i < 3; i++) {
+              if (a[i] !== b[i]) return a[i] - b[i];
+            }
+            return 0;
+          }
+
+          let releases = [];
+          try {
+            const raw = execSync(`gh api repos/${process.env.REPO}/releases?per_page=50`, { encoding: 'utf8' });
+            releases = JSON.parse(raw);
+          } catch (e) {
+            releases = [];
+          }
+
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          const pkgTuple = parseVer(pkg.version || '1.0.0');
+
+          let nextTuple;
+          if (!Array.isArray(releases) || releases.length === 0) {
+            // 최초 릴리스: v1.0.0 생성
+            nextTuple = [1, 0, 0];
+          } else {
+            let maxRel = [1, 0, 0];
+            for (const r of releases) {
+              const t = parseVer(r.tag_name);
+              if (cmpVer(t, maxRel) > 0) maxRel = t;
+            }
+            // package.json이 이미 더 높은 버전이면 그 버전을 사용, 아니면 패치 버전 +1 자동 증가
+            if (cmpVer(pkgTuple, maxRel) > 0) {
+              nextTuple = pkgTuple;
+            } else {
+              nextTuple = [maxRel[0], maxRel[1], maxRel[2] + 1];
+            }
+          }
+
+          const versionNo = `${nextTuple[0]}.${nextTuple[1]}.${nextTuple[2]}`;
+          const tagName = `v${versionNo}`;
+          const versionCode = nextTuple[0] * 10000 + nextTuple[1] * 100 + nextTuple[2];
+
+          // package.json 및 android/app/build.gradle 버전 동기화
+          pkg.version = versionNo;
+          fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n', 'utf8');
+
+          let gradle = fs.readFileSync('android/app/build.gradle', 'utf8');
+          gradle = gradle.replace(/versionCode\s+\d+/, `versionCode ${versionCode}`);
+          gradle = gradle.replace(/versionName\s+"[^"]*"/, `versionName "${versionNo}"`);
+          fs.writeFileSync('android/app/build.gradle', gradle, 'utf8');
+
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `version_no=${versionNo}\n`);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `tag_name=${tagName}\n`);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `version_code=${versionCode}\n`);
+          console.log(`Resolved Release Version: ${tagName} (versionCode=${versionCode})`);
+          EOF
+
+      - name: Restore Persistent Signing Keystore
+        id: ks-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: release.keystore
+          key: realtime-signing-keystore-${{ github.run_number }}
+          restore-keys: |
+            realtime-signing-keystore-
+
+      - name: Install Dependencies, Build Web Assets & Run Unit Tests
         run: |
           npm ci || npm install
           npm run build
-
-      - name: Run Core Shift Logic & OCR Unit Tests
-        run: |
           npm test
-
-      - name: Sync Capacitor to Android
-        run: |
           npx cap sync android
 
-      - name: Grant Execute Permission for Gradlew
+      - name: Build Unsigned Release APK with Gradle 8.14.3
         run: |
           chmod +x android/gradlew
-
-      - name: Build Unsigned Release APK with Gradle
-        run: |
           cd android
-          ./gradlew clean assembleRelease --no-daemon --stacktrace
+          ./gradlew assembleRelease --no-daemon --stacktrace
 
       - name: Sign Android Release APK with apksigner
         env:
@@ -57,32 +134,38 @@ jobs:
           KS_ALIAS: ${{ secrets.KEY_ALIAS }}
           KS_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_PASS: ${{ secrets.KEY_PASSWORD }}
+          TAG_NAME: ${{ steps.ver.outputs.tag_name }}
         run: |
-          REF_LABEL="${GITHUB_REF_NAME:-v1.0.0}"
           if [ -n "$KS_B64" ]; then
             echo "$KS_B64" | base64 -d > release.keystore
             SIGN_ALIAS="$KS_ALIAS"
             SIGN_KS_PASS="$KS_PASS"
             SIGN_KEY_PASS="$KEY_PASS"
           else
-            echo "Generating release keystore automatically..."
             SIGN_ALIAS="realtime_key"
             SIGN_KS_PASS="realtime2026!"
             SIGN_KEY_PASS="realtime2026!"
-            keytool -genkeypair -v \
-              -keystore release.keystore \
-              -alias "$SIGN_ALIAS" \
-              -keyalg RSA \
-              -keysize 2048 \
-              -validity 10000 \
-              -storepass "$SIGN_KS_PASS" \
-              -keypass "$SIGN_KEY_PASS" \
-              -dname "CN=RealtimeApp, OU=Mobile, O=Realtime, L=Seoul, S=Seoul, C=KR"
+            if [ ! -f release.keystore ]; then
+              echo "Generating initial persistent release keystore..."
+              keytool -genkeypair -v \
+                -keystore release.keystore \
+                -alias "$SIGN_ALIAS" \
+                -keyalg RSA \
+                -keysize 2048 \
+                -validity 10000 \
+                -storepass "$SIGN_KS_PASS" \
+                -keypass "$SIGN_KEY_PASS" \
+                -dname "CN=RealtimeApp, OU=Mobile, O=Realtime, L=Seoul, S=Seoul, C=KR"
+            else
+              echo "Reusing cached persistent release.keystore for seamless Android upgrade compatibility."
+            fi
           fi
+
           UNSIGNED_APK=$(find android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
           echo "Found unsigned APK: $UNSIGNED_APK"
           BUILD_TOOLS_DIR=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -n 1)
           echo "Using Android Build Tools: $BUILD_TOOLS_DIR"
+
           $BUILD_TOOLS_DIR/apksigner sign \
             --ks release.keystore \
             --ks-key-alias "$SIGN_ALIAS" \
@@ -90,48 +173,55 @@ jobs:
             --key-pass "pass:$SIGN_KEY_PASS" \
             --out ./realtime.apk \
             "$UNSIGNED_APK"
-          cp ./realtime.apk "./realtime-${REF_LABEL}.apk"
-          $BUILD_TOOLS_DIR/apksigner verify --verbose ./realtime.apk
-          echo "✓ 정식 서명 완료: ./realtime.apk"
 
-      - name: Publish Signed APK to GitHub Release with QR Code
-        if: startsWith(github.ref, 'refs/tags/')
+          cp ./realtime.apk "./realtime-${TAG_NAME}.apk"
+          $BUILD_TOOLS_DIR/apksigner verify --verbose ./realtime.apk
+          echo "✓ 정식 서명 완료: ./realtime.apk 및 ./realtime-${TAG_NAME}.apk"
+
+      - name: Save Persistent Signing Keystore to Cache
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: release.keystore
+          key: realtime-signing-keystore-${{ github.run_number }}
+
+      - name: Publish Versioned APK to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: "realtime 앱 ${{ github.ref_name }} (정식 서명판)"
+          tag_name: ${{ steps.ver.outputs.tag_name }}
+          target_commitish: ${{ github.sha }}
+          name: "realtime ${{ steps.ver.outputs.tag_name }} (정식 서명 APK)"
           body: |
-            ### 📱 realtime 정식 서명 릴리스 (${{ github.ref_name }})
-            - **앱 이름**: `realtime` (`realtime.apk`)
-            - **서명 상태**: Release Keystore 정식 서명 완료 (SHA-256 / RSA)
-            - **배포 기준 커밋**: ${{ github.sha }}
+            ### 📱 realtime 정식 서명 릴리스 (${{ steps.ver.outputs.tag_name }})
+            - **버전**: `${{ steps.ver.outputs.tag_name }}` (`versionCode: ${{ steps.ver.outputs.version_code }}`)
+            - **서명 상태**: Release Keystore 정식 서명 완료 (기존 설치 앱 위 덮어쓰기 업데이트 호환)
+            - **변경 내용**: ${{ github.event.head_commit.message }}
 
             ---
 
-            ### 📲 스마트폰 카메라로 QR 코드를 스캔하세요 (또는 이미지 터치)
-            > 스마트폰 기본 카메라 앱으로 아래 QR 코드를 비추거나, 이미지를 직접 터치하면 바로 최신 `realtime.apk`가 다운로드됩니다.
+            ### 📲 항상 최신 버전 APK 다운로드 (QR 코드 & 고정 링크)
+            > 아래 링크와 QR 코드는 향후 새 버전이 릴리스될 때마다 **자동으로 가장 최신 버전의 `realtime.apk`**로 연결됩니다.
 
-            [![Download QR Code](https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/realtime.apk)](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/realtime.apk)
+            [![Latest APK QR Code](https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=10&ecc=M&data=https://github.com/${{ github.repository }}/releases/latest/download/realtime.apk)](https://github.com/${{ github.repository }}/releases/latest/download/realtime.apk)
 
-            - **📥 GitHub Release APK 다운로드**:
-              [https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/realtime.apk](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/realtime.apk)
-            - **⚡ 실시간 다운로드 미러 링크 (Surge)**:
+            - **📥 최신 버전 자동 다운로드 (추천·고정 주소)**:
+              [https://github.com/${{ github.repository }}/releases/latest/download/realtime.apk](https://github.com/${{ github.repository }}/releases/latest/download/realtime.apk)
+            - **📦 이번 버전(${{ steps.ver.outputs.tag_name }}) 지정 다운로드**:
+              [https://github.com/${{ github.repository }}/releases/download/${{ steps.ver.outputs.tag_name }}/realtime-${{ steps.ver.outputs.tag_name }}.apk](https://github.com/${{ github.repository }}/releases/download/${{ steps.ver.outputs.tag_name }}/realtime-${{ steps.ver.outputs.tag_name }}.apk)
+            - **⚡ Surge 실시간 다운로드 미러**:
               [https://kbs-realtime.surge.sh/realtime.apk](https://kbs-realtime.surge.sh/realtime.apk)
-
-            ---
-
-            ### 🌐 실시간 공개 웹앱 바로가기 (설치 없이 브라우저로 열기)
-            - ⚡ **실시간 웹앱 (Surge)**: [https://kbs-realtime.surge.sh](https://kbs-realtime.surge.sh)
-            - 🔗 **GitHub Pages 웹앱**: [https://jongringer.github.io/realtime/](https://jongringer.github.io/realtime/)
+            - **🌐 실시간 웹앱 바로가기**:
+              [https://kbs-realtime.surge.sh](https://kbs-realtime.surge.sh)
           draft: false
           prerelease: false
+          make_latest: true
           files: |
             ./realtime.apk
-            ./realtime-${{ github.ref_name }}.apk
+            ./realtime-${{ steps.ver.outputs.tag_name }}.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Sync and Deploy Signed APK to Surge.sh Cloud
+      - name: Sync Latest APK & Version Info to Surge Cloud
         run: |
           mkdir -p dist
           cp ./realtime.apk ./dist/realtime.apk
@@ -140,3 +230,14 @@ jobs:
         env:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN || 'kbs_shift_1634@shiftwork.app' }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN || '81c2062b09ea41b4d328d2d5c79c910a' }}
+
+      - name: Commit Bumped Version Metadata Back to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json android/app/build.gradle master-shifts.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(release): bump version to ${{ steps.ver.outputs.tag_name }} [skip ci]"
+            git pull --rebase origin main || true
+            git push origin HEAD:main || true
+          fi

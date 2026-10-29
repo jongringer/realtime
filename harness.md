@@ -9,8 +9,8 @@
   - 요청된 작업 범위 외의 리팩토링 및 파일 수정 금지
 
 ## 2. Directory Index & Critical Paths
-- `app/src/main/java/.../data/`: 근무 스케줄, 순환근무(일근/야근/조근) 데이터 모델 및 로컬 DB
-- `app/src/main/java/.../transit/`: 지하철 9호선 실시간 도착 정보 및 출퇴근 트래커
+- `app/src/main/java/.../data/`: 근무 스케줄, 통상근무와 순환근무(일근/야근/조근) 데이터 모델 및 로컬 DB
+- `app/src/main/java/.../transit/`: 지하철 9호선 실시간 도착 정보 및 버스 실시간 도착 정보
 - `app/src/main/java/.../ui/`: UI 레이아웃
 - `.github/workflows/`: GitHub Actions APK 빌드 및 릴리즈 파이프라인
 
