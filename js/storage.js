@@ -129,12 +129,10 @@ class ShiftStorage {
       try {
         const storedOverrides = JSON.parse(storedOverridesRaw) || {};
         let updated = false;
-        // 기본 9월 특이사항(17일, 18일) 및 10월 특이사항(23일, 31일)이 없으면 자동 채움
+        // 마스터 특이사항(9월, 10월, 11월 대근/휴가 등)은 구버전 캐시보다 항상 우선 최신화
         for (const [k, v] of Object.entries(DEFAULT_INITIAL_DATA.overrides)) {
-          if (!storedOverrides[k]) {
-            storedOverrides[k] = v;
-            updated = true;
-          }
+          storedOverrides[k] = v;
+          updated = true;
         }
         if (updated) {
           this.setOverrides(storedOverrides);

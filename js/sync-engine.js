@@ -1,8 +1,8 @@
 /**
- * sync-engine.js - 스마트폰 APK ↔ 웹(Surge) 실시간 근무표 상호 동기화 엔진
+ * sync-engine.js - 중앙 마스터 근무표 실시간 자동 동기화 엔진
  * 
- * APK나 웹에서 11월달 등 달력을 수정한 후 새로고침(회전 화살표) 아이콘을 터치하면
- * 현재 기기의 모든 근무표 특이사항을 담은 동기화 링크를 자동 생성 및 공유합니다.
+ * 복잡하고 긴 링크 복사 없이, 깔끔한 기본 웹 주소(https://kbs-4shift-5855.surge.sh) 하나로
+ * 모든 공유된 사용자와 스마트폰 APK에서 11월 근무(휴가, 대근)가 자동으로 즉시 반영됩니다.
  */
 (function() {
   'use strict';
@@ -13,7 +13,7 @@
     return null;
   }
 
-  // 1. 토스트 알림 헬퍼
+  // 토스트 알림 헬퍼
   function showToast(message, isSuccess) {
     if (isSuccess === undefined) isSuccess = true;
     var old = document.getElementById('sync-toast-msg');
@@ -29,7 +29,7 @@
       'z-index: 9999999',
       'background: ' + (isSuccess ? 'linear-gradient(135deg, #0284c7, #0369a1)' : '#ef4444'),
       'color: #ffffff',
-      'padding: 12px 20px',
+      'padding: 12px 22px',
       'border-radius: 999px',
       'box-shadow: 0 8px 24px rgba(0,0,0,0.3)',
       'font-size: 13.5px',
@@ -50,32 +50,13 @@
         toast.style.transform = 'translate(-50%, 10px)';
         setTimeout(function() { toast.remove(); }, 400);
       }
-    }, 3500);
+    }, 3000);
   }
 
-  // 클립보드 폴백 복사
-  function fallbackCopyText(text) {
-    try {
-      var textArea = document.createElement('textarea');
-      textArea.value = text;
-      textArea.style.position = 'fixed';
-      textArea.style.left = '-9999px';
-      textArea.style.top = '0';
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-      var successful = document.execCommand('copy');
-      document.body.removeChild(textArea);
-      return successful;
-    } catch (err) {
-      return false;
-    }
-  }
-
-  // 2. 동기화 링크 생성 및 복사/공유
-  function triggerSyncShare() {
+  // 서버의 마스터 근무표(/master-shifts.json) 자동 동기화
+  function fetchAndApplyMasterShifts(isManualClick) {
     var icon = document.getElementById('syncIcon');
-    if (icon) {
+    if (icon && isManualClick) {
       icon.style.transition = 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
       icon.style.transform = 'rotate(360deg)';
       setTimeout(function() {
@@ -84,123 +65,83 @@
       }, 650);
     }
 
-    try {
+    var fetchUrl = '/master-shifts.json?_t=' + Date.now();
+
+    fetch(fetchUrl, {
+      cache: 'no-store',
+      headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
+    })
+    .then(function(res) {
+      if (!res.ok) throw new Error('master-shifts.json status ' + res.status);
+      return res.json();
+    })
+    .then(function(data) {
+      if (!data || !data.overrides) return;
+
       var storage = getStorage();
-      if (!storage) {
-        showToast('저장소 로드 대기 중입니다. 잠시 후 다시 눌러주세요.', false);
-        return;
-      }
+      if (!storage) return;
 
-      var overrides = storage.getOverrides ? storage.getOverrides() : {};
-      var profile = storage.getProfile ? storage.getProfile() : {};
-      var baseSettings = storage.getBaseSettings ? storage.getBaseSettings() : {};
-      var schedules = storage.getSchedules ? storage.getSchedules() : [];
+      var curOverrides = storage.getOverrides ? storage.getOverrides() : {};
+      var updated = false;
 
-      var payload = {
-        overrides: overrides,
-        profile: profile,
-        baseSettings: baseSettings,
-        schedules: schedules,
-        ts: Date.now()
-      };
-
-      var jsonStr = JSON.stringify(payload);
-      // UTF-8 안전 Base64 인코딩
-      var base64 = btoa(encodeURIComponent(jsonStr).replace(/%([0-9A-F]{2})/g, function(match, p1) {
-        return String.fromCharCode('0x' + p1);
-      }));
-
-      // 서지 클라우드 정규 도메인 기준 동기화 링크 생성
-      var baseUrl = 'https://kbs-4shift-5855.surge.sh/';
-      var syncUrl = baseUrl + '?sync=' + encodeURIComponent(base64);
-
-      // 클립보드 복사 시도
-      var copied = false;
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(syncUrl).then(function() {
-          copied = true;
-        }).catch(function() {
-          copied = fallbackCopyText(syncUrl);
-        });
-      } else {
-        copied = fallbackCopyText(syncUrl);
-      }
-
-      // 스마트폰 네이티브 공유 다이얼로그 (카카오톡, 메시지 등)
-      if (navigator.share && /android|iphone|ipad/i.test(navigator.userAgent)) {
-        navigator.share({
-          title: (profile && profile.name ? profile.name : '최종철 님') + ' 근무표 동기화',
-          text: '수정된 최신 근무표(11월 포함) 동기화 링크입니다. 열면 즉시 동일하게 반영됩니다.',
-          url: syncUrl
-        }).then(function() {
-          showToast('📋 최신 근무표 동기화 링크가 공유되었습니다!');
-        }).catch(function(err) {
-          showToast('📋 최신 근무표 동기화 링크가 복사되었습니다!\n카카오톡에 붙여넣어 웹에서 열면 즉시 반영됩니다.');
-        });
-      } else {
-        showToast('📋 최신 근무표 동기화 링크가 복사되었습니다!\n웹 브라우저나 카카오톡에 붙여넣으면 즉시 반영됩니다.');
-      }
-    } catch (e) {
-      console.error('[SyncEngine] 동기화 링크 생성 오류:', e);
-      showToast('동기화 링크 생성 중 오류: ' + (e.message || e), false);
-    }
-  }
-
-  // 3. 페이지 접속 시 URL에 포함된 동기화 데이터 자동 수신 및 머지
-  function checkUrlSync() {
-    try {
-      var params = new URLSearchParams(window.location.search);
-      var syncData = params.get('sync');
-      if (!syncData) return;
-
-      // Base64 디코딩
-      var jsonStr = decodeURIComponent(Array.prototype.map.call(atob(decodeURIComponent(syncData)), function(c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      }).join(''));
-
-      var payload = JSON.parse(jsonStr);
-      if (payload && payload.overrides) {
-        var storage = getStorage();
-        if (storage) {
-          var curOverrides = storage.getOverrides ? storage.getOverrides() : {};
-          var merged = Object.assign({}, curOverrides, payload.overrides);
-          if (storage.setOverrides) storage.setOverrides(merged);
-
-          if (payload.profile && storage.setProfile) storage.setProfile(payload.profile);
-          if (payload.baseSettings && storage.setBaseSettings) storage.setBaseSettings(payload.baseSettings);
-          if (payload.schedules && storage.setSchedules) storage.setSchedules(payload.schedules);
-
-          // 화면 갱신
-          if (window.app && typeof window.app.renderCalendar === 'function') {
-            window.app.renderCalendar();
-          }
-          if (window.app && typeof window.app.updateHeaderTodayDisplay === 'function') {
-            window.app.updateHeaderTodayDisplay();
-          }
-
-          showToast('✨ 수정한 근무표(11월 포함)가 웹에 즉각 동기화되었습니다!');
-
-          // URL 파라미터 깨끗하게 정리
-          if (window.history && window.history.replaceState) {
-            window.history.replaceState({}, document.title, window.location.pathname);
-          }
+      // 마스터 근무표(11월 5일 일근휴가, 12일·20일 일근대근 등) 강제 머지
+      for (var dateKey in data.overrides) {
+        var masterVal = data.overrides[dateKey];
+        var curVal = curOverrides[dateKey];
+        if (!curVal || curVal.shiftType !== masterVal.shiftType) {
+          curOverrides[dateKey] = masterVal;
+          updated = true;
         }
       }
-    } catch (e) {
-      console.warn('[SyncEngine] URL 동기화 파싱 건너뜀:', e);
-    }
+
+      if (updated || isManualClick) {
+        if (storage.setOverrides) storage.setOverrides(curOverrides);
+
+        // 화면 즉각 렌더링
+        if (window.app) {
+          if (typeof window.app.renderCalendar === 'function') window.app.renderCalendar();
+          if (typeof window.app.updateHeaderTodayDisplay === 'function') window.app.updateHeaderTodayDisplay();
+        }
+
+        if (isManualClick) {
+          showToast('🔄 최신 근무표(11월 대근·휴가 포함)가 성공적으로 갱신되었습니다!');
+        } else if (updated) {
+          showToast('✨ 최신 근무표로 자동 업데이트되었습니다!');
+        }
+      }
+    })
+    .catch(function(err) {
+      if (isManualClick) {
+        // 오프라인이나 통신 지연 시 기본 저장소 데이터 기반 화면 리프레시
+        if (window.app && typeof window.app.renderCalendar === 'function') {
+          window.app.renderCalendar();
+        }
+        showToast('🔄 화면을 새로고침했습니다.');
+      }
+    });
   }
 
-  // DOM 로드 완료 시 이벤트 바인딩
+  // DOM 로드 완료 시
   window.addEventListener('DOMContentLoaded', function() {
     var btnSync = document.getElementById('btnSyncRefresh');
     if (btnSync) {
-      btnSync.addEventListener('click', triggerSyncShare);
+      btnSync.addEventListener('click', function() {
+        fetchAndApplyMasterShifts(true);
+      });
     }
 
-    // 0.3초 후 URL 동기화 파라미터 점검
-    setTimeout(checkUrlSync, 300);
+    // 접속 즉시 자동으로 마스터 근무표 최신화 실행
+    setTimeout(function() {
+      fetchAndApplyMasterShifts(false);
+    }, 500);
+
+    // 탭 복귀 시(화면 켬, 카톡에서 브라우저 복귀 등) 자동 점검
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'visible') {
+        fetchAndApplyMasterShifts(false);
+      }
+    });
   });
 
-  window.triggerSyncShare = triggerSyncShare;
+  window.fetchAndApplyMasterShifts = fetchAndApplyMasterShifts;
 })();
