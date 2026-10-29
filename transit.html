@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+  <title>realtime - 실시간 지하철 즐겨찾기 전광판</title>
+  <link rel="icon" type="image/png" href="icons/icon-192.png?v=1.0.0.1793265893787">
+  <link rel="stylesheet" href="css/style.css?v=1.0.0.1793265893787">
+  <script>
+    (function() {
+      try {
+        var savedTheme = localStorage.getItem('realtime_app_theme') || localStorage.getItem('kbs_shift_theme') || 'apple-light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+      } catch (e) {}
+    })();
+  </script>
+
+  <script>
+    window.__APP_VERSION__ = "1.0.0";
+    window.__BUILD_TIMESTAMP__ = 1793265893787;
+    window.__BUILD_DATE__ = "2026-10-29 09:24:53";
+  </script>
+</head>
+<body data-theme="apple-light">
+  <script>
+    (function() {
+      try {
+        var savedTheme = localStorage.getItem('realtime_app_theme') || localStorage.getItem('kbs_shift_theme') || 'apple-light';
+        document.body.setAttribute('data-theme', savedTheme);
+      } catch (e) {}
+    })();
+  </script>
+  <main class="app-container" style="padding-top: 14px; padding-bottom: 36px;">
+    <section class="transit-widget-card" id="transitWidgetSection" style="margin-top: 0;">
+      <div class="transit-widget-header">
+        <div class="transit-widget-title-wrap">
+          <span style="font-size: 17px;">⭐🚇</span>
+          <h2 class="transit-widget-title">실시간 지하철 즐겨찾기</h2>
+        </div>
+        <div class="transit-header-actions">
+          <a href="index.html" class="btn-transit-fullscreen">← 캘린더 홈</a>
+          <button type="button" class="transit-refresh-btn" id="btnHeaderReload">🔄 새로고침</button>
+        </div>
+      </div>
+
+      <div class="fav-Pinned-banner">
+        <button type="button" class="fav-jump-pill fav-jump-line9" onclick="window.transitManager && window.transitManager.scrollToFavCard('fav-card-assembly')">9호선 국회의사당역</button>
+        <button type="button" class="fav-jump-pill fav-jump-line9" onclick="window.transitManager && window.transitManager.scrollToFavCard('fav-card-yeouido-9')">9호선 여의도역</button>
+        <button type="button" class="fav-jump-pill fav-jump-line5" onclick="window.transitManager && window.transitManager.scrollToFavCard('fav-card-yeouido-5')">5호선 여의도역</button>
+      </div>
+
+      <div class="transit-widget-content" id="transitCardsContainer" style="display: flex; flex-direction: column; gap: 12px;"></div>
+
+      <div class="transit-footer-bar">
+        <span id="lastUpdated" class="transit-update-time">서울시 실시간 지하철 공공API 연동 활성화</span>
+        <button type="button" class="btn-reload-transit" id="btnReloadTransit">🔄 새로고침</button>
+      </div>
+    </section>
+  </main>
+  <script src="js/transit.js?v=1.0.0.1793265893787"></script>
+</body>
+</html>
