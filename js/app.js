@@ -1251,6 +1251,59 @@ class ShiftApp {
         this.elCalendarGrid.style.opacity = '';
       }
     }, { passive: true });
+
+    // PC 웹 마우스 좌우 드래그 스와이프 지원
+    let isMouseDown = false;
+    let mStartX = 0;
+    let mStartY = 0;
+    let mCurX = 0;
+    let mHoriz = null;
+    card.addEventListener('mousedown', (e) => {
+      if (e.button !== 0 || this.isMonthTransitioning) return;
+      isMouseDown = true;
+      mStartX = e.clientX;
+      mStartY = e.clientY;
+      mCurX = mStartX;
+      mHoriz = null;
+      if (this.elCalendarGrid) {
+        this.elCalendarGrid.classList.remove('sliding-transition');
+        this.elCalendarGrid.classList.add('no-transition');
+      }
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (!isMouseDown) return;
+      mCurX = e.clientX;
+      const dx = mCurX - mStartX;
+      const dy = e.clientY - mStartY;
+      if (mHoriz === null && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
+        mHoriz = Math.abs(dx) >= Math.abs(dy);
+      }
+      if (mHoriz === true && this.elCalendarGrid) {
+        this.elCalendarGrid.style.transform = `translateX(${dx * 0.72}px)`;
+        this.elCalendarGrid.style.opacity = `${Math.max(0.45, 1 - Math.abs(dx) / 360)}`;
+      }
+    });
+    window.addEventListener('mouseup', () => {
+      if (!isMouseDown) return;
+      isMouseDown = false;
+      const dx = mCurX - mStartX;
+      const grid = this.elCalendarGrid;
+      if (mHoriz === true && Math.abs(dx) >= 48) {
+        if (grid) grid.classList.remove('no-transition');
+        this.changeMonth(dx < 0 ? 'next' : 'prev', true);
+      } else if (grid && mHoriz === true) {
+        grid.classList.remove('no-transition');
+        grid.classList.add('sliding-transition');
+        grid.style.transform = 'translateX(0)';
+        grid.style.opacity = '1';
+        setTimeout(() => {
+          grid.classList.remove('sliding-transition');
+          grid.style.transform = '';
+          grid.style.opacity = '';
+        }, 200);
+      }
+      mHoriz = null;
+    });
   }
 
   // ========= 이달의 일정 · 휴가 · 특이사항 렌더링 =========

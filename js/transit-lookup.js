@@ -1805,14 +1805,14 @@
     renderQuickChips() {
       if (!this.chipsContainer) return;
 
-      const history = this.getRecentHistory();
+      const history = this.getRecentHistory().filter(h => h.type === 'bus');
       const defaultChips = [
         { type: 'bus', id: '19130', name: 'KBS (19130)' },
-        { type: 'subway', id: '국회의사당', name: '국회의사당역' },
-        { type: 'subway', id: '여의도', name: '여의도역(5·9)' },
         { type: 'bus', id: '19007', name: '여의도환승센터' },
         { type: 'bus', id: '19133', name: '국회의사당역5번출구' },
-        { type: 'subway', id: '당산', name: '당산역(2·9)' }
+        { type: 'bus', id: '19156', name: '여의도역5번출구' },
+        { type: 'bus', id: '19155', name: '여의도역6번출구' },
+        { type: 'bus', id: '19150', name: 'KBS별관' }
       ];
 
       const merged = [...defaultChips];

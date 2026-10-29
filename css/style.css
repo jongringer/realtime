@@ -9782,7 +9782,7 @@ body.dark-theme .btn-dangsan-view-toggle.active {
 }
 
 /* ==========================================================================
-   실시간 대중교통 즐겨찾기 3곳 상시 노출 카드 (국회의사당역 · 여의도역 · 19130 KBS)
+   실시간 지하철 즐겨찾기 & 전 호선 BIT 전광판 고유 색상 시스템 (9호선 골드 · 5호선 퍼플 · 전 호선)
    ========================================================================== */
 .fav-Pinned-banner {
   display: flex;
@@ -9794,394 +9794,245 @@ body.dark-theme .btn-dangsan-view-toggle.active {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 7px 12px;
+  padding: 6px 12px;
   border-radius: 999px;
-  font-size: 12.8px;
+  font-size: 12.5px;
   font-weight: 800;
-  text-decoration: none;
-  background: #eff6ff;
-  color: #1e40af;
-  border: 1px solid #bfdbfe;
-  transition: transform 0.14s ease, background 0.14s ease;
+  cursor: pointer;
+  background: #fdfbf7;
+  color: #78350f;
+  border: 1.5px solid #e7d8c1;
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
+}
+.fav-jump-pill.fav-jump-line9 {
+  background: #fef9ee;
+  color: #92400e;
+  border-color: #e6c88a;
+}
+.fav-jump-pill.fav-jump-line5 {
+  background: #faf5ff;
+  color: #6b21a8;
+  border-color: #d8b4fe;
 }
 .fav-jump-pill:active {
-  transform: scale(0.96);
+  transform: scale(0.95);
 }
-[data-theme="obsidian"] .fav-jump-pill {
-  background: rgba(30, 58, 138, 0.35);
-  color: #bae6fd;
-  border-color: rgba(56, 189, 248, 0.3);
+[data-theme="obsidian"] .fav-jump-pill.fav-jump-line9 {
+  background: rgba(184, 134, 11, 0.22);
+  color: #fde68a;
+  border-color: rgba(245, 158, 11, 0.45);
+}
+[data-theme="obsidian"] .fav-jump-pill.fav-jump-line5 {
+  background: rgba(139, 80, 164, 0.28);
+  color: #e9d5ff;
+  border-color: rgba(192, 132, 252, 0.48);
 }
 
-.transit-favorites-stack {
+.fav-card-flash {
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.45) !important;
+  transition: box-shadow 0.3s ease;
+}
+
+/* 지하철 BIT 카드 헤더 레이아웃: 스크린샷 동일 2단 배치 */
+.subway-9-card .bit-header-row {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-}
-
-.fav-station-card {
-  border-radius: 20px;
-  background: #ffffff;
-  border: 1.5px solid rgba(15, 23, 42, 0.1);
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
-  overflow: hidden;
-}
-[data-theme="obsidian"] .fav-station-card {
-  background: #111827;
-  border-color: rgba(148, 163, 184, 0.18);
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.42);
-}
-
-.fav-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-start;
   gap: 8px;
-  padding: 13px 15px;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 9px;
 }
-[data-theme="obsidian"] .fav-card-header {
-  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-  border-bottom-color: rgba(148, 163, 184, 0.18);
-}
-
-.fav-header-left {
+.subway-9-card .bit-title-group {
   display: flex;
   align-items: center;
-  gap: 7px;
-  flex-wrap: wrap;
-  min-width: 0;
+  gap: 8px;
+  width: 100%;
 }
-.fav-card-title {
-  margin: 0;
-  font-size: 17px;
-  font-weight: 900;
-  color: #0f172a;
-  letter-spacing: -0.3px;
-}
-[data-theme="obsidian"] .fav-card-title {
-  color: #f8fafc;
-}
-.fav-card-sub {
-  font-size: 12px;
-  font-weight: 700;
-  color: #64748b;
-}
-[data-theme="obsidian"] .fav-card-sub {
-  color: #94a3b8;
-}
-
-.fav-line-badge {
+.subway-9-card .subway-source-toggle-group {
   display: inline-flex;
   align-items: center;
-  padding: 3px 9px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 900;
-  color: #ffffff;
-}
-.fav-line-9 {
-  background: #b58600;
-}
-.fav-line-5 {
-  background: #8b5cf6;
-}
-.fav-line-bus {
-  background: #1d4ed8;
-}
-
-.fav-line-sub-divider {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px 4px 14px;
-  font-size: 13px;
-  font-weight: 800;
-  color: #334155;
-}
-[data-theme="obsidian"] .fav-line-sub-divider {
-  color: #cbd5e1;
-}
-
-.fav-subway-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  padding: 12px;
-}
-@media (max-width: 520px) {
-  .fav-subway-grid {
-    grid-template-columns: 1fr;
-    gap: 9px;
-    padding: 10px;
-  }
-}
-
-.fav-dir-box {
-  border-radius: 14px;
-  padding: 10px 12px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-}
-[data-theme="obsidian"] .fav-dir-box {
-  background: rgba(30, 41, 59, 0.65);
-  border-color: rgba(148, 163, 184, 0.16);
-}
-.fav-dir-title {
-  font-size: 13.5px;
-  font-weight: 900;
-  color: #1e293b;
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-[data-theme="obsidian"] .fav-dir-title {
-  color: #e2e8f0;
-}
-
-.fav-train-rows {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-.fav-train-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: 11px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-}
-[data-theme="obsidian"] .fav-train-row {
-  background: #0f172a;
-  border-color: rgba(148, 163, 184, 0.16);
-}
-.fav-train-row.fav-row-first {
-  border-left: 3.5px solid #2563eb;
-}
-[data-theme="obsidian"] .fav-train-row.fav-row-first {
-  border-left-color: #38bdf8;
-}
-
-.fav-train-left {
-  display: flex;
-  align-items: center;
-  gap: 5px;
   flex-wrap: wrap;
-  min-width: 0;
+  gap: 5px;
+  padding: 5px 8px;
+  border-radius: 12px;
+  background: #eef2f6 !important;
+  border: 1.5px solid #cbd5e1 !important;
 }
-.fav-order-dot {
-  font-size: 11.5px;
-  font-weight: 900;
-  padding: 2px 6px;
-  border-radius: 6px;
+.subway-9-card .subway-mode-btn {
+  background: #ffffff !important;
+  color: #1e293b !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  padding: 5px 10px !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
 }
-.dot-first {
-  background: #dbeafe;
-  color: #1d4ed8;
+.subway-9-card .subway-mode-btn.active-realtime {
+  background: #ecfdf5 !important;
+  color: #064e3b !important;
+  border-color: #6ee7b7 !important;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.22) !important;
 }
-.dot-second {
-  background: #f1f5f9;
-  color: #475569;
+.subway-9-card .subway-mode-btn.active-timetable {
+  background: #d97706 !important;
+  color: #ffffff !important;
+  border-color: #b45309 !important;
+  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.32) !important;
 }
-[data-theme="obsidian"] .dot-first {
-  background: rgba(37, 99, 235, 0.3);
-  color: #93c5fd;
+.subway-9-card .btn-timetable-popup {
+  background: #ffffff !important;
+  color: #1e293b !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  padding: 5px 9px !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
 }
-[data-theme="obsidian"] .dot-second {
-  background: rgba(148, 163, 184, 0.18);
-  color: #cbd5e1;
+.subway-9-card .bus-time-zoom-ctrl {
+  gap: 6px !important;
+  padding-left: 2px !important;
+  margin-left: 2px !important;
+}
+.subway-9-card .btn-time-zoom-btn {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+  border: 1.5px solid #94a3b8 !important;
 }
 
-.fav-train-type {
-  font-size: 11.5px;
-  font-weight: 800;
-  padding: 2px 6px;
-  border-radius: 6px;
-}
-.fav-train-type.type-express {
+.badge-train-express {
+  display: inline-flex;
+  align-items: center;
   background: #fee2e2;
   color: #b91c1c;
-}
-[data-theme="obsidian"] .fav-train-type.type-express {
-  background: rgba(239, 68, 68, 0.25);
-  color: #fca5a5;
-}
-.fav-train-type.type-normal {
-  background: #e2e8f0;
-  color: #334155;
-}
-[data-theme="obsidian"] .fav-train-type.type-normal {
-  background: #1e293b;
-  color: #cbd5e1;
+  border: 1px solid #fca5a5;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 1.5px 6px;
+  border-radius: 5px;
+  margin-left: 3px;
+  letter-spacing: -0.2px;
 }
 
-.fav-train-dest {
-  font-size: 13.5px;
-  font-weight: 800;
-  color: #0f172a;
+/* 5호선 고유색 (#8b50a4) BIT 전광판 카드 */
+body[data-theme="obsidian"] .bit-board-card.subway-9-card.subway-5-card,
+body[data-theme="noble-gold"] .bit-board-card.subway-9-card.subway-5-card,
+.bit-board-card.subway-9-card.subway-5-card {
+  background: #fcfaff !important;
+  border: 1.3px solid #e2d4f0 !important;
+  box-shadow: 0 2px 8px rgba(139, 80, 164, 0.06) !important;
 }
-[data-theme="obsidian"] .fav-train-dest {
-  color: #f8fafc;
+body[data-theme="obsidian"] .subway-9-card.subway-5-card .bit-header-row,
+.subway-9-card.subway-5-card .bit-header-row {
+  border-bottom: 1.5px solid #e9ddf5 !important;
 }
-.fav-train-pos {
-  font-size: 12px;
-  font-weight: 700;
-  color: #64748b;
+.subway-9-card.subway-5-card .badge-seoul-subway {
+  background: #8b50a4 !important;
+  color: #ffffff !important;
 }
-[data-theme="obsidian"] .fav-train-pos {
-  color: #94a3b8;
+body[data-theme="obsidian"] .subway-9-card.subway-5-card .bit-desc-row,
+.subway-9-card.subway-5-card .bit-desc-row {
+  color: #4c1d95 !important;
 }
-
-.fav-train-right {
-  display: flex;
-  align-items: baseline;
-  gap: 5px;
-  white-space: nowrap;
-  flex-shrink: 0;
+body[data-theme="obsidian"] .subway-9-card.subway-5-card .bit-dest-pill,
+.subway-9-card.subway-5-card .bit-dest-pill {
+  background: #f3ebfa !important;
+  color: #581c87 !important;
+  border: 1px solid #dfc9f2 !important;
 }
-.fav-eta-primary {
-  font-size: calc(18px + var(--time-font-boost, 0px)) !important;
-  font-weight: 900 !important;
-  color: #0284c7;
+body[data-theme="obsidian"] .subway-9-card.subway-5-card .next-transit-box,
+body[data-theme="obsidian"] .subway-9-card.subway-5-card .next2-transit-box,
+.subway-9-card.subway-5-card .next-transit-box,
+.subway-9-card.subway-5-card .next2-transit-box {
+  background: #ffffff !important;
+  border: 1px solid #e2d4f0 !important;
 }
-[data-theme="obsidian"] .fav-eta-primary {
-  color: #38bdf8;
+body[data-theme="obsidian"] .subway-9-card.subway-5-card .next-transit-sub,
+.subway-9-card.subway-5-card .next-transit-sub {
+  color: #3b0764 !important;
+  border-top: 1px dashed #e5d4f5 !important;
 }
-.fav-eta-secondary {
-  font-size: calc(15px + var(--time-font-boost, 0px)) !important;
-  font-weight: 800 !important;
-  color: #334155;
+body[data-theme="obsidian"] .subway-9-card.subway-5-card .next-transit-sub b,
+.subway-9-card.subway-5-card .next-transit-sub b {
+  color: #3b0764 !important;
 }
-[data-theme="obsidian"] .fav-eta-secondary {
-  color: #cbd5e1;
+body[data-theme="obsidian"] .subway-9-card.subway-5-card .next2-tag-blue,
+.subway-9-card.subway-5-card .next2-tag-blue {
+  color: #581c87 !important;
 }
-.fav-eta-imminent {
-  color: #dc2626 !important;
-}
-[data-theme="obsidian"] .fav-eta-imminent {
-  color: #f87171 !important;
-}
-.fav-eta-clock {
-  font-size: 12px;
-  font-weight: 700;
-  color: #64748b;
-}
-[data-theme="obsidian"] .fav-eta-clock {
-  color: #94a3b8;
+body[data-theme="obsidian"] .subway-9-card.subway-5-card .bit-footer-info,
+.subway-9-card.subway-5-card .bit-footer-info {
+  border-top: 1px solid #e9ddf5 !important;
+  color: #1e1b4b !important;
 }
 
-.fav-empty-msg {
-  padding: 12px;
+/* 수도권 전 호선 고유 배지 색상 (지하철 역사 검색 파트 호환) */
+.subway-9-card .badge-seoul-subway.line-color-1001 { background: #0052A4 !important; }
+.subway-9-card .badge-seoul-subway.line-color-1002 { background: #00A84D !important; }
+.subway-9-card .badge-seoul-subway.line-color-1003 { background: #EF7C1C !important; }
+.subway-9-card .badge-seoul-subway.line-color-1004 { background: #00A5DE !important; }
+.subway-9-card .badge-seoul-subway.line-color-1005 { background: #8b50a4 !important; }
+.subway-9-card .badge-seoul-subway.line-color-1006 { background: #CD7C2F !important; }
+.subway-9-card .badge-seoul-subway.line-color-1007 { background: #747F00 !important; }
+.subway-9-card .badge-seoul-subway.line-color-1008 { background: #E6186C !important; }
+.subway-9-card .badge-seoul-subway.line-color-1009 { background: #b8860b !important; }
+.subway-9-card .badge-seoul-subway.line-color-1077 { background: #D4003B !important; }
+.subway-9-card .badge-seoul-subway.line-color-1065 { background: #0090D2 !important; }
+.subway-9-card .badge-seoul-subway.line-color-1063 { background: #77C4A3 !important; }
+.subway-9-card .badge-seoul-subway.line-color-1075 { background: #F5A200 !important; }
+.subway-9-card .badge-seoul-subway.line-color-1094 { background: #6789CA !important; }
+.subway-9-card .badge-seoul-subway.line-color-1092 { background: #B0CE18 !important; }
+.subway-9-card .badge-seoul-subway.line-color-1093 { background: #8FC31F !important; }
+.subway-9-card .badge-seoul-subway.line-color-1032 { background: #9A6292 !important; }
+
+body[data-theme="obsidian"] .bit-board-card.subway-9-card.subway-other-card,
+.bit-board-card.subway-9-card.subway-other-card {
+  background: #f8fafc !important;
+  border: 1.3px solid #cbd5e1 !important;
+}
+body[data-theme="obsidian"] .subway-9-card.subway-other-card .bit-header-row,
+.subway-9-card.subway-other-card .bit-header-row {
+  border-bottom: 1.5px solid #e2e8f0 !important;
+}
+body[data-theme="obsidian"] .subway-9-card.subway-other-card .bit-desc-row,
+.subway-9-card.subway-other-card .bit-desc-row {
+  color: #334155 !important;
+}
+body[data-theme="obsidian"] .subway-9-card.subway-other-card .bit-dest-pill,
+.subway-9-card.subway-other-card .bit-dest-pill {
+  background: #eef2f6 !important;
+  color: #1e293b !important;
+  border: 1px solid #cbd5e1 !important;
+}
+body[data-theme="obsidian"] .subway-9-card.subway-other-card .next-transit-box,
+body[data-theme="obsidian"] .subway-9-card.subway-other-card .next2-transit-box,
+.subway-9-card.subway-other-card .next-transit-box,
+.subway-9-card.subway-other-card .next2-transit-box {
+  background: #ffffff !important;
+  border: 1px solid #dbe3ec !important;
+}
+body[data-theme="obsidian"] .subway-9-card.subway-other-card .next-transit-sub,
+body[data-theme="obsidian"] .subway-9-card.subway-other-card .next-transit-sub b,
+.subway-9-card.subway-other-card .next-transit-sub,
+.subway-9-card.subway-other-card .next-transit-sub b {
+  color: #1e293b !important;
+  border-top-color: #e2e8f0 !important;
+}
+body[data-theme="obsidian"] .subway-9-card.subway-other-card .next2-tag-blue,
+.subway-9-card.subway-other-card .next2-tag-blue {
+  color: #1e3a8a !important;
+}
+
+.fav-loading-card {
+  padding: 24px 16px;
   text-align: center;
-  font-size: 13.5px;
-  font-weight: 700;
-  color: #64748b;
-}
-
-/* 19130 KBS 버스정류장 상시 카드 */
-.fav-bus-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px;
-}
-.fav-bus-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 14px;
+  border-radius: 16px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
+  color: #334155;
 }
-[data-theme="obsidian"] .fav-bus-item {
-  background: rgba(30, 41, 59, 0.65);
-  border-color: rgba(148, 163, 184, 0.16);
-}
-.fav-bus-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-.fav-bus-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 58px;
-  padding: 6px 10px;
-  border-radius: 10px;
-  color: #ffffff;
-  font-size: 15px;
-  font-weight: 900;
-  text-align: center;
-  flex-shrink: 0;
-}
-.fav-bus-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-.fav-bus-dir {
-  font-size: 13px;
-  font-weight: 800;
-  color: #1e293b;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-[data-theme="obsidian"] .fav-bus-dir {
+[data-theme="obsidian"] .fav-loading-card {
+  background: #1e293b;
+  border-color: #334155;
   color: #e2e8f0;
-}
-.fav-bus-pos {
-  font-size: 12px;
-  font-weight: 700;
-  color: #64748b;
-}
-[data-theme="obsidian"] .fav-bus-pos {
-  color: #94a3b8;
-}
-
-.fav-bus-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 3px;
-  flex-shrink: 0;
-}
-.fav-bus-eta-row {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-}
-.fav-bus-tag {
-  font-size: 11px;
-  font-weight: 900;
-  padding: 2px 6px;
-  border-radius: 5px;
-  background: #dbeafe;
-  color: #1d4ed8;
-}
-[data-theme="obsidian"] .fav-bus-tag {
-  background: rgba(37, 99, 235, 0.3);
-  color: #93c5fd;
-}
-.fav-bus-tag-sub {
-  font-size: 11px;
-  font-weight: 800;
-  color: #64748b;
-}
-.fav-bus-raw {
-  font-size: 13.5px;
-  font-weight: 800;
-  color: #64748b;
 }
 
 /* [정류장 + 버스번호] 선택 노선 하이라이트 전광판 */

@@ -119,9 +119,7 @@
       <section class="month-nav-bar" style="margin-top: 4px; margin-bottom: 6px;">
         <div class="month-title-wrap">
           <button type="button" class="btn-home-today" id="btnHomeToday" title="오늘(이번 달)로 바로 이동">🏠</button>
-          <button type="button" class="month-step-btn" id="btnPrevMonth" title="이전 달">◀</button>
           <h1 class="month-title" id="monthTitle">2026년 10월 캘린더</h1>
-          <button type="button" class="month-step-btn" id="btnNextMonth" title="다음 달">▶</button>
         </div>
         <div class="month-alarm-wrap" style="display: flex; align-items: center; gap: 6px;">
           <button type="button" class="btn-shift-alarm btn-sync-refresh" id="btnSyncRefresh" title="캘린더 및 실시간 교통 새로고침" style="padding: 6px 10px; background: var(--bg-card, #ffffff); border: 1.5px solid var(--card-border, #cbd5e1); color: var(--text-main) !important; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
@@ -162,12 +160,12 @@
       </div>
     </div>
 
-    <!-- 2화면: 실시간 대중교통 즐겨찾기 3곳 상시 노출 (국회의사당역 상·하행 / 여의도역 상·하행 / 버스정류장 19130) -->
+    <!-- 2화면: 실시간 지하철 즐겨찾기 상시 노출 (국회의사당역 9호선 상·하행 / 여의도역 9호선·5호선 상·하행) -->
     <section class="transit-widget-card" id="transitWidgetSection">
       <div class="transit-widget-header">
         <div class="transit-widget-title-wrap">
-          <span style="font-size: 16px;">⭐🚇🚌</span>
-          <h2 class="transit-widget-title">실시간 대중교통 즐겨찾기</h2>
+          <span style="font-size: 16px;">⭐🚇</span>
+          <h2 class="transit-widget-title">실시간 지하철 즐겨찾기</h2>
         </div>
         <div class="transit-header-actions">
           <div class="bus-time-zoom-ctrl" style="margin-right: 2px;">
@@ -179,32 +177,32 @@
             </button>
           </div>
           <a href="transit.html" target="_blank" class="btn-transit-fullscreen">전체화면 ↗</a>
-          <button type="button" class="transit-refresh-btn" id="btnHeaderReload" title="실시간 교통정보 즉시 새로고침">🔄 새로고침</button>
+          <button type="button" class="transit-refresh-btn" id="btnHeaderReload" title="실시간 지하철 즉시 새로고침">🔄 새로고침</button>
         </div>
       </div>
 
-      <!-- 상시 노출 즐겨찾기 3곳 바로가기 뱃지 -->
+      <!-- 상시 노출 지하철 즐겨찾기 바로가기 뱃지 (9호선 골드 / 5호선 퍼플) -->
       <div class="fav-Pinned-banner">
         <button type="button" class="fav-jump-pill fav-jump-line9" onclick="window.transitManager && window.transitManager.scrollToFavCard('fav-card-assembly')">9호선 국회의사당역</button>
-        <button type="button" class="fav-jump-pill fav-jump-yeouido" onclick="window.transitManager && window.transitManager.scrollToFavCard('fav-card-yeouido')">5·9호선 여의도역</button>
-        <button type="button" class="fav-jump-pill fav-jump-bus" onclick="window.transitManager && window.transitManager.scrollToFavCard('fav-card-19130')">🚏 19130 KBS</button>
+        <button type="button" class="fav-jump-pill fav-jump-line9" onclick="window.transitManager && window.transitManager.scrollToFavCard('fav-card-yeouido-9')">9호선 여의도역</button>
+        <button type="button" class="fav-jump-pill fav-jump-line5" onclick="window.transitManager && window.transitManager.scrollToFavCard('fav-card-yeouido-5')">5호선 여의도역</button>
       </div>
 
       <div class="transit-widget-content" id="transitCardsContainer" style="display: flex; flex-direction: column; gap: 12px;"></div>
 
       <div class="transit-footer-bar">
-        <span id="lastUpdated" class="transit-update-time">서울시 TOPIS · 실시간 지하철 연동 활성화</span>
+        <span id="lastUpdated" class="transit-update-time">서울시 실시간 지하철 공공API 연동 활성화</span>
         <button type="button" class="btn-reload-transit" id="btnReloadTransit">🔄 새로고침</button>
       </div>
     </section>
 
-    <!-- 3화면: 실시간 버스 · 지하철 통합 검색 전광판 (정류장ID / 정류소명 / 버스번호 / 지하철역) -->
-    <section class="transit-lookup-card" id="transitLookupSection">
+    <!-- 3화면: 원하는 지하철 역사명 입력 실시간 도착 & 시간표 전광판 (버스 실시간 바로 위 별도 파트) -->
+    <section class="transit-lookup-card subway-lookup-section-card" id="subwayLookupSection">
       <div class="transit-lookup-header transit-lookup-header-stacked">
         <div class="transit-lookup-title-row">
           <div style="display:flex; align-items:center; gap:6px;">
-            <span class="transit-lookup-header-icon">🚏🚌🚇</span>
-            <h3 class="transit-lookup-title">실시간 버스 · 지하철 도착 조회</h3>
+            <span class="transit-lookup-header-icon">🚇</span>
+            <h3 class="transit-lookup-title">실시간 지하철 역사 도착 조회</h3>
           </div>
           <div class="bus-time-zoom-ctrl">
             <button type="button" class="btn-time-zoom-btn btn-time-zoom-plus" onclick="window.transitManager && window.transitManager.increaseTimeFontSize(event)" title="도착시간 글씨 확대" aria-label="도착시간 글씨 확대">
@@ -216,20 +214,77 @@
           </div>
         </div>
         <div class="transit-lookup-sub-row">
-          <p class="transit-lookup-subtitle">정류장 번호·이름 / 버스번호 / 지하철역 입력 즉시 조회</p>
+          <p class="transit-lookup-subtitle">원하는 지하철 역사명 입력 시 전 호선 실시간 도착 · 시간표 표시</p>
+          <div class="transit-lookup-header-actions">
+            <span id="subwayLookupLiveBadge" class="transit-lookup-live-badge">⚡ 지하철 실시간</span>
+            <button type="button" class="btn-lookup-refresh" id="btnSubwayLookupRefresh" title="지하철 도착 정보 새로고침">🔄</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 지하철 역사명 검색 바 -->
+      <div class="lookup-search-container" id="subwaySearchContainer">
+        <div class="lookup-input-wrapper">
+          <span class="lookup-input-icon">🚇</span>
+          <input type="text" id="inputSubwayQuery" class="lookup-input"
+                 placeholder="지하철 역사명 입력 (예: 당산, 선유도, 광화문, 강남, 서울역, 김포공항)"
+                 autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+          <button type="button" id="btnClearSubwayQuery" class="btn-clear-query" style="display:none;" title="입력 지우기">✕</button>
+          <button type="button" id="btnExecSubwaySearch" class="btn-lookup-search">조회</button>
+        </div>
+        <div id="subwaySuggestionsDropdown" class="lookup-suggestions-dropdown" style="display: none;"></div>
+      </div>
+
+      <!-- 지하철 빠른 바로가기 칩 -->
+      <div class="lookup-quick-chips-wrap">
+        <span class="quick-chips-label">⚡ 주요역사:</span>
+        <div class="quick-chips-scroll" id="subwayQuickChipsContainer"></div>
+      </div>
+
+      <!-- 지하철 검색 결과 전광판 영역 -->
+      <div id="subwayLookupResultContainer" class="lookup-result-container" style="display: flex; flex-direction: column; gap: 12px;">
+        <div class="lookup-guide-box" id="subwayLookupGuideBox">
+          <div class="guide-icon">🚇</div>
+          <div class="guide-title">조회할 지하철 역사명을 입력하거나 위 버튼을 터치하세요</div>
+          <div class="guide-desc">
+            예: <strong>선유도</strong>, <strong>당산</strong>, <strong>광화문</strong>, <strong>홍대입구</strong>, <strong>강남</strong>, <strong>서울역</strong>, <strong>김포공항</strong> 등 입력 시 호선 고유색 전광판으로 다음·다다음 실시간 열차 및 시간표를 확인하실 수 있습니다.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4화면: 실시간 버스 도착 전광판 (KBS 19130 기본 노출 + 정류장·버스번호 조회) -->
+    <section class="transit-lookup-card" id="transitLookupSection">
+      <div class="transit-lookup-header transit-lookup-header-stacked">
+        <div class="transit-lookup-title-row">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span class="transit-lookup-header-icon">🚏🚌</span>
+            <h3 class="transit-lookup-title">실시간 버스 도착 조회</h3>
+          </div>
+          <div class="bus-time-zoom-ctrl">
+            <button type="button" class="btn-time-zoom-btn btn-time-zoom-plus" onclick="window.transitManager && window.transitManager.increaseTimeFontSize(event)" title="도착시간 글씨 확대" aria-label="도착시간 글씨 확대">
+              <span class="zoom-btn-icon">＋</span>
+            </button>
+            <button type="button" class="btn-time-zoom-btn btn-time-zoom-reset" onclick="window.transitManager && window.transitManager.resetTimeFontSize(event)" title="도착시간 글씨 원래대로 복귀" aria-label="도착시간 글씨 원래대로 복귀">
+              <span class="zoom-btn-icon">↺</span>
+            </button>
+          </div>
+        </div>
+        <div class="transit-lookup-sub-row">
+          <p class="transit-lookup-subtitle">정류장 번호·이름 / 버스번호 입력 즉시 조회 (기본: 19130 KBS)</p>
           <div class="transit-lookup-header-actions">
             <span id="transitLookupLiveBadge" class="transit-lookup-live-badge">⚡ TOPIS 실시간</span>
-            <button type="button" class="btn-lookup-refresh" id="btnLookupRefresh" title="도착 정보 새로고침">🔄</button>
+            <button type="button" class="btn-lookup-refresh" id="btnLookupRefresh" title="버스 도착 정보 새로고침">🔄</button>
           </div>
         </div>
       </div>
 
       <!-- 검색 바 영역 -->
-      <div class="lookup-search-container">
+      <div class="lookup-search-container" id="busSearchContainer">
         <div class="lookup-input-wrapper">
           <span class="lookup-input-icon">🔍</span>
           <input type="text" id="inputTransitQuery" class="lookup-input"
-                 placeholder="정류장(예: 19130, KBS), 버스번호(162, 5618), 역 이름(여의도, 국회의사당)"
+                 placeholder="정류장(예: 19130, KBS), 버스번호(162, 5618), 정류장+버스(KBS 162)"
                  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
           <button type="button" id="btnClearLookupQuery" class="btn-clear-query" style="display:none;" title="입력 지우기">✕</button>
           <button type="button" id="btnExecLookupSearch" class="btn-lookup-search">조회</button>
@@ -249,9 +304,9 @@
       <div id="lookupResultContainer" class="lookup-result-container">
         <div class="lookup-guide-box" id="lookupGuideBox">
           <div class="guide-icon">🚏</div>
-          <div class="guide-title">정류장 · 버스번호 · 지하철역을 입력하세요</div>
+          <div class="guide-title">정류장 번호 · 정류소명 · 버스번호를 입력하세요</div>
           <div class="guide-desc">
-            정류장 5자리(예: <strong>19130</strong> KBS), <strong>정류소+버스번호</strong>(예: <strong>19130 162</strong>, <strong>KBS 5618</strong>), <strong>버스번호 단독</strong>(예: <strong>162</strong>, <strong>260</strong>), 또는 <strong>지하철역</strong>(예: <strong>국회의사당</strong>, <strong>여의도</strong>, <strong>당산</strong>)을 입력하면 실시간 도착 전광판이 즉시 표시됩니다.
+            정류장 5자리(예: <strong>19130</strong> KBS), <strong>정류소+버스번호</strong>(예: <strong>19130 162</strong>, <strong>KBS 5618</strong>), 또는 <strong>버스번호 단독</strong>(예: <strong>162</strong>, <strong>260</strong>, <strong>5618</strong>)을 입력하면 실시간 버스 전광판이 즉시 표시됩니다.
           </div>
         </div>
       </div>
@@ -597,6 +652,7 @@
   <script src="js/timetable-15154.js?v=1.0.0"></script>
   <script src="js/bus-routes-db.js?v=1.0.0"></script>
   <script src="js/transit.js?v=1.0.0"></script>
+  <script src="js/subway-lookup.js?v=1.0.0"></script>
   <script src="js/transit-lookup.js?v=1.0.0"></script>
   <script src="js/version-sync.js?v=1.0.0"></script>
   <script src="js/sync-engine.js?v=1.0.0"></script>
