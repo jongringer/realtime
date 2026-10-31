@@ -196,6 +196,49 @@ body {
   box-sizing: border-box;
 }
 
+/* PC/태블릿 등 넓은 화면: 9:16 스마트폰 비율로 완벽 한정 & 좌우 크롭 (스마트폰 실물 뷰) */
+@media screen and (min-aspect-ratio: 9/16) and (min-width: 460px) {
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    background: radial-gradient(circle at 50% 25%, #1e293b 0%, #0f172a 65%, #020617 100%) !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .app-container {
+    height: 100dvh;
+    max-height: 100dvh;
+    width: calc(100dvh * (9 / 16)) !important;
+    max-width: calc(100vw - 20px) !important;
+    aspect-ratio: 9 / 16;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin: 0 auto;
+    border-radius: 20px;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 24px 50px -10px rgba(0, 0, 0, 0.7);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+  }
+
+  .app-container::-webkit-scrollbar {
+    width: 5px;
+  }
+  .app-container::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .app-container::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.35);
+    border-radius: 999px;
+  }
+  .app-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.6);
+  }
+}
+
 /* --------------------------------------------------------------------------
    1. 상단 프로필 헤더
    -------------------------------------------------------------------------- */
