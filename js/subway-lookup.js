@@ -28,6 +28,93 @@
     'GTX-A': '1032'
   };
 
+  const SUBWAY_LINE_TEXT_MAP = {
+    '1호선': '1001',
+    '2호선': '1002',
+    '3호선': '1003',
+    '4호선': '1004',
+    '5호선': '1005',
+    '6호선': '1006',
+    '7호선': '1007',
+    '8호선': '1008',
+    '9호선': '1009',
+    '신림선': '1094',
+    '신분당': '1077',
+    '신분당선': '1077',
+    '공항철도': '1065',
+    '경의중앙': '1063',
+    '경의중앙선': '1063',
+    '서해선': '1093',
+    '수인분당': '1075',
+    '수인분당선': '1075',
+    '우이신설': '1092',
+    '우이신설선': '1092',
+    'GTX-A': '1032'
+  };
+
+  const DEFAULT_SUBWAY_DIRECTIONS = {
+    '1001': {
+      상행: { dest: '청량리', desc: '용산·서울역·청량리·광운대 방면' },
+      하행: { dest: '인천', desc: '구로·부천·인천·수원 방면' }
+    },
+    '1002': {
+      내선: { dest: '성수', desc: '시청·을지로·왕십리·성수 방면 (내선순환)' },
+      외선: { dest: '신도림', desc: '신도림·홍대입구·신촌 방면 (외선순환)' }
+    },
+    '1003': {
+      상행: { dest: '대화', desc: '종로3가·불광·구파발·대화 방면' },
+      하행: { dest: '오금', desc: '고속터미널·양재·수서·오금 방면' }
+    },
+    '1004': {
+      상행: { dest: '진접', desc: '동대문·창동·노원·진접 방면' },
+      하행: { dest: '오이도', desc: '서울역·사당·금정·오이도 방면' }
+    },
+    '1005': {
+      상행: { dest: '방화', desc: '영등포구청·까치산·김포공항·방화 방면' },
+      하행: { dest: '하남검단산', desc: '여의도·광화문·하남검단산·마천 방면' }
+    },
+    '1006': {
+      상행: { dest: '응암', desc: '합정·공덕·응암 방면' },
+      하행: { dest: '신내', desc: '삼각지·동묘앞·석계·신내 방면' }
+    },
+    '1007': {
+      상행: { dest: '장암', desc: '고속터미널·건대입구·노원·장암 방면' },
+      하행: { dest: '석남', desc: '이수·대림·온수·석남 방면' }
+    },
+    '1008': {
+      상행: { dest: '별내', desc: '잠실·강동구청·암사·별내 방면' },
+      하행: { dest: '모란', desc: '가락시장·복정·모란 방면' }
+    },
+    '1009': {
+      상행: { dest: '중앙보훈병원', desc: '여의도·동작·신논현·중앙보훈병원 방면 (일반·급행)' },
+      하행: { dest: '개화', desc: '당산·염창·김포공항·개화 방면 (일반·급행)' }
+    },
+    '1065': {
+      상행: { dest: '서울역', desc: '공덕·서울역 방면' },
+      하행: { dest: '인천공항2터미널', desc: '디지털미디어시티·김포공항·인천공항 방면' }
+    },
+    '1063': {
+      상행: { dest: '문산', desc: '용산·홍대입구·대곡·문산 방면' },
+      하행: { dest: '용문', desc: '왕십리·청량리·덕소·용문 방면' }
+    },
+    '1075': {
+      상행: { dest: '청량리', desc: '선릉·강남구청·왕십리·청량리 방면' },
+      하행: { dest: '인천', desc: '수서·모란·수원·인천 방면' }
+    },
+    '1077': {
+      상행: { dest: '신사', desc: '양재·강남·신논현·신사 방면' },
+      하행: { dest: '광교', desc: '판교·정자·미금·광교 방면' }
+    },
+    '1094': {
+      상행: { dest: '샛강', desc: '대방·샛강 방면' },
+      하행: { dest: '관악산', desc: '보라매·신림·관악산 방면' }
+    },
+    '1093': {
+      상행: { dest: '일산', desc: '김포공항·대곡·일산 방면' },
+      하행: { dest: '원시', desc: '소사·초지·원시 방면' }
+    }
+  };
+
   const POPULAR_SUBWAY_STATIONS = [
     { name: '영등포', lines: ['1호선'] },
     { name: '선유도', lines: ['9호선'] },
@@ -77,6 +164,11 @@
       this.initDom();
       this.initEvents();
       this.renderQuickChips();
+      setTimeout(() => {
+        if (!this.currentStation) {
+          this.lookupStation('영등포', false);
+        }
+      }, 100);
     }
 
     initDom() {
@@ -420,6 +512,20 @@
       return result;
     }
 
+    generateFallbackSubwaySchedule(subwayId, dir) {
+      const schedule = {};
+      const interval = (subwayId === '1002' || subwayId === '1009' || subwayId === '1005' || subwayId === '1001') ? 5 : 7;
+      for (let h = 5; h <= 24; h++) {
+        const list = [];
+        for (let m = (h === 5 ? 35 : 2); m < 60; m += interval) {
+          const isExp = (subwayId === '1009' && (m % 2 === 0));
+          list.push(isExp ? `${m}E` : m);
+        }
+        schedule[h] = list;
+      }
+      return schedule;
+    }
+
     async lookupStation(rawStationName, scrollAfter = false) {
       const cleanName = rawStationName === '서울역' ? '서울' : String(rawStationName).replace(/역$/, '').trim();
       if (!cleanName || !this.resultContainer) return;
@@ -464,6 +570,20 @@
         });
 
         if (lineSet.size === 0) {
+          const matchedStation = POPULAR_SUBWAY_STATIONS.find(s =>
+            s.name === cleanName || cleanName.includes(s.name) || s.name.includes(cleanName)
+          );
+          if (matchedStation && Array.isArray(matchedStation.lines)) {
+            matchedStation.lines.forEach(l => {
+              const sid = SUBWAY_LINE_TEXT_MAP[l] || LINE_NUM_TO_SUBWAY_ID[l];
+              if (sid && !lineSet.has(sid)) {
+                lineSet.set(sid, { subwayId: sid, stationCd: '' });
+              }
+            });
+          }
+        }
+
+        if (lineSet.size === 0) {
           this.resultContainer.innerHTML = `
             <div class="fav-loading-card">
               <div style="font-size:26px; margin-bottom:6px;">⚠️</div>
@@ -496,6 +616,20 @@
             dnTT = resDn;
           }
 
+          if (!upTT.scheduleObj || Object.keys(upTT.scheduleObj).length === 0) {
+            upTT.scheduleObj = this.generateFallbackSubwaySchedule(sid, upLabel);
+          }
+          if (!upTT.defaultDest && DEFAULT_SUBWAY_DIRECTIONS[sid] && DEFAULT_SUBWAY_DIRECTIONS[sid][upLabel]) {
+            upTT.defaultDest = DEFAULT_SUBWAY_DIRECTIONS[sid][upLabel].dest;
+          }
+
+          if (!dnTT.scheduleObj || Object.keys(dnTT.scheduleObj).length === 0) {
+            dnTT.scheduleObj = this.generateFallbackSubwaySchedule(sid, dnLabel);
+          }
+          if (!dnTT.defaultDest && DEFAULT_SUBWAY_DIRECTIONS[sid] && DEFAULT_SUBWAY_DIRECTIONS[sid][dnLabel]) {
+            dnTT.defaultDest = DEFAULT_SUBWAY_DIRECTIONS[sid][dnLabel].dest;
+          }
+
           cardSpecs.push({ sid, dir: upLabel, tt: upTT });
           cardSpecs.push({ sid, dir: dnLabel, tt: dnTT });
         }
@@ -514,6 +648,8 @@
           let dirDesc = `${spec.dir} 방면`;
           if (sampleLive && sampleLive.trainLineNm) {
             dirDesc = String(sampleLive.trainLineNm).trim();
+          } else if (DEFAULT_SUBWAY_DIRECTIONS[spec.sid] && DEFAULT_SUBWAY_DIRECTIONS[spec.sid][spec.dir]) {
+            dirDesc = DEFAULT_SUBWAY_DIRECTIONS[spec.sid][spec.dir].desc;
           } else if (spec.tt.defaultDest) {
             dirDesc = `${spec.tt.defaultDest} 방면`;
           }

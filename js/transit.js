@@ -369,7 +369,7 @@ class TransitManager {
     for (const makeProxy of proxies) {
       try {
         const controller = new AbortController();
-        const tid = setTimeout(() => controller.abort(), 7500);
+        const tid = setTimeout(() => controller.abort(), 2000);
         const res = await fetch(makeProxy(httpUrl), { cache: 'no-store', signal: controller.signal });
         clearTimeout(tid);
         if (res.ok) {

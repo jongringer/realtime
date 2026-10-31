@@ -178,6 +178,8 @@ body {
   padding-left: env(safe-area-inset-left, 0px);
   padding-right: env(safe-area-inset-right, 0px);
   transition: background-color 0.25s ease, color 0.25s ease;
+  overflow-x: hidden;
+  overflow-y: auto;
   box-sizing: border-box;
 }
 
@@ -196,46 +198,27 @@ body {
   box-sizing: border-box;
 }
 
-/* PC/태블릿 등 넓은 화면: 9:16 스마트폰 비율로 완벽 한정 & 좌우 크롭 (스마트폰 실물 뷰) */
-@media screen and (min-aspect-ratio: 9/16) and (min-width: 460px) {
-  html, body {
-    height: 100%;
-    overflow: hidden;
-  }
-
+/* PC/태블릿 등 넓은 모니터 화면: 스마트폰 9:16 비율(폭 440px)로 정확히 좌우 크롭 & 아래로 시원하게 전체 스크롤 */
+@media screen and (min-width: 480px) {
   body {
-    background: radial-gradient(circle at 50% 25%, #1e293b 0%, #0f172a 65%, #020617 100%) !important;
-    align-items: center !important;
+    background: radial-gradient(circle at 50% 20%, #1e293b 0%, #0f172a 60%, #020617 100%) !important;
+    align-items: flex-start !important;
     justify-content: center !important;
+    padding-top: 20px !important;
+    padding-bottom: 40px !important;
+    overflow-y: auto !important;
   }
 
   .app-container {
-    height: 100dvh;
-    max-height: 100dvh;
-    width: calc(100dvh * (9 / 16)) !important;
-    max-width: calc(100vw - 20px) !important;
-    aspect-ratio: 9 / 16;
-    overflow-y: auto;
-    overflow-x: hidden;
-    margin: 0 auto;
-    border-radius: 20px;
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 24px 50px -10px rgba(0, 0, 0, 0.7);
-    scrollbar-width: thin;
-    scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
-  }
-
-  .app-container::-webkit-scrollbar {
-    width: 5px;
-  }
-  .app-container::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .app-container::-webkit-scrollbar-thumb {
-    background: rgba(148, 163, 184, 0.35);
-    border-radius: 999px;
-  }
-  .app-container::-webkit-scrollbar-thumb:hover {
-    background: rgba(148, 163, 184, 0.6);
+    width: 100% !important;
+    max-width: 440px !important;
+    min-height: calc(100vh - 60px) !important;
+    height: auto !important;
+    overflow: visible !important;
+    margin: 0 auto !important;
+    border-radius: 24px !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(0, 0, 0, 0.2) !important;
   }
 }
 
